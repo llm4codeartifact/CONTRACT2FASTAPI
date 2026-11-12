@@ -43,6 +43,8 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--replace-components", action="store_true",
                         help="Also replace ORM/schema fragments; unsafe for shared declarations.")
     parser.add_argument("--skip-mutations", action="store_true")
+    parser.add_argument("--quiet", action="store_true",
+                        help="Write only the final summary to stdout (full details remain in --report).")
     # Internal protocol used by the parent evaluator.  A candidate is evaluated
     # in a fresh Python process so a stuck Uvicorn/pytest child cannot stop the
     # whole batch.
@@ -471,7 +473,8 @@ def main() -> None:
         for row in rows(results_path, selected, args.limit):
             value = evaluate_isolated(f"{results_path.as_posix()}#{row['index']}", row, args)
             values.append(value)
-            print(json.dumps(value, ensure_ascii=False))
+            if not args.quiet:
+                print(json.dumps(value, ensure_ascii=False))
     report = {"configuration": vars(args), "summary": summarise(values), "candidates": values}
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")

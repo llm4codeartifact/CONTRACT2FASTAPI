@@ -26,7 +26,7 @@ This yields the backend-level split used in the experiment: 425 training and 113
 The collection evaluator starts a target FastAPI backend, records its OpenAPI document, runs Schemathesis, optionally invokes OWASP ZAP when `--zap-path` is supplied, and then runs the black-box pytest suite on a fresh server. For example:
 
 ```powershell
-python collection_evaluator.py `
+python scripts\collection\collection_evaluator.py `
   --target backends.Fleet.temporal_conflict.temporal_conflicts_trip_driver_vehicle:app `
   --tests backends\Fleet\temporal_conflict\tests `
   --specification backends\Fleet\temporal_conflict\temporal_conflicts_trip_driver_vehicle.specification.json `
