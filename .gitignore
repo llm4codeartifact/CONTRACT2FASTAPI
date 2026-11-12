@@ -1,5 +1,6 @@
 # Local environments, caches, reports, and generated training artifacts
 .venv/
+.venv-*/
 venv/
 __pycache__/
 *.py[cod]

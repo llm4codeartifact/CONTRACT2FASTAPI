@@ -29,7 +29,7 @@ VALIDATION_KEYS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", type=Path, default=Path("datasets/v1"))
-    parser.add_argument("--output-dir", type=Path, default=Path("generated/llamafactory-v1"))
+    parser.add_argument("--output-dir", type=Path, default=Path("datasets/v1/llamafactory"))
     return parser.parse_args()
 
 
@@ -132,12 +132,12 @@ def main() -> None:
             train_rows.extend(rows)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.output_dir / "qwen_fastapi_codegen_train.jsonl", train_rows)
-    write_jsonl(args.output_dir / "qwen_fastapi_codegen_validation.jsonl", val_rows)
+    write_jsonl(args.output_dir / "train.jsonl", train_rows)
+    write_jsonl(args.output_dir / "validation.jsonl", val_rows)
 
     dataset_info = {
         "qwen_fastapi_codegen_train": {
-            "file_name": "qwen_fastapi_codegen_train.jsonl",
+            "file_name": "train.jsonl",
             "formatting": "sharegpt",
             "columns": {"messages": "conversations"},
             "tags": {
@@ -149,7 +149,7 @@ def main() -> None:
             },
         },
         "qwen_fastapi_codegen_validation": {
-            "file_name": "qwen_fastapi_codegen_validation.jsonl",
+            "file_name": "validation.jsonl",
             "formatting": "sharegpt",
             "columns": {"messages": "conversations"},
             "tags": {

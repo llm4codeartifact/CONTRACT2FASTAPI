@@ -14,16 +14,16 @@ quantization_bit: 4
 quantization_method: bitsandbytes
 
 ### Dataset
-dataset_dir: generated/llamafactory-v3b
-dataset: qwen_fastapi_codegen_v3b_train
-eval_dataset: qwen_fastapi_codegen_v3b_validation
+dataset_dir: datasets/v1/llamafactory
+dataset: qwen_fastapi_codegen_train
+eval_dataset: qwen_fastapi_codegen_validation
 template: qwen
-cutoff_len: 6144
+cutoff_len: 4096
 overwrite_cache: true
 preprocessing_num_workers: 8
 
 ### Output
-output_dir: outputs/qwen25-coder-7b-fastapi-contract-v3b-a40-3epoch
+output_dir: outputs/qwen25-coder-7b-fastapi-a40-3epoch
 logging_steps: 5
 save_steps: 50
 eval_steps: 25
@@ -36,7 +36,6 @@ report_to: none
 per_device_train_batch_size: 1
 per_device_eval_batch_size: 1
 gradient_accumulation_steps: 8
-gradient_checkpointing: true
 learning_rate: 1.0e-4
 num_train_epochs: 3.0
 lr_scheduler_type: cosine

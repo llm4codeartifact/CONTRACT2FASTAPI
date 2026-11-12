@@ -2,19 +2,21 @@
 
 ## Dataset releases
 
-`datasets/v1` is the initial endpoint-level release. The later releases are derived in order:
+`datasets/v1` is the initial endpoint-level release. Every release has two complementary forms: paired `inputs.json` / `outputs.json` records for corpus provenance and `llamafactory/train.jsonl` / `llamafactory/validation.jsonl` for direct model training. The paired records are aligned by index and their manifest declares the backend-level split.
+
+The later releases are derived in order:
 
 ```powershell
-python scripts\dataset\build_per_backend_dataset_v2.py --source-dir datasets\v1 --output-dir generated\v2
-python scripts\dataset\build_per_backend_dataset_v3.py --source-dir generated\v2 --output-dir generated\v3
-python scripts\dataset\build_per_backend_dataset_v3b.py --source-dir generated\v2 --output-dir generated\v3b
-python scripts\dataset\build_per_backend_dataset_v3c.py --source-dir generated\v3 --output-dir generated\v3c
+python scripts\dataset\build_per_backend_dataset_v2.py --source-dir datasets\v1 --output-dir datasets\v2
+python scripts\dataset\build_per_backend_dataset_v3.py --source-dir datasets\v2 --output-dir datasets\v3
+python scripts\dataset\build_per_backend_dataset_v3b.py --source-dir datasets\v2 --output-dir datasets\v3b
+python scripts\dataset\build_per_backend_dataset_v3c.py --source-dir datasets\v3 --output-dir datasets\v3c
 ```
 
 The checked-in `datasets/v2`, `datasets/v3`, `datasets/v3b`, and `datasets/v3c` are the evaluated releases. To build the LLaMA-Factory files for v3c:
 
 ```powershell
-python scripts\dataset\build_llamafactory_dataset_v3c.py --source-dir datasets\v3c --output-dir generated\llamafactory-v3c
+python scripts\dataset\build_llamafactory_dataset_v3c.py --source-dir datasets\v3c --output-dir datasets\v3c\llamafactory
 ```
 
 This yields the backend-level split used in the experiment: 425 training and 113 held-out records.
@@ -40,10 +42,10 @@ Do not invoke all tests together with a plain `pytest backends`: some black-box 
 The model is `Qwen/Qwen2.5-Coder-7B-Instruct`; the supplied YAML files record the QLoRA configuration. On a CUDA-capable Linux host, install the optional fine-tuning environment with `bash scripts/finetuning/bootstrap_env.sh`, build the required ShareGPT dataset, and run:
 
 ```bash
-llamafactory-cli train configs/qwen25_coder_7b_a40_3epoch_qlora_v3c.yaml
+llamafactory-cli train configs/v3c/qwen25_coder_7b_a40_3epoch_qlora_v3c.yaml
 ```
 
-Then call `scripts/finetuning/evaluate_validation_samples.py` with the adapter, input dataset, and output directory. The raw generated candidates needed for the supplied runtime result are distributed in `results/runtime/`; no model adapter or optimizer state is required to rerun the host-aware evaluation.
+Then call `scripts/finetuning/evaluate_validation_samples.py` with the adapter, input dataset, and output directory. The raw generated candidates are partitioned in `results/<version>/structural/`; the candidates needed for the supplied host-aware result are in `results/v3c/runtime/`. No model adapter or optimizer state is required to rerun the host-aware evaluation.
 
 ## Scope and external tools
 

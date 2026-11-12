@@ -29,7 +29,7 @@ VALIDATION_KEYS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", type=Path, default=Path("datasets/v3"))
-    parser.add_argument("--output-dir", type=Path, default=Path("generated/llamafactory-v3"))
+    parser.add_argument("--output-dir", type=Path, default=Path("datasets/v3/llamafactory"))
     return parser.parse_args()
 
 
@@ -132,8 +132,8 @@ def main() -> None:
             train_rows.extend(rows)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    train_name = "qwen_fastapi_codegen_v3_train.jsonl"
-    validation_name = "qwen_fastapi_codegen_v3_validation.jsonl"
+    train_name = "train.jsonl"
+    validation_name = "validation.jsonl"
     write_jsonl(args.output_dir / train_name, train_rows)
     write_jsonl(args.output_dir / validation_name, val_rows)
 

@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--dataset",
-        default="generated/llamafactory-v1/qwen_fastapi_codegen_validation.jsonl",
+        default="datasets/v1/llamafactory/validation.jsonl",
     )
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--num-samples", type=int, default=10)

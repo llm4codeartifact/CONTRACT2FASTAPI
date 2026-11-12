@@ -5,11 +5,11 @@ Anonymous supplementary artifact for double-anonymous review at LLM4Code 2027.
 ## Contents
 
 - `backends/` contains 30 runnable synthetic FastAPI backend variants across ten domains, their specifications, OpenAPI snapshots, endpoint-test metadata, and black-box tests.
-- `datasets/` contains the endpoint-level releases v1, v2, v3, v3b, and v3c.
+- `datasets/` contains the endpoint-level releases v1, v2, v3, v3b, and v3c. Each release contains the canonical paired `inputs.json` / `outputs.json` corpus and immediately usable `llamafactory/train.jsonl` and `llamafactory/validation.jsonl` splits.
 - `collection_evaluator.py` runs the collection quality gate: OpenAPI extraction, Schemathesis, optional OWASP ZAP, pytest, and dataset export.
 - `scripts/dataset/` derives the successive dataset releases and produces LLaMA-Factory ShareGPT training data.
 - `scripts/finetuning/` contains the structural and host-aware runtime evaluators.
-- `results/` contains the generated candidates used for the supplied structural and runtime evaluation evidence. Model checkpoints are deliberately not distributed.
+- `results/` is partitioned by dataset version. Each version contains structural candidates; v3c additionally contains the 30 candidates evaluated by the host-aware runtime evaluator. Model checkpoints are deliberately not distributed.
 
 ## Quick reproduction
 
@@ -20,11 +20,11 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements\collection.txt
 python scripts\finetuning\evaluate_integrated_samples.py `
-  --results results\runtime\validation_generation_start0_n10.jsonl `
-  --results results\runtime\validation_generation_start10_n10.jsonl `
-  --results results\runtime\validation_generation_start20_n10.jsonl `
+  --results results\v3c\runtime\validation_generation_start0_n10.jsonl `
+  --results results\v3c\runtime\validation_generation_start10_n10.jsonl `
+  --results results\v3c\runtime\validation_generation_start20_n10.jsonl `
   --manifest datasets\v3c\manifest.json `
-  --report results\runtime\reproduced_v3c_runtime_report.json `
+  --report results\v3c\runtime\reproduced_v3c_runtime_report.json `
   --repeats 2 --timeout 30 --candidate-timeout 90 --skip-mutations
 ```
 
