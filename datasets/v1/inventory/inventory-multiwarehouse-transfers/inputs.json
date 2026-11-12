@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "DELETE /products/{product_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_product accepting db, current_user, product_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class StockLevelModel. Declare fields or class attributes: __tablename__, created_at, id, in_transit_quantity, product, product_id, quantity, updated_at, warehouse, warehouse_id. Maintain the declared ORM relationships.\n3. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /products/{product_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Warehouses have unique code and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteProduct(request):\n    // REQ-8-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "DELETE /transfers/{transfer_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_transfer accepting db, current_user, transfer_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /transfers/{transfer_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Warehouses have unique code and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteTransfer(request):\n    // REQ-8-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "DELETE /warehouses/{warehouse_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_warehouse accepting db, current_user, warehouse_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class StockLevelModel. Declare fields or class attributes: __tablename__, created_at, id, in_transit_quantity, product, product_id, quantity, updated_at, warehouse, warehouse_id. Maintain the declared ORM relationships.\n3. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /warehouses/{warehouse_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Warehouses have unique code and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteWarehouse(request):\n    // REQ-8-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-8-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /products",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProductListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_products accepting db, sku, name, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProductModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, name, sku, stock_levels, transfers, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /products to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListProduct(request):\n    // REQ-8-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /products/{product_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProductResponse. Declare fields or class attributes: active, created_at, id, model_config, name, sku, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, product_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProductModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, name, sku, stock_levels, transfers, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /products/{product_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetProduct(request):\n    // REQ-8-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /transfers",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_transfers accepting db, source_warehouse_id, dest_warehouse_id, product_id, status, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /transfers to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTransfer(request):\n    // REQ-8-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /transfers/{transfer_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, transfer_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /transfers/{transfer_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTransfer(request):\n    // REQ-8-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /warehouses",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WarehouseListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_warehouses accepting db, code, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WarehouseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, stock_levels, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /warehouses to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListWarehouse(request):\n    // REQ-8-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /warehouses/{warehouse_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WarehouseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, warehouse_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting w. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WarehouseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, stock_levels, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /warehouses/{warehouse_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetWarehouse(request):\n    // REQ-8-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "GET /warehouses/{warehouse_id}/transfer-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_conflicts accepting db, warehouse_id, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /warehouses/{warehouse_id}/transfer-conflicts to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Warehouses have unique code and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleTransferConflicts(request):\n    // REQ-8-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "PATCH /products/{product_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProductResponse. Declare fields or class attributes: active, created_at, id, model_config, name, sku, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_product accepting db, current_user, product_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProductModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, name, sku, stock_levels, transfers, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /products/{product_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchProduct(request):\n    // REQ-8-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "PATCH /transfers/{transfer_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_transfer accepting db, current_user, transfer_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /transfers/{transfer_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTransfer(request):\n    // REQ-8-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "PATCH /warehouses/{warehouse_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WarehouseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_warehouse accepting db, current_user, warehouse_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting w. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WarehouseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, stock_levels, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /warehouses/{warehouse_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchWarehouse(request):\n    // REQ-8-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /products",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProductResponse. Declare fields or class attributes: active, created_at, id, model_config, name, sku, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_product accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProductModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, name, sku, stock_levels, transfers, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /products to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateProduct(request):\n    // REQ-8-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /transfers",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_transfer accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /transfers to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTransfer(request):\n    // REQ-8-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /transfers/{transfer_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine cancel_transfer accepting db, current_user, transfer_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class StockLevelModel. Declare fields or class attributes: __tablename__, created_at, id, in_transit_quantity, product, product_id, quantity, updated_at, warehouse, warehouse_id. Maintain the declared ORM relationships.\n3. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /transfers/{transfer_id}/cancel to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelTransfer(request):\n    // REQ-8-027; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /transfers/{transfer_id}/dispatch",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine dispatch_transfer accepting db, current_user, transfer_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class StockLevelModel. Declare fields or class attributes: __tablename__, created_at, id, in_transit_quantity, product, product_id, quantity, updated_at, warehouse, warehouse_id. Maintain the declared ORM relationships.\n3. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /transfers/{transfer_id}/dispatch to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDispatchTransfer(request):\n    // REQ-8-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /transfers/{transfer_id}/receive",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TransferResponse. Declare fields or class attributes: cancelled_at, created_at, dest_warehouse_id, dispatched_at, id, model_config, product_id, quantity, received_at, source_warehouse_id, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine receive_transfer accepting db, current_user, transfer_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class StockLevelModel. Declare fields or class attributes: __tablename__, created_at, id, in_transit_quantity, product, product_id, quantity, updated_at, warehouse, warehouse_id. Maintain the declared ORM relationships.\n3. DEFINE class TransferModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, dest_warehouse, dest_warehouse_id, dispatched_at, id, product, product_id, quantity, received_at, source_warehouse, source_warehouse_id, status, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /transfers/{transfer_id}/receive to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleReceiveTransfer(request):\n    // REQ-8-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "inventory-multiwarehouse-transfers",
+    "endpoint": "POST /warehouses",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WarehouseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_warehouse accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting w. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WarehouseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, stock_levels, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /warehouses to an authenticated user or admin, accepting JSON declared route fields; it shall validate Warehouses have unique code and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Inventory management.\nB: Multi-warehouse and atomic transfers.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateWarehouse(request):\n    // REQ-8-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Warehouses have unique code and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

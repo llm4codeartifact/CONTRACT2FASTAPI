@@ -1,0 +1,3982 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /employees/{employee_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/employees/{employee_id}",
+      "path_params": [
+        {
+          "name": "employee_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "EmployeeController",
+          "routine": "delete_employee"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_balances",
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_employee",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "employee_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": true
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee fields, soft-delete only an employee without leave relations and never cascade, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteEmployee(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an employee without leave relations and never cascade. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /leave-balances/{leave_balance_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/leave-balances/{leave_balance_id}",
+      "path_params": [
+        {
+          "name": "leave_balance_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "delete_balance"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_balance",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_balance_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id; it shall validate balance year, type, and range, delete only an unused balance without changing requests, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteLeaveBalance(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only an unused balance without changing requests. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /leave-requests/{leave_request_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/leave-requests/{leave_request_id}",
+      "path_params": [
+        {
+          "name": "leave_request_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "delete_request"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_request",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_request_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate date interval, ownership, and overlap rules, delete only a DRAFT request and retain approved history, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteLeaveRequest(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only a DRAFT request and retain approved history. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/employees",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "EmployeeController",
+          "routine": "list_employees"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /employees to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate employee fields and stable pagination, return an authorized stable page of employees, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListEmployee(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees/{employee_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/employees/{employee_id}",
+      "path_params": [
+        {
+          "name": "employee_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "EmployeeController",
+          "routine": "get_employee"
+        },
+        {
+          "controller_class": "EmployeeController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "employee_id",
+          "model": "EmployeeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee fields, return the authorized Employee, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetEmployee(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees/{employee_id}/leave-calendar",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/employees/{employee_id}/leave-calendar",
+      "path_params": [
+        {
+          "name": "employee_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "date_from",
+          "alias": "date_from",
+          "required": true,
+          "constraints": {
+            "alias": "date_from",
+            "required": true
+          }
+        },
+        {
+          "name": "date_to",
+          "alias": "date_to",
+          "required": true,
+          "constraints": {
+            "alias": "date_to",
+            "required": true
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "get_calendar"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_calendar",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "employee_id",
+          "model": "EmployeeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "date_from",
+          "alias": "date_from",
+          "model_field": "date_from",
+          "operator": "=="
+        },
+        {
+          "parameter": "date_to",
+          "alias": "date_to",
+          "model_field": "date_to",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-calendar to the employee or an admin, accepting a positive employee_id, date_from, date_to, limit, and after_id; it shall validate inclusive range and ownership, return approved and submitted intervals, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleLeaveCalendar(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE inclusive range and ownership OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-balances",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "employee_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "leave_type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "year",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "list_balances"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_balances",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "employee_id",
+          "alias": "employee_id",
+          "model_field": "employee_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "leave_type",
+          "alias": "leave_type",
+          "model_field": "leave_type",
+          "operator": "=="
+        },
+        {
+          "parameter": "year",
+          "alias": "year",
+          "model_field": "year",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-balances to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate balance year, type, and range and stable pagination, return an authorized stable page of leave-balances, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListLeaveBalance(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance year, type, and range and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances/{leave_balance_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-balances/{leave_balance_id}",
+      "path_params": [
+        {
+          "name": "leave_balance_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "get_balance"
+        },
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_balances",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_balance",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_balance_id",
+          "model": "LeaveBalanceModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id; it shall validate balance year, type, and range, return the authorized LeaveBalance, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetLeaveBalance(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances/{leave_balance_id}/history",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-balances/{leave_balance_id}/history",
+      "path_params": [
+        {
+          "name": "leave_balance_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "list_history"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveBalanceHistoryModel",
+          "table": "leave_balance_histories",
+          "fields": [
+            "amount",
+            "change_type",
+            "created_at",
+            "id",
+            "leave_balance_id",
+            "note",
+            "resulting_remaining_days"
+          ],
+          "foreign_keys": [
+            {
+              "field": "leave_balance_id",
+              "target": "leave_balances.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_balance_histories",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id",
+        "leave_balances.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_balance_id",
+          "model": "LeaveBalanceHistoryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-balances/{leave_balance_id}/history to the employee or an admin, accepting a positive leave_balance_id, limit, and after_id; it shall validate balance ownership and pagination, return immutable balance history, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleBalanceHistory(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance ownership and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-requests",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-requests",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "employee_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "leave_type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "status_val",
+          "alias": "status",
+          "required": false,
+          "constraints": {
+            "alias": "status",
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "list_requests"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "employee_id",
+          "alias": "employee_id",
+          "model_field": "employee_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "leave_type",
+          "alias": "leave_type",
+          "model_field": "leave_type",
+          "operator": "=="
+        },
+        {
+          "parameter": "status_val",
+          "alias": "status",
+          "model_field": "status",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-requests to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate date interval, ownership, and overlap rules and stable pagination, return an authorized stable page of leave-requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListLeaveRequest(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE date interval, ownership, and overlap rules and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-requests/{leave_request_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-requests/{leave_request_id}",
+      "path_params": [
+        {
+          "name": "leave_request_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "get_request"
+        },
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_request_id",
+          "model": "LeaveRequestModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate date interval, ownership, and overlap rules, return the authorized LeaveRequest, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetLeaveRequest(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /employees/{employee_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/employees/{employee_id}",
+      "path_params": [
+        {
+          "name": "employee_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "EmployeeController",
+          "routine": "patch_employee"
+        },
+        {
+          "controller_class": "EmployeeController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "employee_id",
+          "model": "EmployeeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id and JSON partial employee_code, full_name, hire_date, active; it shall validate employee fields, update supplied Employee fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchEmployee(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Employee fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /leave-balances/{leave_balance_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/leave-balances/{leave_balance_id}",
+      "path_params": [
+        {
+          "name": "leave_balance_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "patch_balance"
+        },
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "LeaveBalanceHistoryModel",
+          "table": "leave_balance_histories",
+          "fields": [
+            "amount",
+            "change_type",
+            "created_at",
+            "id",
+            "leave_balance_id",
+            "note",
+            "resulting_remaining_days"
+          ],
+          "foreign_keys": [
+            {
+              "field": "leave_balance_id",
+              "target": "leave_balances.id"
+            }
+          ]
+        },
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "leave_balance_histories",
+        "leave_balances",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id",
+        "leave_balances.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_balance_id",
+          "model": "LeaveBalanceModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id and JSON partial employee_id, leave_type, year, opening_days; it shall validate balance year, type, and range, update supplied LeaveBalance fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchLeaveBalance(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveBalance fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /leave-requests/{leave_request_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/leave-requests/{leave_request_id}",
+      "path_params": [
+        {
+          "name": "leave_request_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "patch_request"
+        },
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_request_id",
+          "model": "LeaveRequestModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id and JSON partial employee_id, leave_type, start_date, end_date, requested_days; it shall validate date interval, ownership, and overlap rules, update supplied LeaveRequest fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchLeaveRequest(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveRequest fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /employees",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/employees",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "EmployeeController",
+          "routine": "create_employee"
+        },
+        {
+          "controller_class": "EmployeeController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_employee",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /employees to an authenticated user or admin, accepting JSON employee_code, full_name, hire_date, active; it shall validate employee fields, create the Employee and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateEmployee(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Employee and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-balances",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/leave-balances",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "create_balance"
+        },
+        {
+          "controller_class": "LeaveBalanceController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "LeaveBalanceHistoryModel",
+          "table": "leave_balance_histories",
+          "fields": [
+            "amount",
+            "change_type",
+            "created_at",
+            "id",
+            "leave_balance_id",
+            "note",
+            "resulting_remaining_days"
+          ],
+          "foreign_keys": [
+            {
+              "field": "leave_balance_id",
+              "target": "leave_balances.id"
+            }
+          ]
+        },
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "leave_balance_histories",
+        "leave_balances",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id",
+        "leave_balances.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_balance",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /leave-balances to an authenticated user or admin, accepting JSON employee_id, leave_type, year, opening_days; it shall validate balance year, type, and range, create the LeaveBalance and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateLeaveBalance(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveBalance and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/leave-requests",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "create_request"
+        },
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "employees",
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_request",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /leave-requests to an authenticated user or admin, accepting JSON employee_id, leave_type, start_date, end_date, requested_days; it shall validate date interval, ownership, and overlap rules, create the LeaveRequest and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateLeaveRequest(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveRequest and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests/{leave_request_id}/cancel",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/leave-requests/{leave_request_id}/cancel",
+      "path_params": [
+        {
+          "name": "leave_request_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "cancel_request"
+        },
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveBalanceHistoryModel",
+          "table": "leave_balance_histories",
+          "fields": [
+            "amount",
+            "change_type",
+            "created_at",
+            "id",
+            "leave_balance_id",
+            "note",
+            "resulting_remaining_days"
+          ],
+          "foreign_keys": [
+            {
+              "field": "leave_balance_id",
+              "target": "leave_balances.id"
+            }
+          ]
+        },
+        {
+          "name": "LeaveBalanceModel",
+          "table": "leave_balances",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "id",
+            "leave_type",
+            "opening_days",
+            "remaining_days",
+            "updated_at",
+            "used_days",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_balance_histories",
+        "leave_balances",
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id",
+        "leave_balances.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "cancel_request",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_request_id",
+          "model": "LeaveRequestModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/cancel to its employee or an admin, accepting a positive leave_request_id and JSON cancelled_at; it shall validate allowed cancellation and balance restoration, cancel request and restore approved balance, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCancelLeave(request):\n    // REQ-7-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE allowed cancellation and balance restoration OR RETURN 400 or 422.\n    BEGIN TRANSACTION; cancel request and restore approved balance. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests/{leave_request_id}/submit",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "A: Leave balances and date intervals",
+      "summary": "Application domain: Human resources.\nBackend variant: A: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/leave-requests/{leave_request_id}/submit",
+      "path_params": [
+        {
+          "name": "leave_request_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "serialize"
+        },
+        {
+          "controller_class": "LeaveRequestController",
+          "routine": "submit_request"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LeaveRequestModel",
+          "table": "leave_requests",
+          "fields": [
+            "cancelled_at",
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "submitted_at",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "leave_requests",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "leave_request_id",
+          "model": "LeaveRequestModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/submit to its employee or an admin, accepting a positive leave_request_id and JSON submitted_at; it shall validate DRAFT transition, mark request SUBMITTED, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleSubmitLeave(request):\n    // REQ-7-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE DRAFT transition OR RETURN 400 or 422.\n    BEGIN TRANSACTION; mark request SUBMITTED. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Employees have unique employee_code ^[A-Z0-9-]{3,20}$, full_name 3..120, hire_date in 2025-01-01..2035-12-31, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Leave balances are unique by employee, leave_type VACATION, SICK, PERSONAL, UNPAID, and year 2025..2035, with days 0..365 in 0.5 increments."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

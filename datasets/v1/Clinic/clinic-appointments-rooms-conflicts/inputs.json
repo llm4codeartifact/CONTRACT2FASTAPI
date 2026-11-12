@@ -1,0 +1,416 @@
+[
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "DELETE /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_room accepting db, current_user, room_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose DELETE /rooms/{room_id} to an admin, accepting a positive room_id; it shall atomically soft-delete only a room with no appointment of any status as required by REQ-3-008, be idempotent only insofar as a deleted id is 404, never cascade to appointment records, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteRoom(request, room_id):\n    // REQ-3-016; preconditions: existing non-deleted room and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. IF invalid or absent id THEN RETURN 404. END IF\n    BEGIN TRANSACTION; lock room and appointment references. IF any appointment references room THEN ROLLBACK; RETURN 409. END IF\n    MARK room deleted; COMMIT; RETURN 204.\n    // REQ-3-008. Repeat is 404; failure rollback leaves all rooms and appointments unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /animals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_animals accepting db, current_user, species, active, client_account_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /animals to an authenticated user or admin, accepting optional species, active boolean, client_account_id allowed only to admins, limit, and after_id; it shall validate REQ-3-003 and REQ-3-010, restrict a user to animals mapped to that user account, make no persistent change, and emit only 200, 400, 401, 403, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAnimals(request):\n    // REQ-3-017; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE admin for client_account_id OR RETURN 403. VALIDATE filters and pagination OR RETURN 400 or 422.\n    READ rows for caller account when user, otherwise matching admin filters, ordered by id; RETURN 200 page.\n    // Transaction: none. Postcondition: animals and appointments remain unchanged even when an error is returned.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /animals/{animal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalResponse. Declare fields or class attributes: active, client_account_id, created_at, id, model_config, name, species, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_animal accepting db, current_user, animal_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /animals/{animal_id} to its client user or an admin, accepting a positive animal_id; it shall enforce REQ-3-001 and REQ-3-003, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAnimal(request, animal_id):\n    // REQ-3-019; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. RETURN 404 for non-positive or absent id. REQUIRE caller is client owner or admin OR RETURN 403.\n    RETURN 200 with patient animal. Transaction: none; postcondition: state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /animals/{animal_id}/appointment-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_animal_conflicts accepting db, current_user, animal_id, start_at, end_at, exclude_appointment_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /animals/{animal_id}/appointment-conflicts to the animal's client user or an admin, accepting a positive animal_id, required start_at and end_at, optional positive exclude_appointment_id, limit, and after_id; it shall validate REQ-3-001, REQ-3-004, and REQ-3-010, return SCHEDULED or CHECKED_IN conflicts using REQ-3-005 without persistent effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleAnimalAppointmentConflicts(request, animal_id):\n    // REQ-3-028; preconditions: persistence available.\n    REQUIRE authenticated animal client or admin OR RETURN 401 or 403. RETURN 404 for invalid or absent animal. VALIDATE query interval, optional exclude id, and pagination OR RETURN 400 or 422.\n    READ that animal's active-status appointments overlapping [start_at,end_at), omit exclude, order by id, and RETURN 200 page.\n    // Transaction: none; postcondition and all errors leave animals, rooms, and appointments unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /appointments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_appointments accepting db, current_user, animal_id, room_id, status_val, from_time, to_time, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at.\n4. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /appointments to an authenticated user or admin, accepting optional positive animal_id, positive room_id permitted only to admins, status, from, to, limit, and after_id; it shall validate REQ-3-001, REQ-3-004, REQ-3-006, inclusive start_at filter semantics and REQ-3-010, restrict a user to appointments for that user's animals, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAppointments(request):\n    // REQ-3-020; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE admin for room_id OR RETURN 403. VALIDATE ids, enum, UTC bounds, from less than or equal to to, and REQ-3-010 OR RETURN 400 or 422.\n    RETURN 404 for unknown supplied positive animal or room. READ matching appointments by id, restricted to caller animals for user; RETURN 200 page.\n    // Transaction: none; postcondition: state unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /appointments/{appointment_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_appointment accepting db, current_user, appointment_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /appointments/{appointment_id} to the appointment's patient client user or an admin, accepting a positive appointment_id; it shall enforce REQ-3-001 and REQ-3-009, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAppointment(request, appointment_id):\n    // REQ-3-022; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. IF id is non-positive or absent THEN RETURN 404. END IF\n    REQUIRE caller owns appointment patient or is admin OR RETURN 403. RETURN 200 with appointment.\n    // Transaction: none; postcondition: persistent state remains unchanged on every result.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall check only local persistence, return deterministic service status without persistent effects, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-3-011; preconditions: none.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status ok.\n    // Authorization: public. Transaction: none. Postcondition: persistent state unchanged; error response has no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /rooms",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_rooms accepting db, current_user, room_type, active, include_deleted, name_prefix, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /rooms to an authenticated user or admin, accepting optional room_type, active boolean, include_deleted boolean permitted only to admins, name_prefix of 1..60 characters, limit, and after_id; it shall validate REQ-3-002 and REQ-3-010, return stable pages without persistent effects, and emit only 200, 400, 401, 403, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListRooms(request):\n    // REQ-3-012; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE admin when include_deleted is true OR RETURN 403.\n    VALIDATE enum, booleans, prefix, and REQ-3-010 pagination OR RETURN 400 or 422. READ matching rooms by ascending id.\n    RETURN 200 page. Transaction: none; postcondition: rooms and appointments remain unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomResponse. Declare fields or class attributes: active, capacity, created_at, id, is_deleted, model_config, name, room_type, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_room accepting db, current_user, room_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /rooms/{room_id} to an authenticated user or admin, accepting a positive room_id; it shall enforce REQ-3-001 and return the non-deleted room without persistent effects, and emit only 200, 401, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetRoom(request, room_id):\n    // REQ-3-014; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. IF room_id is non-positive, absent, or deleted THEN RETURN 404. END IF\n    RETURN 200 with room. Transaction: none; postcondition: persistent state unchanged; all errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "GET /rooms/{room_id}/appointment-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_room_conflicts accepting db, current_user, room_id, start_at, end_at, exclude_appointment_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /rooms/{room_id}/appointment-conflicts to an admin, accepting a positive room_id, required start_at and end_at, optional positive exclude_appointment_id, limit, and after_id; it shall validate REQ-3-001, REQ-3-004, and REQ-3-010, return SCHEDULED or CHECKED_IN overlapping appointments using REQ-3-005, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleRoomAppointmentConflicts(request, room_id):\n    // REQ-3-027; preconditions: persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. RETURN 404 for invalid or absent room. VALIDATE UTC five-minute interval, optional existing-format exclude id, and pagination OR RETURN 400 or 422.\n    READ active-status appointments whose [start_at,end_at) overlaps query interval; omit exclude id; order by id and return 200 page.\n    // Transaction: none; postcondition: persistent state unchanged, including appointment occupancy.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "PATCH /appointments/{appointment_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_appointment accepting db, db_user, appointment_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose PATCH /appointments/{appointment_id} to the appointment's patient client user or an admin, accepting a positive appointment_id and JSON reason, room_id, start_at, or end_at; it shall require application/json, permit changes only while SCHEDULED, validate the resulting appointment under REQ-3-004 and REQ-3-005, atomically update only supplied fields, be idempotent for an identical valid payload, preserve cancellation history, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchAppointment(request, appointment_id):\n    // REQ-3-023; preconditions: JSON request, existing appointment, and persistence available.\n    REQUIRE authenticated patient client or admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415.\n    BEGIN TRANSACTION; lock appointment, resulting room, animal, and conflict slots. IF status is not SCHEDULED THEN ROLLBACK; RETURN 409. END IF\n    VALIDATE resulting REQ-3-004 appointment OR ROLLBACK; RETURN 400 or 422. IF room missing then ROLLBACK; RETURN 404; IF REQ-3-005 conflict then ROLLBACK; RETURN 409.\n    UPDATE supplied fields; COMMIT; RETURN 200. // Identical valid payload is idempotent; rollback preserves all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "PATCH /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomResponse. Declare fields or class attributes: active, capacity, created_at, id, is_deleted, model_config, name, room_type, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_room accepting db, current_user, room_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose PATCH /rooms/{room_id} to an admin, accepting a positive room_id and JSON name, room_type, capacity, or active; it shall require application/json, validate the resulting room under REQ-3-002 and the deactivation condition in REQ-3-008, atomically update only supplied fields, be idempotent for an identical valid payload, preserve appointment relations, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchRoom(request, room_id):\n    // REQ-3-015; preconditions: JSON request, existing non-deleted room, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE partial result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock room and its active appointments. IF setting active false while any SCHEDULED or CHECKED_IN appointment exists THEN ROLLBACK; RETURN 409. END IF\n    IF replacement name conflicts THEN ROLLBACK; RETURN 409. END IF UPDATE supplied fields; COMMIT; RETURN 200.\n    // Identical payload is idempotent; rollback preserves room and appointment relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /animals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalResponse. Declare fields or class attributes: active, client_account_id, created_at, id, model_config, name, species, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_animal accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /animals to an authenticated user or admin, accepting JSON name, species, and optional active default true plus an optional positive client_account_id only for admins; it shall require application/json, validate REQ-3-001 and REQ-3-003, require a supplied client_account_id to identify an existing account, assign a user-created animal to the caller account, atomically create it, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateAnimal(request):\n    // REQ-3-018; preconditions: JSON request and persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE application/json OR RETURN 415. VALIDATE REQ-3-001 and REQ-3-003 OR RETURN 400 or 422.\n    REQUIRE admin for a supplied different client_account_id OR RETURN 403; unknown supplied client_account_id is 404. BEGIN TRANSACTION; CREATE active or inactive patient animal for permitted account; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Any error rolls back and leaves animals and future appointment relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /appointments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_appointment accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at.\n3. DEFINE class PatientAnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, name, species, updated_at.\n4. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /appointments to an authenticated user or admin, accepting JSON positive animal_id, positive room_id, reason, start_at, and end_at; it shall require application/json, validate REQ-3-001, REQ-3-004, and REQ-3-005, require the user caller to own the animal, atomically create a SCHEDULED appointment after locking conflict slots, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateAppointment(request):\n    // REQ-3-021; preconditions: JSON request, active room and animal, and persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE application/json OR RETURN 415. VALIDATE body under REQ-3-004 OR RETURN 400 or 422.\n    LOAD room and animal or RETURN 404; REQUIRE caller owns animal or is admin under REQ-3-009 OR RETURN 403.\n    BEGIN TRANSACTION; lock room, animal, and overlapping active appointments. IF REQ-3-005 conflict exists THEN ROLLBACK; RETURN 409. END IF CREATE SCHEDULED appointment; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves appointments, rooms, and animals unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /appointments/{appointment_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine cancel_appointment accepting db, current_user, appointment_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /appointments/{appointment_id}/cancel to the appointment's patient client user or an admin, accepting a positive appointment_id and JSON cancelled_at plus cancellation_reason; it shall require application/json, validate REQ-3-001 and REQ-3-007, permit only SCHEDULED or CHECKED_IN appointments, atomically create immutable cancellation history and mark CANCELLED, be non-idempotent, release conflict occupancy without deleting relations, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelAppointment(request, appointment_id):\n    // REQ-3-026; preconditions: JSON request, existing appointment, and persistence available.\n    REQUIRE authenticated patient client or admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-3-007 data OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock appointment. IF status is terminal THEN ROLLBACK; RETURN 409. END IF\n    SET CANCELLED plus immutable cancellation fields and cancelling account; retain animal and room links; COMMIT; RETURN 200.\n    // REQ-3-006 and REQ-3-007. Non-idempotent; errors roll back all changes and preserve conflict state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /appointments/{appointment_id}/check-in",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine check_in_appointment accepting db, current_user, appointment_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /appointments/{appointment_id}/check-in to the appointment's patient client user or an admin, accepting a positive appointment_id and JSON checked_in_at in the timestamp range of REQ-3-001; it shall require application/json, allow only a SCHEDULED appointment to become CHECKED_IN when checked_in_at is within its planned interval, atomically preserve room and patient occupancy, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCheckInAppointment(request, appointment_id):\n    // REQ-3-024; preconditions: JSON request, existing appointment, and persistence available.\n    REQUIRE authenticated patient client or admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE checked_in_at UTC range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock appointment, room, animal, and active conflicts. IF status is not SCHEDULED, timestamp is outside interval, or REQ-3-005 would fail THEN ROLLBACK; RETURN 409. END IF\n    SET status CHECKED_IN and checked_in_at; COMMIT; RETURN 200.\n    // REQ-3-005 and REQ-3-006. Non-idempotent; rollback leaves all persistent state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /appointments/{appointment_id}/complete",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AppointmentResponse. Declare fields or class attributes: animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, model_config, reason, room_id, start_at, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine complete_appointment accepting db, current_user, appointment_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AppointmentModel. Declare fields or class attributes: __tablename__, animal_id, cancellation_reason, cancelled_at, cancelled_by_account_id, checked_in_at, completed_at, created_at, end_at, id, reason, room_id, start_at, status, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /appointments/{appointment_id}/complete to the appointment's patient client user or an admin, accepting a positive appointment_id and JSON completed_at in the timestamp range of REQ-3-001; it shall require application/json, permit only CHECKED_IN appointments and require completed_at not earlier than checked_in_at, atomically mark COMPLETED, be non-idempotent, retain all room and patient relations, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCompleteAppointment(request, appointment_id):\n    // REQ-3-025; preconditions: JSON request, existing appointment, and persistence available.\n    REQUIRE authenticated patient client or admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE completed_at OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock appointment. IF status is not CHECKED_IN or completed_at precedes checked_in_at THEN ROLLBACK; RETURN 409. END IF\n    SET status COMPLETED and completed_at; retain room and animal links; COMMIT; RETURN 200.\n    // REQ-3-006. Non-idempotent; rollback preserves appointment and relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-appointments-rooms-conflicts",
+    "endpoint": "POST /rooms",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomResponse. Declare fields or class attributes: active, capacity, created_at, id, is_deleted, model_config, name, room_type, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_room accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, active, capacity, created_at, id, is_deleted, name, room_type, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /rooms to an admin, accepting JSON name, room_type, capacity, and optional active default true; it shall require application/json, validate REQ-3-002, atomically create a unique non-deleted room, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\n: Appointments, rooms, and scheduling conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateRoom(request):\n    // REQ-3-013; preconditions: JSON request and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-3-002 body OR RETURN 400 or 422.\n    BEGIN TRANSACTION. IF normalized room name already exists among non-deleted rooms THEN ROLLBACK; RETURN 409. END IF CREATE room; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; on error rollback leaves rooms and all appointment relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

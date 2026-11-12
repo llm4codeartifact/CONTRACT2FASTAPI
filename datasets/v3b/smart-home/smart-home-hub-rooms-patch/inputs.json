@@ -1,0 +1,2790 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /devices/{device_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/devices/{device_id}",
+      "path_params": [
+        {
+          "name": "device_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "delete_device"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_device",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "device_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting a positive path id; it shall atomically delete only the selected device without changing its hub or room revisions and without cascading to any other resource, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteDevice(request, device_id):\n    // REQ-2-026; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF device_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION; DELETE device only; COMMIT; RETURN 204.\n    // REQ-2-008. Repeat returns 404; rollback retains the device and unchanged hub/room relations and revisions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-008",
+          "requirement": "A hub cannot be deleted while it has rooms or devices. A room cannot be deleted while it has devices. Deleting an unreferenced room or hub cascades no unrelated records; deleting a device removes only that device."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /hubs/{hub_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/hubs/{hub_id}",
+      "path_params": [
+        {
+          "name": "hub_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HubController",
+          "routine": "delete_hub"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_hub",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "hub_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall atomically delete only a hub with no rooms and no devices, shall not cascade-delete child resources, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteHub(request, hub_id):\n    // REQ-2-016; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF hub_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF any room or device belongs to hub THEN ROLLBACK; RETURN 409 under REQ-2-008. END IF DELETE hub; COMMIT; RETURN 204.\n    // Repeat returns 404; all error paths preserve hub, child relations, and revisions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-008",
+          "requirement": "A hub cannot be deleted while it has rooms or devices. A room cannot be deleted while it has devices. Deleting an unreferenced room or hub cascades no unrelated records; deleting a device removes only that device."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /rooms/{room_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/rooms/{room_id}",
+      "path_params": [
+        {
+          "name": "room_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoomController",
+          "routine": "delete_room"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_room",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "room_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting a positive path id; it shall atomically delete only an empty room, reject deletion when any device references it without detaching devices, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRoom(request, room_id):\n    // REQ-2-021; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF room_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF device refers to room THEN ROLLBACK; RETURN 409 under REQ-2-008. END IF DELETE room; COMMIT; RETURN 204.\n    // Repeat returns 404; errors leave room, hub, devices, and revisions unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-008",
+          "requirement": "A hub cannot be deleted while it has rooms or devices. A room cannot be deleted while it has devices. Deleting an unreferenced room or hub cascades no unrelated records; deleting a device removes only that device."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /devices",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/devices",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "hub_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "room_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "unassigned",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "list_devices"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "hubs",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "hub_id",
+          "alias": "hub_id",
+          "model_field": "hub_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "room_id",
+          "alias": "room_id",
+          "model_field": "room_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "type",
+          "alias": "type",
+          "model_field": "type",
+          "operator": "=="
+        },
+        {
+          "parameter": "unassigned",
+          "alias": "unassigned",
+          "model_field": "unassigned",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /devices as an authenticated user-or-admin endpoint accepting optional hub_id, room_id, type enum, unassigned boolean, limit, and after_id; it shall apply exact filters where unassigned true means room_id is null and false means non-null, validate supplied parents and their ownership, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListDevices(request):\n    // REQ-2-022; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE enum, boolean, pagination, and supplied parent ids or RETURN 422/404. IF user caller does not own selected parent hub/room THEN RETURN 403.\n    READ owner-visible devices matching exact filters, sort id, page, RETURN 200.\n    // Transaction: none; postcondition: device topology and revisions unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /devices/{device_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/devices/{device_id}",
+      "path_params": [
+        {
+          "name": "device_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "get_device_by_id"
+        },
+        {
+          "controller_class": "DeviceController",
+          "routine": "serialize_device"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "device_id",
+          "model": "DeviceModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting a positive path id; it shall return the device and current revision ETag after hub ownership authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetDevice(request, device_id):\n    // REQ-2-024; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF device_id <= 0 OR absent THEN RETURN 404. IF user caller does not own device.hub THEN RETURN 403.\n    RETURN 200 with device and ETag. // Transaction none; all state unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health as a public endpoint with no input or authorization; it shall return deterministic local persistence health without persistent effects and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-2-011; Preconditions: none. Authorization: public. Transaction: none.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Postcondition: hubs, rooms, devices, and revisions are unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/hubs",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "owner_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "timezone",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HubController",
+          "routine": "list_hubs"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "owner_id",
+          "alias": "owner_id",
+          "model_field": "owner_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "timezone",
+          "alias": "timezone",
+          "model_field": "timezone",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /hubs as an authenticated user-or-admin endpoint accepting optional owner_id for admins only, timezone enum, limit, and after_id; it shall apply exact filters, enforce REQ-2-009, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListHubs(request):\n    // REQ-2-012; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE timezone and pagination or RETURN 422. IF owner_id <= 0 OR owner absent THEN RETURN 404.\n    IF caller is user and owner_id is another user THEN RETURN 403. READ visible hubs by id page; RETURN 200.\n    // Transaction: none; postcondition: no persistent state, including revisions, changes.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-009",
+          "requirement": "A user may access and modify only hubs owned by that user and their rooms and devices; an admin may access every resource. A resource can never be moved to a hub owned by a different user."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs/{hub_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/hubs/{hub_id}",
+      "path_params": [
+        {
+          "name": "hub_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HubController",
+          "routine": "get_hub_by_id"
+        },
+        {
+          "controller_class": "HubController",
+          "routine": "serialize_hub"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "hub_id",
+          "model": "HubModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the hub with current revision ETag after authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHub(request, hub_id):\n    // REQ-2-014; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF hub_id <= 0 OR hub absent THEN RETURN 404. IF user caller is not hub owner THEN RETURN 403.\n    READ hub; RETURN 200 with ETag for REQ-2-005.\n    // Transaction: none; postcondition: all state and revisions are unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-005",
+          "requirement": "Every mutable hub, room, and device representation exposes its current revision as a strong ETag formatted \"<positive-integer>\". A PATCH requires an exact If-Match ETag; missing, malformed, or stale ETags never modify state."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs/{hub_id}/topology",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/hubs/{hub_id}/topology",
+      "path_params": [
+        {
+          "name": "hub_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "serialize_device"
+        },
+        {
+          "controller_class": "HubController",
+          "routine": "get_hub_by_id"
+        },
+        {
+          "controller_class": "HubController",
+          "routine": "serialize_hub"
+        },
+        {
+          "controller_class": "RoomController",
+          "routine": "serialize_room"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "hubs",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "hub_id",
+          "model": "HubModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /hubs/{hub_id}/topology as an authenticated hub-owner-or-admin endpoint accepting a positive path id; it shall return the hub, rooms ordered by id, and devices ordered by id with room assignments, enforce REQ-2-010, make no persistent changes, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHubTopology(request, hub_id):\n    // REQ-2-027; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF hub_id <= 0 OR absent THEN RETURN 404. IF user caller is not hub owner THEN RETURN 403.\n    READ hub, rooms, and devices using REQ-2-010 ordering; RETURN 200.\n    // Transaction: none. Postcondition: the entire topology and all revisions remain unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-010",
+          "requirement": "Topology is acyclic by construction: rooms cannot belong to rooms, a device has one hub, and its room is null or belongs to that hub. Private routes deny by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /rooms",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/rooms",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "hub_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "floor",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": -5,
+            "le": 200
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoomController",
+          "routine": "list_rooms"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "hub_id",
+          "alias": "hub_id",
+          "model_field": "hub_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "floor",
+          "alias": "floor",
+          "model_field": "floor",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /rooms as an authenticated user-or-admin endpoint accepting optional hub_id, floor integer -5..200, limit, and after_id; it shall validate a supplied existing parent hub, enforce ownership through the hub, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRooms(request):\n    // REQ-2-017; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE floor and pagination or RETURN 422. IF supplied hub_id <= 0 OR absent THEN RETURN 404.\n    IF user caller does not own selected hub THEN RETURN 403. READ visible rooms by id page; RETURN 200.\n    // Transaction: none; postcondition: topology and revisions unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /rooms/{room_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/rooms/{room_id}",
+      "path_params": [
+        {
+          "name": "room_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoomController",
+          "routine": "get_room_by_id"
+        },
+        {
+          "controller_class": "RoomController",
+          "routine": "serialize_room"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "room_id",
+          "model": "RoomModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting a positive path id; it shall return the room with current revision ETag after hub ownership authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRoom(request, room_id):\n    // REQ-2-019; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF room_id <= 0 OR room absent THEN RETURN 404. IF user caller does not own room.hub THEN RETURN 403.\n    RETURN 200 with room and current ETag. // Transaction: none; persistent state unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /devices/{device_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/devices/{device_id}",
+      "path_params": [
+        {
+          "name": "device_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "if_match",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "alias": "If-Match"
+          }
+        }
+      ],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "patch_device"
+        },
+        {
+          "controller_class": "DeviceController",
+          "routine": "serialize_device"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "device_id",
+          "model": "DeviceModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "if_match",
+          "alias": "if_match",
+          "model_field": "if_match",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting application/json with one or more supplied fields from non-null label, nullable room_id, and non-null type plus required exact If-Match; it shall validate REQ-2-003 through REQ-2-007 and REQ-2-010, treat room_id null as deliberate unassignment, atomically update only supplied fields and increment only device revision, be non-idempotent because every success advances revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchDevice(request, device_id):\n    // REQ-2-025; Preconditions: JSON, exact If-Match, existing device, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; VALIDATE non-empty patch, field syntax, and ETag format or RETURN 422; invalid id/absence RETURN 404.\n    BEGIN TRANSACTION; lock device, hub, and proposed room. IF If-Match stale THEN ROLLBACK; RETURN 409 current ETag. IF room mismatches hub, capacity fails, or label duplicate THEN ROLLBACK; RETURN 409. END IF\n    APPLY only supplied fields; increment device revision only; COMMIT; RETURN 200 new ETag.\n    // Null room_id unassigns; other nulls are 422. Errors rollback all relations and every revision.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-007",
+          "requirement": "A rejected concurrent PATCH returns 409 when If-Match does not equal the current revision, and its response includes the current ETag; it leaves the target and every related resource unchanged."
+        },
+        {
+          "id": "REQ-2-010",
+          "requirement": "Topology is acyclic by construction: rooms cannot belong to rooms, a device has one hub, and its room is null or belongs to that hub. Private routes deny by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /hubs/{hub_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/hubs/{hub_id}",
+      "path_params": [
+        {
+          "name": "hub_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "if_match",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "alias": "If-Match"
+          }
+        }
+      ],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HubController",
+          "routine": "patch_hub"
+        },
+        {
+          "controller_class": "HubController",
+          "routine": "serialize_hub"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "hub_id",
+          "model": "HubModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "if_match",
+          "alias": "if_match",
+          "model_field": "if_match",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting application/json with one or both of name and timezone plus a required exact If-Match ETag; it shall validate a non-empty non-null patch and REQ-2-001 and REQ-2-005, atomically update only supplied fields and increment only the hub revision, be non-idempotent because identical payloads advance revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchHub(request, hub_id):\n    // REQ-2-015; Preconditions: JSON, exact If-Match, positive existing hub, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; IF hub_id invalid/absent RETURN 404; VALIDATE non-empty non-null fields and ETag syntax or RETURN 422.\n    BEGIN TRANSACTION; lock hub. IF If-Match != current ETag THEN ROLLBACK; RETURN 409 with current ETag under REQ-2-007. END IF\n    APPLY supplied fields; revision = revision + 1; COMMIT; RETURN 200 with new ETag.\n    // Not idempotent. Any error rolls back: hub, rooms, devices, and every revision remain unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-005",
+          "requirement": "Every mutable hub, room, and device representation exposes its current revision as a strong ETag formatted \"<positive-integer>\". A PATCH requires an exact If-Match ETag; missing, malformed, or stale ETags never modify state."
+        },
+        {
+          "id": "REQ-2-007",
+          "requirement": "A rejected concurrent PATCH returns 409 when If-Match does not equal the current revision, and its response includes the current ETag; it leaves the target and every related resource unchanged."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /rooms/{room_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/rooms/{room_id}",
+      "path_params": [
+        {
+          "name": "room_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "if_match",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "alias": "If-Match"
+          }
+        }
+      ],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoomController",
+          "routine": "patch_room"
+        },
+        {
+          "controller_class": "RoomController",
+          "routine": "serialize_room"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "room_id",
+          "model": "RoomModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "if_match",
+          "alias": "if_match",
+          "model_field": "if_match",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting application/json with one or both of name and floor plus required exact If-Match; it shall validate REQ-2-002, REQ-2-005, and case-insensitive name uniqueness in the existing hub, atomically update only supplied fields and increment only room revision, be non-idempotent because every success advances revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRoom(request, room_id):\n    // REQ-2-020; Preconditions: JSON, If-Match, existing room, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; validate patch and ETag format or RETURN 422; invalid id/absence RETURN 404.\n    BEGIN TRANSACTION; lock room. IF stale ETag OR resulting case-insensitive duplicate name THEN ROLLBACK; RETURN 409 with current ETag when stale. END IF\n    UPDATE supplied fields; increment room revision only; COMMIT; RETURN 200 new ETag.\n    // Not idempotent. On error no topology, device assignment, or revision changes occur.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-005",
+          "requirement": "Every mutable hub, room, and device representation exposes its current revision as a strong ETag formatted \"<positive-integer>\". A PATCH requires an exact If-Match ETag; missing, malformed, or stale ETags never modify state."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /devices",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/devices",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DeviceController",
+          "routine": "create_device"
+        },
+        {
+          "controller_class": "DeviceController",
+          "routine": "serialize_device"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DeviceModel",
+          "table": "devices",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "devices",
+        "hubs",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_device",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /devices as an authenticated hub-owner-or-admin endpoint accepting application/json hub_id, optional room_id, label, address, and type; it shall validate REQ-2-003, REQ-2-004, and REQ-2-010, require accessible same-hub room if supplied, reject duplicate per-hub label or address, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateDevice(request):\n    // REQ-2-023; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    VALIDATE fields or RETURN 422; verify hub and optional room positive/existing/same hub and caller ownership or RETURN 404/403.\n    BEGIN TRANSACTION; lock hub and room. IF capacity exceeded or label/address duplicate THEN ROLLBACK; RETURN 409. END IF CREATE device revision 1; COMMIT; RETURN 201 Location and ETag.\n    // Non-idempotent; rollback leaves all topology and revisions unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-003",
+          "requirement": "A device belongs to exactly one existing hub and optionally one room of that same hub, has a per-hub unique label of 1..80 characters, address matching ^[A-F0-9]{12}$ unique within its hub, type SENSOR, LIGHT, SWITCH, THERMOSTAT, or LOCK, and revision starting at 1."
+        },
+        {
+          "id": "REQ-2-004",
+          "requirement": "A hub contains at most 64 devices and a room contains at most 32 devices; assigning or moving a device must preserve both capacity limits atomically."
+        },
+        {
+          "id": "REQ-2-010",
+          "requirement": "Topology is acyclic by construction: rooms cannot belong to rooms, a device has one hub, and its room is null or belongs to that hub. Private routes deny by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /hubs",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/hubs",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HubController",
+          "routine": "create_hub"
+        },
+        {
+          "controller_class": "HubController",
+          "routine": "serialize_hub"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_hub",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /hubs as an authenticated user-or-admin endpoint accepting application/json serial, name, and timezone, with optional owner_id permitted only to admins; it shall validate REQ-2-001, set a user caller as owner, reject duplicate serials, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateHub(request):\n    // REQ-2-013; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    RESOLVE owner: user caller, or positive existing admin-supplied owner; reject forbidden owner with 403 and absent with 404. VALIDATE REQ-2-001 or RETURN 422.\n    BEGIN TRANSACTION; IF serial exists THEN ROLLBACK; RETURN 409. END IF CREATE hub revision 1; COMMIT; RETURN 201 Location and ETag.\n    // Non-idempotent. Any error rolls back with no hub, room, or device relation changed.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "A hub has a unique positive id, one owner, a globally unique serial matching ^[A-Z0-9-]{8,32}$, a name of 1..80 characters, timezone from the IANA subset Europe/Rome, Europe/London, UTC, America/New_York, or Asia/Tokyo, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /rooms",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Hubs, rooms, devices, and concurrent PATCH",
+      "summary": "Application domain: Smart home.\nBackend variant: Hubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/rooms",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoomController",
+          "routine": "create_room"
+        },
+        {
+          "controller_class": "RoomController",
+          "routine": "serialize_room"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "HubModel",
+          "table": "hubs",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoomModel",
+          "table": "rooms",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "hubs",
+        "rooms",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_room",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /rooms as an authenticated hub-owner-or-admin endpoint accepting application/json hub_id, name, and floor; it shall validate REQ-2-002 and a positive existing accessible hub, reject a case-insensitive duplicate name in that hub, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRoom(request):\n    // REQ-2-018; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    VALIDATE hub id/name/floor under REQ-2-002 or RETURN 422. IF hub invalid/absent RETURN 404; IF user does not own hub RETURN 403.\n    BEGIN TRANSACTION; IF case-insensitive name exists in hub THEN ROLLBACK RETURN 409; CREATE room revision 1; COMMIT RETURN 201 Location and ETag.\n    // Non-idempotent. Rollback preserves hub, rooms, devices, and revisions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-002",
+          "requirement": "A room belongs to exactly one existing hub, has a name of 1..60 characters unique case-insensitively within that hub, floor integer -5..200, and revision starting at 1."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

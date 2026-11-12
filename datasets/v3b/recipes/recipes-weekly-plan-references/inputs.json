@@ -1,0 +1,3563 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /meal-entries/{mealentry_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/meal-entries/{mealentry_id}",
+      "path_params": [
+        {
+          "name": "mealentry_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "delete_meal_entry"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_meal_entry",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealentry_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /meal-entries/{mealentry_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteMealEntry(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /meal-plans/{mealplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/meal-plans/{mealplan_id}",
+      "path_params": [
+        {
+          "name": "mealplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "delete_meal_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_meal_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealplan_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /meal-plans/{mealplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteMealPlan(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "delete_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-entries",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/meal-entries",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "plan_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "day",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "meal",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "list_meal_entries"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_meal_entries",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "plan_id",
+          "alias": "plan_id",
+          "model_field": "plan_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "day",
+          "alias": "day",
+          "model_field": "day",
+          "operator": "=="
+        },
+        {
+          "parameter": "meal",
+          "alias": "meal",
+          "model_field": "meal",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /meal-entries to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMealEntry(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-entries/{mealentry_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/meal-entries/{mealentry_id}",
+      "path_params": [
+        {
+          "name": "mealentry_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "get_meal_entry"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_meal_entry",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealentry_id",
+          "model": "MealEntryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /meal-entries/{mealentry_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMealEntry(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/meal-plans",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "list_meal_plans"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_meal_plans",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /meal-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMealPlan(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans/{mealplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/meal-plans/{mealplan_id}",
+      "path_params": [
+        {
+          "name": "mealplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "get_meal_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_meal_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealplan_id",
+          "model": "MealPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMealPlan(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans/{mealplan_id}/shopping-list",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/meal-plans/{mealplan_id}/shopping-list",
+      "path_params": [
+        {
+          "name": "mealplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "get_shopping_list"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_shopping_list",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealplan_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id}/shopping-list to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleShoppingList(request):\n    // REQ-10-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "is_active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "list_recipes"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_recipes",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "is_active",
+          "alias": "is_active",
+          "model_field": "is_active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "get_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes/{recipe_id}/plan-usages",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes/{recipe_id}/plan-usages",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "get_plan_usages"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "meal_plans",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_plan_usages",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePlanUsages(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /meal-entries/{mealentry_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/meal-entries/{mealentry_id}",
+      "path_params": [
+        {
+          "name": "mealentry_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "patch_meal_entry"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_meal_entry",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealentry_id",
+          "model": "MealEntryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /meal-entries/{mealentry_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMealEntry(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /meal-plans/{mealplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/meal-plans/{mealplan_id}",
+      "path_params": [
+        {
+          "name": "mealplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "patch_meal_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_meal_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealplan_id",
+          "model": "MealPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /meal-plans/{mealplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMealPlan(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "patch_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-entries",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/meal-entries",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "create_meal_entry"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_meal_entry",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /meal-entries to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMealEntry(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-entries/{mealentry_id}/move",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/meal-entries/{mealentry_id}/move",
+      "path_params": [
+        {
+          "name": "mealentry_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "move_meal_entry"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "move_meal_entry",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealentry_id",
+          "model": "MealEntryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /meal-entries/{mealentry_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleMoveMealEntry(request):\n    // REQ-10-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-plans",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/meal-plans",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "create_meal_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_meal_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /meal-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMealPlan(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-plans/{mealplan_id}/copy-week",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/meal-plans/{mealplan_id}/copy-week",
+      "path_params": [
+        {
+          "name": "mealplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "copy_week"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "MealEntryModel",
+          "table": "meal_entries",
+          "fields": [
+            "created_at",
+            "day",
+            "id",
+            "meal",
+            "plan_id",
+            "recipe_id",
+            "servings",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "plan_id",
+              "target": "meal_plans.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "MealPlanModel",
+          "table": "meal_plans",
+          "fields": [
+            "created_at",
+            "id",
+            "note",
+            "updated_at",
+            "user_id",
+            "week_start_date"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "meal_entries",
+        "meal_plans",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "meal_plans.id",
+        "recipes.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "copy_week",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "mealplan_id",
+          "model": "MealPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /meal-plans/{mealplan_id}/copy-week to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCopyWeek(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /recipes",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "B: Weekly plan and referential integrity",
+      "summary": "Application domain: Recipe management.\nBackend variant: B: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/recipes",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantBController",
+          "routine": "create_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeIngredientItemModel",
+          "table": "recipe_ingredient_items",
+          "fields": [
+            "id",
+            "name",
+            "quantity",
+            "recipe_id",
+            "unit"
+          ],
+          "foreign_keys": [
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "base_servings",
+            "created_at",
+            "description",
+            "id",
+            "is_active",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipe_ingredient_items",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Recipes have title 3..160 and active boolean"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

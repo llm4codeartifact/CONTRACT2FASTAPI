@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /meal-entries/{mealentry_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_meal_entry accepting db, entry_id, user. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /meal-entries/{mealentry_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteMealEntry(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /meal-plans/{mealplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_meal_plan accepting db, plan_id, user. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /meal-plans/{mealplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteMealPlan(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "DELETE /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_recipe accepting db, recipe_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-entries",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealEntryListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_meal_entries accepting db, user, plan_id, day, meal, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /meal-entries to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListMealEntry(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-entries/{mealentry_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealEntryResponseSchema. Declare fields or class attributes: created_at, day, id, meal, model_config, plan_id, recipe_id, recipe_title, servings, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_meal_entry accepting db, entry_id, user. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /meal-entries/{mealentry_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetMealEntry(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealPlanListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_meal_plans accepting db, user, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /meal-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListMealPlan(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans/{mealplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealPlanResponseSchema. Declare fields or class attributes: created_at, id, model_config, note, updated_at, user_id, week_start_date."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_meal_plan accepting db, plan_id, user. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetMealPlan(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /meal-plans/{mealplan_id}/shopping-list",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ShoppingListResponseSchema. Declare fields or class attributes: items, model_config, plan_id, week_start_date."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_shopping_list accepting db, plan_id, user. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id}/shopping-list to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleShoppingList(request):\n    // REQ-10-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_recipes accepting db, is_active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: base_servings, created_at, description, id, ingredients, is_active, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_recipe accepting db, recipe_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "GET /recipes/{recipe_id}/plan-usages",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanUsageListResponseSchema. Declare fields or class attributes: items, model_config, recipe_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_plan_usages accepting db, recipe_id, user. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePlanUsages(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /meal-entries/{mealentry_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealEntryResponseSchema. Declare fields or class attributes: created_at, day, id, meal, model_config, plan_id, recipe_id, recipe_title, servings, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_meal_entry accepting db, entry_id, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /meal-entries/{mealentry_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchMealEntry(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /meal-plans/{mealplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealPlanResponseSchema. Declare fields or class attributes: created_at, id, model_config, note, updated_at, user_id, week_start_date."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_meal_plan accepting db, plan_id, user, payload. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /meal-plans/{mealplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchMealPlan(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "PATCH /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: base_servings, created_at, description, id, ingredients, is_active, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_recipe accepting db, recipe_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-entries",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealEntryResponseSchema. Declare fields or class attributes: created_at, day, id, meal, model_config, plan_id, recipe_id, recipe_title, servings, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_meal_entry accepting db, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /meal-entries to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateMealEntry(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-entries/{mealentry_id}/move",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealEntryResponseSchema. Declare fields or class attributes: created_at, day, id, meal, model_config, plan_id, recipe_id, recipe_title, servings, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine move_meal_entry accepting db, entry_id, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /meal-entries/{mealentry_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleMoveMealEntry(request):\n    // REQ-10-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-plans",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealPlanResponseSchema. Declare fields or class attributes: created_at, id, model_config, note, updated_at, user_id, week_start_date."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_meal_plan accepting db, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /meal-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateMealPlan(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /meal-plans/{mealplan_id}/copy-week",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MealPlanResponseSchema. Declare fields or class attributes: created_at, id, model_config, note, updated_at, user_id, week_start_date."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine copy_week accepting db, plan_id, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class MealPlanModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, entries, id, note, updated_at, user, user_id, week_start_date. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MealEntryModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, day, id, meal, plan, plan_id, recipe, recipe_id, servings, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /meal-plans/{mealplan_id}/copy-week to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCopyWeek(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-weekly-plan-references",
+    "endpoint": "POST /recipes",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: base_servings, created_at, description, id, ingredients, is_active, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_recipe accepting db, payload. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, meal_plans, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, base_servings, created_at, description, id, ingredients, is_active, meal_entries, title, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class RecipeIngredientItemModel. Declare fields or class attributes: __tablename__, id, name, quantity, recipe, recipe_id, unit. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nB: Weekly plan and referential integrity.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

@@ -1,0 +1,393 @@
+[
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /devices/{device_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_device accepting db, current_user, device_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting a positive path id; it shall atomically delete only the selected device without changing its hub or room revisions and without cascading to any other resource, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteDevice(request, device_id):\n    // REQ-2-026; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF device_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION; DELETE device only; COMMIT; RETURN 204.\n    // REQ-2-008. Repeat returns 404; rollback retains the device and unchanged hub/room relations and revisions.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /hubs/{hub_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_hub accepting db, current_user, hub_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships.\n3. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall atomically delete only a hub with no rooms and no devices, shall not cascade-delete child resources, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteHub(request, hub_id):\n    // REQ-2-016; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF hub_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF any room or device belongs to hub THEN ROLLBACK; RETURN 409 under REQ-2-008. END IF DELETE hub; COMMIT; RETURN 204.\n    // Repeat returns 404; all error paths preserve hub, child relations, and revisions.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "DELETE /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_room accepting db, current_user, room_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting a positive path id; it shall atomically delete only an empty room, reject deletion when any device references it without detaching devices, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteRoom(request, room_id):\n    // REQ-2-021; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF room_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF device refers to room THEN ROLLBACK; RETURN 409 under REQ-2-008. END IF DELETE room; COMMIT; RETURN 204.\n    // Repeat returns 404; errors leave room, hub, devices, and revisions unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /devices",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DeviceListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_devices accepting db, current_user, hub_id, room_id, type_filter, unassigned, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships.\n4. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /devices as an authenticated user-or-admin endpoint accepting optional hub_id, room_id, type enum, unassigned boolean, limit, and after_id; it shall apply exact filters where unassigned true means room_id is null and false means non-null, validate supplied parents and their ownership, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListDevices(request):\n    // REQ-2-022; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE enum, boolean, pagination, and supplied parent ids or RETURN 422/404. IF user caller does not own selected parent hub/room THEN RETURN 403.\n    READ owner-visible devices matching exact filters, sort id, page, RETURN 200.\n    // Transaction: none; postcondition: device topology and revisions unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /devices/{device_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DeviceResponse. Declare fields or class attributes: address, etag, hub_id, id, label, model_config, revision, room_id, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_device_by_id accepting db, current_user, device_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_device accepting device. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting a positive path id; it shall return the device and current revision ETag after hub ownership authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetDevice(request, device_id):\n    // REQ-2-024; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF device_id <= 0 OR absent THEN RETURN 404. IF user caller does not own device.hub THEN RETURN 403.\n    RETURN 200 with device and ETag. // Transaction none; all state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health as a public endpoint with no input or authorization; it shall return deterministic local persistence health without persistent effects and emit only 200 or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-2-011; Preconditions: none. Authorization: public. Transaction: none.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Postcondition: hubs, rooms, devices, and revisions are unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HubListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_hubs accepting db, current_user, owner_id, timezone, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /hubs as an authenticated user-or-admin endpoint accepting optional owner_id for admins only, timezone enum, limit, and after_id; it shall apply exact filters, enforce REQ-2-009, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListHubs(request):\n    // REQ-2-012; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE timezone and pagination or RETURN 422. IF owner_id <= 0 OR owner absent THEN RETURN 404.\n    IF caller is user and owner_id is another user THEN RETURN 403. READ visible hubs by id page; RETURN 200.\n    // Transaction: none; postcondition: no persistent state, including revisions, changes.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs/{hub_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HubResponse. Declare fields or class attributes: etag, id, model_config, name, owner_id, revision, serial, timezone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_hub_by_id accepting db, current_user, hub_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_hub accepting hub. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the hub with current revision ETag after authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHub(request, hub_id):\n    // REQ-2-014; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF hub_id <= 0 OR hub absent THEN RETURN 404. IF user caller is not hub owner THEN RETURN 403.\n    READ hub; RETURN 200 with ETag for REQ-2-005.\n    // Transaction: none; postcondition: all state and revisions are unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /hubs/{hub_id}/topology",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HubTopologyResponse. Declare fields or class attributes: devices, hub, model_config, rooms."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_hub_by_id accepting db, current_user, hub_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_hub accepting hub. Return the value produced by the implemented branch.\n4. DEFINE routine serialize_room accepting room. Return the value produced by the implemented branch.\n5. DEFINE routine serialize_device accepting device. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships.\n4. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /hubs/{hub_id}/topology as an authenticated hub-owner-or-admin endpoint accepting a positive path id; it shall return the hub, rooms ordered by id, and devices ordered by id with room assignments, enforce REQ-2-010, make no persistent changes, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHubTopology(request, hub_id):\n    // REQ-2-027; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF hub_id <= 0 OR absent THEN RETURN 404. IF user caller is not hub owner THEN RETURN 403.\n    READ hub, rooms, and devices using REQ-2-010 ordering; RETURN 200.\n    // Transaction: none. Postcondition: the entire topology and all revisions remain unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /rooms",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_rooms accepting db, current_user, hub_id, floor, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /rooms as an authenticated user-or-admin endpoint accepting optional hub_id, floor integer -5..200, limit, and after_id; it shall validate a supplied existing parent hub, enforce ownership through the hub, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListRooms(request):\n    // REQ-2-017; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE floor and pagination or RETURN 422. IF supplied hub_id <= 0 OR absent THEN RETURN 404.\n    IF user caller does not own selected hub THEN RETURN 403. READ visible rooms by id page; RETURN 200.\n    // Transaction: none; postcondition: topology and revisions unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "GET /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomResponse. Declare fields or class attributes: etag, floor, hub_id, id, model_config, name, revision."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_room_by_id accepting db, current_user, room_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_room accepting room. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting a positive path id; it shall return the room with current revision ETag after hub ownership authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetRoom(request, room_id):\n    // REQ-2-019; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF room_id <= 0 OR room absent THEN RETURN 404. IF user caller does not own room.hub THEN RETURN 403.\n    RETURN 200 with room and current ETag. // Transaction: none; persistent state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /devices/{device_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class DeviceResponse. Declare fields or class attributes: address, etag, hub_id, id, label, model_config, revision, room_id, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_device accepting db, current_user, device_id, payload, if_match. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_device accepting device. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships.\n3. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /devices/{device_id} as an authenticated device-owner-or-admin endpoint accepting application/json with one or more supplied fields from non-null label, nullable room_id, and non-null type plus required exact If-Match; it shall validate REQ-2-003 through REQ-2-007 and REQ-2-010, treat room_id null as deliberate unassignment, atomically update only supplied fields and increment only device revision, be non-idempotent because every success advances revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchDevice(request, device_id):\n    // REQ-2-025; Preconditions: JSON, exact If-Match, existing device, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; VALIDATE non-empty patch, field syntax, and ETag format or RETURN 422; invalid id/absence RETURN 404.\n    BEGIN TRANSACTION; lock device, hub, and proposed room. IF If-Match stale THEN ROLLBACK; RETURN 409 current ETag. IF room mismatches hub, capacity fails, or label duplicate THEN ROLLBACK; RETURN 409. END IF\n    APPLY only supplied fields; increment device revision only; COMMIT; RETURN 200 new ETag.\n    // Null room_id unassigns; other nulls are 422. Errors rollback all relations and every revision.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /hubs/{hub_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class HubResponse. Declare fields or class attributes: etag, id, model_config, name, owner_id, revision, serial, timezone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_hub accepting db, current_user, hub_id, payload, if_match. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_hub accepting hub. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /hubs/{hub_id} as an authenticated owner-or-admin endpoint accepting application/json with one or both of name and timezone plus a required exact If-Match ETag; it shall validate a non-empty non-null patch and REQ-2-001 and REQ-2-005, atomically update only supplied fields and increment only the hub revision, be non-idempotent because identical payloads advance revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchHub(request, hub_id):\n    // REQ-2-015; Preconditions: JSON, exact If-Match, positive existing hub, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; IF hub_id invalid/absent RETURN 404; VALIDATE non-empty non-null fields and ETag syntax or RETURN 422.\n    BEGIN TRANSACTION; lock hub. IF If-Match != current ETag THEN ROLLBACK; RETURN 409 with current ETag under REQ-2-007. END IF\n    APPLY supplied fields; revision = revision + 1; COMMIT; RETURN 200 with new ETag.\n    // Not idempotent. Any error rolls back: hub, rooms, devices, and every revision remain unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "PATCH /rooms/{room_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class RoomResponse. Declare fields or class attributes: etag, floor, hub_id, id, model_config, name, revision."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_room accepting db, current_user, room_id, payload, if_match. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_room accepting room. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /rooms/{room_id} as an authenticated room-owner-or-admin endpoint accepting application/json with one or both of name and floor plus required exact If-Match; it shall validate REQ-2-002, REQ-2-005, and case-insensitive name uniqueness in the existing hub, atomically update only supplied fields and increment only room revision, be non-idempotent because every success advances revision, return 200 with new ETag, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchRoom(request, room_id):\n    // REQ-2-020; Preconditions: JSON, If-Match, existing room, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; validate patch and ETag format or RETURN 422; invalid id/absence RETURN 404.\n    BEGIN TRANSACTION; lock room. IF stale ETag OR resulting case-insensitive duplicate name THEN ROLLBACK; RETURN 409 with current ETag when stale. END IF\n    UPDATE supplied fields; increment room revision only; COMMIT; RETURN 200 new ETag.\n    // Not idempotent. On error no topology, device assignment, or revision changes occur.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /devices",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DeviceCreateRequest. Declare fields or class attributes: address, hub_id, label, model_config, room_id, type.\n2. DEFINE class DeviceResponse. Declare fields or class attributes: address, etag, hub_id, id, label, model_config, revision, room_id, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_device accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_device accepting device. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships.\n4. DEFINE class DeviceModel. Declare fields or class attributes: __tablename__, address, hub, hub_id, id, label, revision, room, room_id, type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /devices as an authenticated hub-owner-or-admin endpoint accepting application/json hub_id, optional room_id, label, address, and type; it shall validate REQ-2-003, REQ-2-004, and REQ-2-010, require accessible same-hub room if supplied, reject duplicate per-hub label or address, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateDevice(request):\n    // REQ-2-023; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    VALIDATE fields or RETURN 422; verify hub and optional room positive/existing/same hub and caller ownership or RETURN 404/403.\n    BEGIN TRANSACTION; lock hub and room. IF capacity exceeded or label/address duplicate THEN ROLLBACK; RETURN 409. END IF CREATE device revision 1; COMMIT; RETURN 201 Location and ETag.\n    // Non-idempotent; rollback leaves all topology and revisions unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /hubs",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HubCreateRequest. Declare fields or class attributes: model_config, name, owner_id, serial, timezone.\n2. DEFINE class HubResponse. Declare fields or class attributes: etag, id, model_config, name, owner_id, revision, serial, timezone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_hub accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_hub accepting hub. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /hubs as an authenticated user-or-admin endpoint accepting application/json serial, name, and timezone, with optional owner_id permitted only to admins; it shall validate REQ-2-001, set a user caller as owner, reject duplicate serials, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateHub(request):\n    // REQ-2-013; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    RESOLVE owner: user caller, or positive existing admin-supplied owner; reject forbidden owner with 403 and absent with 404. VALIDATE REQ-2-001 or RETURN 422.\n    BEGIN TRANSACTION; IF serial exists THEN ROLLBACK; RETURN 409. END IF CREATE hub revision 1; COMMIT; RETURN 201 Location and ETag.\n    // Non-idempotent. Any error rolls back with no hub, room, or device relation changed.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-hub-rooms-patch",
+    "endpoint": "POST /rooms",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoomCreateRequest. Declare fields or class attributes: floor, hub_id, model_config, name.\n2. DEFINE class RoomResponse. Declare fields or class attributes: etag, floor, hub_id, id, model_config, name, revision."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_room accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_room accepting room. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, hubs, id, role, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class HubModel. Declare fields or class attributes: __tablename__, devices, id, name, owner, owner_id, revision, rooms, serial, timezone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RoomModel. Declare fields or class attributes: __tablename__, devices, floor, hub, hub_id, id, name, revision. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /rooms as an authenticated hub-owner-or-admin endpoint accepting application/json hub_id, name, and floor; it shall validate REQ-2-002 and a positive existing accessible hub, reject a case-insensitive duplicate name in that hub, atomically create revision 1, be non-idempotent, return 201 with Location and ETag, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nHubs, rooms, devices, and concurrent PATCH.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateRoom(request):\n    // REQ-2-018; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    VALIDATE hub id/name/floor under REQ-2-002 or RETURN 422. IF hub invalid/absent RETURN 404; IF user does not own hub RETURN 403.\n    BEGIN TRANSACTION; IF case-insensitive name exists in hub THEN ROLLBACK RETURN 409; CREATE room revision 1; COMMIT RETURN 201 Location and ETag.\n    // Non-idempotent. Rollback preserves hub, rooms, devices, and revisions.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

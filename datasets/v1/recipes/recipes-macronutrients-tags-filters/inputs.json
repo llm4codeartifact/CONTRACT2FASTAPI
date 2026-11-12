@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /ingredients/{ingredient_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_ingredient accepting db, ingredient_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RecipeComponentModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, ingredient, ingredient_id, quantity_grams, recipe, recipe_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /ingredients/{ingredient_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteIngredient(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_recipe accepting db, recipe_id, user. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /recipes/{recipe_id}/tags/{tag_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine remove_tag_from_recipe accepting db, recipe_id, tag_id, user. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships.\n3. DEFINE class RecipeTagModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, recipe, recipe_id, tag, tag_id. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id}/tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleRemoveTag(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /tags/{tag_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_tag accepting db, tag_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RecipeTagModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, recipe, recipe_id, tag, tag_id. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteTag(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /ingredients",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class IngredientListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_ingredients accepting db, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /ingredients to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListIngredient(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /ingredients/{ingredient_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class IngredientResponseSchema. Declare fields or class attributes: calories_kcal, carbs_g, created_at, fat_g, id, model_config, name, protein_g, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_ingredient accepting db, ingredient_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /ingredients/{ingredient_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetIngredient(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_recipes accepting db, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/search",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine search_recipes accepting db, tag_ids, max_calories, min_protein, q, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes/search to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleSearchRecipes(request):\n    // REQ-10-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: components, created_at, id, instructions, model_config, servings, tags, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_recipe accepting db, recipe_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/{recipe_id}/nutrition",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeNutritionResponseSchema. Declare fields or class attributes: components, model_config, per_serving_calories_kcal, per_serving_carbs_g, per_serving_fat_g, per_serving_protein_g, recipe_id, servings, total_calories_kcal, total_carbs_g, total_fat_g, total_protein_g."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_recipe_nutrition accepting db, recipe_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/nutrition to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleRecipeNutrition(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /tags",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TagListResponseSchema. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_tags accepting db, dietary_type, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tags to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTag(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /tags/{tag_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TagResponseSchema. Declare fields or class attributes: created_at, dietary_type, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_tag accepting db, tag_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tags/{tag_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTag(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /ingredients/{ingredient_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class IngredientResponseSchema. Declare fields or class attributes: calories_kcal, carbs_g, created_at, fat_g, id, model_config, name, protein_g, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_ingredient accepting db, ingredient_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /ingredients/{ingredient_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchIngredient(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /recipes/{recipe_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: components, created_at, id, instructions, model_config, servings, tags, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_recipe accepting db, recipe_id, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships.\n4. DEFINE class RecipeComponentModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, ingredient, ingredient_id, quantity_grams, recipe, recipe_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /tags/{tag_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TagResponseSchema. Declare fields or class attributes: created_at, dietary_type, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_tag accepting db, tag_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /tags/{tag_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTag(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /ingredients",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class IngredientResponseSchema. Declare fields or class attributes: calories_kcal, carbs_g, created_at, fat_g, id, model_config, name, protein_g, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_ingredient accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /ingredients to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateIngredient(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /recipes",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: components, created_at, id, instructions, model_config, servings, tags, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_recipe accepting db, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class IngredientModel. Declare fields or class attributes: __tablename__, calories_kcal, carbs_g, components, created_at, fat_g, id, name, protein_g, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships.\n4. DEFINE class RecipeComponentModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, ingredient, ingredient_id, quantity_grams, recipe, recipe_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /recipes/{recipe_id}/tags",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RecipeResponseSchema. Declare fields or class attributes: components, created_at, id, instructions, model_config, servings, tags, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine add_tag_to_recipe accepting db, recipe_id, user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine _format_recipe accepting recipe. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RecipeModel. Declare fields or class attributes: __tablename__, components, created_at, id, instructions, recipe_tags, servings, title, updated_at, user, user_id. Maintain the declared ORM relationships.\n3. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class RecipeTagModel. Declare fields or class attributes: __table_args__, __tablename__, created_at, id, recipe, recipe_id, tag, tag_id. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /recipes/{recipe_id}/tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleAddTag(request):\n    // REQ-10-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /tags",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TagResponseSchema. Declare fields or class attributes: created_at, dietary_type, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_tag accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, recipes, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class TagModel. Declare fields or class attributes: __tablename__, created_at, dietary_type, id, name, recipe_tags, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Recipe management.\nC: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTag(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

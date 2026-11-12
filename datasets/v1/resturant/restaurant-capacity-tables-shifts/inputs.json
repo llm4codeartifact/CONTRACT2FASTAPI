@@ -1,0 +1,370 @@
+[
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "DELETE /service-shifts/{shift_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_shift accepting db, shift_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /service-shifts/{shift_id} to an admin, accepting a positive shift_id; it shall atomically soft-delete only a shift with no seating records under REQ-4-007, be idempotent only insofar as a deleted id is 404, not cascade to tables or seatings, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteShift(request, shift_id):\n    // REQ-4-021; preconditions: existing shift and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF any seating references shift THEN ROLLBACK; RETURN 409. END IF MARK deleted; COMMIT; RETURN 204.\n    // REQ-4-007; repeat is 404; rollback leaves every relation unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "DELETE /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /tables/{table_id} to an admin, accepting a positive table_id; it shall atomically soft-delete only a table with no seating records under REQ-4-007, be idempotent only insofar as a deleted id is 404, not cascade to shifts or seatings, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteTable(request, table_id):\n    // REQ-4-016; preconditions: existing table and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF any seating references table THEN ROLLBACK; RETURN 409. END IF MARK deleted; COMMIT; RETURN 204.\n    // REQ-4-007; repeat is 404; rollback postcondition preserves all relationships.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_health accepting db. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization, probe only local persistence, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-4-011; preconditions: none; authorization: public.\n    IF local persistence is unavailable THEN RETURN 503. END IF\n    RETURN 200. Transaction: none; postcondition: state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /seatings",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SeatingListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_seatings accepting db, current_user, table_id, shift_id, seating_status, service_date, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ServiceShiftModel. Declare fields or class attributes: __tablename__, end_at, id, is_deleted, seatings, service_date, service_kind, start_at, turn_count. Maintain the declared ORM relationships.\n3. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /seatings to an authenticated user or admin, accepting optional positive table_id, positive shift_id, status, service_date, limit, and after_id; it shall validate REQ-4-001, REQ-4-004, and REQ-4-009, restrict users to caller-created seatings, return a stable page without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListSeatings(request):\n    // REQ-4-022; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422; unknown supplied table or shift is 404.\n    READ matching rows by id, constrained to creator for user under REQ-4-008; RETURN 200 page. Transaction: none; state unchanged on every result.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /seatings/{seating_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SeatingOut. Declare fields or class attributes: cancelled_at, cancelled_by_user_id, created_at, guest_name, id, model_config, party_size, shift_id, status, table_id, turn_number, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_seating accepting db, current_user, seating_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /seatings/{seating_id} to its creator user or an admin, accepting a positive seating_id; it shall enforce REQ-4-001 and REQ-4-008, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetSeating(request, seating_id):\n    // REQ-4-024; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; RETURN 404 for non-positive or absent id; REQUIRE creator or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: state and table-shift relation unchanged on errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /service-shifts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ShiftListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_shifts accepting db, service_date, service_kind, date_from, date_to, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ServiceShiftModel. Declare fields or class attributes: __tablename__, end_at, id, is_deleted, seatings, service_date, service_kind, start_at, turn_count. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /service-shifts to an authenticated user or admin, accepting optional service_date, service_kind, date_from, date_to, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, ordered inclusive date filters, and REQ-4-009, return a stable page without effects, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListShifts(request):\n    // REQ-4-017; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE dates, enum, range, and pagination OR RETURN 400 or 422.\n    READ matching non-deleted shifts by id; RETURN 200 page. Transaction: none; postcondition and errors leave persistent state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /service-shifts/{shift_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ShiftOut. Declare fields or class attributes: end_at, id, model_config, service_date, service_kind, start_at, turn_count."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_shift accepting db, shift_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ServiceShiftModel. Declare fields or class attributes: __tablename__, end_at, id, is_deleted, seatings, service_date, service_kind, start_at, turn_count. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /service-shifts/{shift_id} to an authenticated user or admin, accepting a positive shift_id; it shall enforce REQ-4-001, return the non-deleted shift without effects, and emit only 200, 401, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetShift(request, shift_id):\n    // REQ-4-019; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; IF shift_id is non-positive, absent, or deleted THEN RETURN 404. END IF\n    RETURN 200. Transaction: none; postcondition: state unchanged; errors leave all relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_tables accepting db, zone, min_seats, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, seatings, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables to an authenticated user or admin, accepting optional zone, min_seats 1..20, active boolean, limit, and after_id; it shall validate REQ-4-002 and REQ-4-009, return a stable page without effects, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTables(request):\n    // REQ-4-012; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE filters and REQ-4-009 OR RETURN 400 or 422.\n    READ matching non-deleted tables by id; RETURN 200 page. Transaction: none; postcondition and errors leave state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "GET /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, seatings, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables/{table_id} to an authenticated user or admin, accepting a positive table_id; it shall apply REQ-4-001, return the non-deleted table without persistent effects, and emit only 200, 401, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTable(request, table_id):\n    // REQ-4-014; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; IF table_id is non-positive, absent, or deleted THEN RETURN 404. END IF\n    RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors do not modify it.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "PATCH /seatings/{seating_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SeatingOut. Declare fields or class attributes: cancelled_at, cancelled_by_user_id, created_at, guest_name, id, model_config, party_size, shift_id, status, table_id, turn_number, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_seating accepting db, current_user, seating_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /seatings/{seating_id} to its creator user or an admin, accepting a positive seating_id and JSON guest_name, party_size, table_id, shift_id, or turn_number; it shall require application/json, permit only BOOKED seatings, validate resulting REQ-4-004 and REQ-4-005 constraints, atomically update supplied fields, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchSeating(request, seating_id):\n    // REQ-4-025; preconditions: JSON, existing seating, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415. BEGIN TRANSACTION; IF status is not BOOKED THEN ROLLBACK; RETURN 409. END IF\n    VALIDATE result OR ROLLBACK; RETURN 400 or 422; lock target turn; IF capacity or uniqueness fails THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Idempotent identical payload; rollback leaves all relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "PATCH /service-shifts/{shift_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ShiftOut. Declare fields or class attributes: end_at, id, model_config, service_date, service_kind, start_at, turn_count."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_shift accepting db, shift_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ServiceShiftModel. Declare fields or class attributes: __tablename__, end_at, id, is_deleted, seatings, service_date, service_kind, start_at, turn_count. Maintain the declared ORM relationships.\n3. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /service-shifts/{shift_id} to an admin, accepting a positive shift_id and JSON start_at, end_at, or turn_count; it shall require application/json, validate REQ-4-003 and existing seating turn numbers, atomically update only a shift with no seating records, be idempotent for an identical valid payload, preserve all relations on failure, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchShift(request, shift_id):\n    // REQ-4-020; preconditions: existing shift, JSON, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE resulting REQ-4-003 values OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF any seating references shift THEN ROLLBACK; RETURN 409. END IF UPDATE supplied fields; COMMIT; RETURN 200.\n    // Identical payload is idempotent; rollback preserves shift-table-seating relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "PATCH /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_table accepting db, table_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, seatings, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /tables/{table_id} to an admin, accepting a positive table_id and JSON code, zone, seats, or active; it shall require application/json, validate the result under REQ-4-002 and REQ-4-007, atomically update supplied fields, be idempotent for an identical valid payload, preserve seating relations, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTable(request, table_id):\n    // REQ-4-015; preconditions: existing table, JSON, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE partial result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF duplicate code, active seating exceeds new seats, or deactivation has BOOKED or SEATED rows THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Idempotent identical payload; rollback leaves table-shift-seating relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "POST /seatings",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SeatingOut. Declare fields or class attributes: cancelled_at, cancelled_by_user_id, created_at, guest_name, id, model_config, party_size, shift_id, status, table_id, turn_number, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_seating accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /seatings to an authenticated user or admin, accepting JSON positive table_id, positive shift_id, turn_number, party_size, and guest_name; it shall require application/json, validate REQ-4-001 and REQ-4-004 through REQ-4-005, atomically create a BOOKED seating owned by the caller after locking capacity, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateSeating(request):\n    // REQ-4-023; preconditions: JSON, active table and shift, persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE body OR RETURN 400 or 422; missing table or shift is 404.\n    BEGIN TRANSACTION; lock table, shift, and turn. IF capacity, turn, or uniqueness rule fails THEN ROLLBACK; RETURN 409. END IF CREATE BOOKED seating with caller; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves all relations under REQ-4-010.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "POST /seatings/{seating_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SeatingOut. Declare fields or class attributes: cancelled_at, cancelled_by_user_id, created_at, guest_name, id, model_config, party_size, shift_id, status, table_id, turn_number, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine cancel_seating accepting db, current_user, seating_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class SeatingModel. Declare fields or class attributes: __tablename__, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, guest_name, id, party_size, shift, shift_id, status, table, table_id, turn_number, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /seatings/{seating_id}/cancel to its creator user or an admin, accepting a positive seating_id and JSON cancelled_at; it shall require application/json, validate REQ-4-001, permit BOOKED or SEATED transitions only under REQ-4-006, atomically mark CANCELLED while retaining table and shift history, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelSeating(request, seating_id):\n    // REQ-4-026; preconditions: JSON, existing seating, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF terminal status THEN ROLLBACK; RETURN 409. END IF SET CANCELLED and retain relations; COMMIT; RETURN 200.\n    // REQ-4-006 and REQ-4-010; non-idempotent, and rollback preserves all state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "POST /service-shifts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ShiftOut. Declare fields or class attributes: end_at, id, model_config, service_date, service_kind, start_at, turn_count."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_shift accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ServiceShiftModel. Declare fields or class attributes: __tablename__, end_at, id, is_deleted, seatings, service_date, service_kind, start_at, turn_count. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /service-shifts to an admin, accepting JSON service_date, service_kind, start_at, end_at, and turn_count; it shall require application/json, validate REQ-4-001 and REQ-4-003, atomically create the unique shift, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateShift(request):\n    // REQ-4-018; preconditions: JSON and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-001 and REQ-4-003 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF date and kind exists THEN ROLLBACK; RETURN 409. END IF CREATE shift; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves tables and all seating relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-capacity-tables-shifts",
+    "endpoint": "POST /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_table accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, seatings, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /tables to an admin, accepting JSON code, zone, seats, and optional active default true; it shall require application/json, validate REQ-4-002, atomically create a unique table, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nA: Table capacity and service turns.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTable(request):\n    // REQ-4-013; preconditions: JSON and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403; REQUIRE application/json OR RETURN 415; VALIDATE REQ-4-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF code exists THEN ROLLBACK; RETURN 409. END IF CREATE table; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback postcondition preserves tables, shifts, and relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

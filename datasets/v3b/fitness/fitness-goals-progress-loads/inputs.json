@@ -1,0 +1,3836 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /fitness-goals/{fitnessgoal_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/fitness-goals/{fitnessgoal_id}",
+      "path_params": [
+        {
+          "name": "fitnessgoal_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "delete_goal"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_goal",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "fitnessgoal_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteFitnessGoal(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /load-limits/{loadlimit_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/load-limits/{loadlimit_id}",
+      "path_params": [
+        {
+          "name": "loadlimit_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "delete_limit"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_limit",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "loadlimit_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /load-limits/{loadlimit_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteLoadLimit(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /progress-events/{progressevent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/progress-events/{progressevent_id}",
+      "path_params": [
+        {
+          "name": "progressevent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "delete_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "progressevent_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /progress-events/{progressevent_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProgressEvent(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/fitness-goals",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "user_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "metric",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "status",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "list_goals"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_goals",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "user_id",
+          "alias": "user_id",
+          "model_field": "user_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "metric",
+          "alias": "metric",
+          "model_field": "metric",
+          "operator": "=="
+        },
+        {
+          "parameter": "status",
+          "alias": "status",
+          "model_field": "status",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /fitness-goals to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListFitnessGoal(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals/{fitnessgoal_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/fitness-goals/{fitnessgoal_id}",
+      "path_params": [
+        {
+          "name": "fitnessgoal_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "get_goal"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_goal",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "fitnessgoal_id",
+          "model": "FitnessGoalModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetFitnessGoal(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals/{fitnessgoal_id}/progress",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/fitness-goals/{fitnessgoal_id}/progress",
+      "path_params": [
+        {
+          "name": "fitnessgoal_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "get_goal_progress"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_goal_progress",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "fitnessgoal_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id}/progress to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGoalProgress(request):\n    // REQ-9-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/load-limits",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "exercise",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "experience_level",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "list_limits"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "load_limits",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_limits",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "exercise",
+          "alias": "exercise",
+          "model_field": "exercise",
+          "operator": "=="
+        },
+        {
+          "parameter": "experience_level",
+          "alias": "experience_level",
+          "model_field": "experience_level",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /load-limits to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListLoadLimit(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits/validate",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/load-limits/validate",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "exercise",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "experience_level",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "load_kg",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true,
+            "ge": 0,
+            "le": 500
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "validate_load"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "load_limits",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "validate_load",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "exercise",
+          "alias": "exercise",
+          "model_field": "exercise",
+          "operator": "=="
+        },
+        {
+          "parameter": "experience_level",
+          "alias": "experience_level",
+          "model_field": "experience_level",
+          "operator": "=="
+        },
+        {
+          "parameter": "load_kg",
+          "alias": "load_kg",
+          "model_field": "load_kg",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /load-limits/validate to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleValidateLoad(request):\n    // REQ-9-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits/{loadlimit_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/load-limits/{loadlimit_id}",
+      "path_params": [
+        {
+          "name": "loadlimit_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "get_limit"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "load_limits",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_limit",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "loadlimit_id",
+          "model": "LoadLimitModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /load-limits/{loadlimit_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetLoadLimit(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /personal-records",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/personal-records",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "user_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "metric",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "exercise",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "get_personal_records"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_personal_records",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "user_id",
+          "alias": "user_id",
+          "model_field": "user_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "metric",
+          "alias": "metric",
+          "model_field": "metric",
+          "operator": "=="
+        },
+        {
+          "parameter": "exercise",
+          "alias": "exercise",
+          "model_field": "exercise",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /personal-records to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePersonalRecords(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /progress-events",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/progress-events",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "goal_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "is_validated",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "list_events"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_events",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "goal_id",
+          "alias": "goal_id",
+          "model_field": "goal_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "is_validated",
+          "alias": "is_validated",
+          "model_field": "is_validated",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /progress-events to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProgressEvent(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /progress-events/{progressevent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/progress-events/{progressevent_id}",
+      "path_params": [
+        {
+          "name": "progressevent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "get_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "progressevent_id",
+          "model": "ProgressEventModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /progress-events/{progressevent_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProgressEvent(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /fitness-goals/{fitnessgoal_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/fitness-goals/{fitnessgoal_id}",
+      "path_params": [
+        {
+          "name": "fitnessgoal_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "patch_goal"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_goal",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "fitnessgoal_id",
+          "model": "FitnessGoalModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchFitnessGoal(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /load-limits/{loadlimit_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/load-limits/{loadlimit_id}",
+      "path_params": [
+        {
+          "name": "loadlimit_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "patch_limit"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "load_limits",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_limit",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "loadlimit_id",
+          "model": "LoadLimitModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /load-limits/{loadlimit_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchLoadLimit(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /progress-events/{progressevent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/progress-events/{progressevent_id}",
+      "path_params": [
+        {
+          "name": "progressevent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "patch_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "load_limits",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "progressevent_id",
+          "model": "ProgressEventModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /progress-events/{progressevent_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProgressEvent(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /fitness-goals",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/fitness-goals",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FitnessGoalController",
+          "routine": "create_goal"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_goal",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /fitness-goals to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateFitnessGoal(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /load-limits",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/load-limits",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "LoadLimitController",
+          "routine": "create_limit"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "load_limits",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_limit",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /load-limits to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateLoadLimit(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /progress-events",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/progress-events",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "create_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "LoadLimitModel",
+          "table": "load_limits",
+          "fields": [
+            "created_at",
+            "exercise",
+            "experience_level",
+            "id",
+            "max_kg",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "load_limits",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /progress-events to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProgressEvent(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /progress-events/{progressevent_id}/validate",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "C: Goals, progress, and load validation",
+      "summary": "Application domain: Fitness management.\nBackend variant: C: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/progress-events/{progressevent_id}/validate",
+      "path_params": [
+        {
+          "name": "progressevent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProgressEventController",
+          "routine": "validate_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FitnessGoalModel",
+          "table": "fitness_goals",
+          "fields": [
+            "created_at",
+            "current_value",
+            "end_date",
+            "exercise",
+            "id",
+            "is_deleted",
+            "metric",
+            "start_date",
+            "status",
+            "target_value",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "ProgressEventModel",
+          "table": "progress_events",
+          "fields": [
+            "created_at",
+            "event_date",
+            "exercise",
+            "goal_id",
+            "id",
+            "is_validated",
+            "notes",
+            "updated_at",
+            "validated_at",
+            "validated_by",
+            "value"
+          ],
+          "foreign_keys": [
+            {
+              "field": "goal_id",
+              "target": "fitness_goals.id"
+            },
+            {
+              "field": "validated_by",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "experience_level",
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "fitness_goals",
+        "progress_events",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "fitness_goals.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "validate_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "progressevent_id",
+          "model": "ProgressEventModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /progress-events/{progressevent_id}/validate to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleValidateProgress(request):\n    // REQ-9-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

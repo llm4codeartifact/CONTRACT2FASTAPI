@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /assignments/{assignment_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_assignment accepting db, current_user, assignment_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id; it shall validate references and non-overlapping effective dates, end assignment only when employee continuity remains, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteAssignment(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; end assignment only when employee continuity remains. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /departments/{department_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_department accepting db, current_user, department_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /departments/{department_id} to an authenticated user or admin, accepting a positive department_id; it shall validate department code, hierarchy, and cycle rule, soft-delete only an unassigned department, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteDepartment(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an unassigned department. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /roles/{role_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_role accepting db, current_user, role_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /roles/{role_id} to an authenticated user or admin, accepting a positive role_id; it shall validate role code and entitlement range, soft-delete only an unassigned role, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteRole(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an unassigned role. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /assignments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AssignmentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_assignments accepting db, current_user, employee_id, department_id, role_id, active, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /assignments to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate references and non-overlapping effective dates and stable pagination, return an authorized stable page of assignments, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAssignment(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE references and non-overlapping effective dates and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /assignments/{assignment_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AssignmentResponse. Declare fields or class attributes: active, created_at, department_id, effective_from, effective_to, employee_id, id, is_deleted, model_config, role_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_assignment accepting db, current_user, assignment_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting asg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id; it shall validate references and non-overlapping effective dates, return the authorized Assignment, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAssignment(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_departments accepting db, current_user, parent_department_id, active, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /departments to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate department code, hierarchy, and cycle rule and stable pagination, return an authorized stable page of departments, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListDepartment(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE department code, hierarchy, and cycle rule and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments/{department_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentResponse. Declare fields or class attributes: active, code, created_at, id, is_deleted, model_config, name, parent_department_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_department accepting db, current_user, department_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dep. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /departments/{department_id} to an authenticated user or admin, accepting a positive department_id; it shall validate department code, hierarchy, and cycle rule, return the authorized Department, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetDepartment(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments/{department_id}/hierarchy",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentHierarchyProjection. Declare fields or class attributes: children, department, model_config, parent."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_hierarchy accepting db, current_user, department_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /departments/{department_id}/hierarchy to an admin, accepting a positive department_id, limit, and after_id; it shall validate hierarchy and pagination, return deterministic department tree projection, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDepartmentHierarchy(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE hierarchy and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /employees/{employee_id}/leave-report",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeLeaveReportResponse. Declare fields or class attributes: annual_leave_days, approved_requests, department_name, employee_code, employee_id, full_name, model_config, remaining_leave_days, role_title, total_approved_leave_days, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine employee_leave_report accepting db, current_user, employee_id, year. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, approved_leaves, assignments, created_at, employee_code, full_name, hire_date, id, is_deleted, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships.\n4. DEFINE class ApprovedLeaveRecordModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, year. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-report to employee or admin, accepting a positive employee_id and year; it shall validate ownership and year range, compute employee leave entitlement report, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleEmployeeReport(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE ownership and year range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /leave-reports/by-department",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentLeaveReportResponse. Declare fields or class attributes: items, limit, model_config, next_after_id, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine report_by_department accepting db, current_user, year, department_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships.\n4. DEFINE class ApprovedLeaveRecordModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, year. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-reports/by-department to an admin, accepting year, optional department_id, limit, and after_id; it shall validate year, department, and pagination, compute approved leave totals by department, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDepartmentReport(request):\n    // REQ-7-025; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE year, department, and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /leave-reports/by-role",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoleLeaveReportResponse. Declare fields or class attributes: items, limit, model_config, next_after_id, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine report_by_role accepting db, current_user, year, role_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships.\n4. DEFINE class ApprovedLeaveRecordModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, year. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-reports/by-role to an admin, accepting year, optional role_id, limit, and after_id; it shall validate year, role, and pagination, compute approved leave totals by role, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleRoleReport(request):\n    // REQ-7-026; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE year, role, and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /roles",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoleListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_roles accepting db, current_user, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /roles to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate role code and entitlement range and stable pagination, return an authorized stable page of roles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListRole(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE role code and entitlement range and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /roles/{role_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoleResponse. Declare fields or class attributes: active, annual_leave_days, code, created_at, id, is_deleted, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_role accepting db, current_user, role_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting role. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /roles/{role_id} to an authenticated user or admin, accepting a positive role_id; it shall validate role code and entitlement range, return the authorized Role, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetRole(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /assignments/{assignment_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AssignmentResponse. Declare fields or class attributes: active, created_at, department_id, effective_from, effective_to, employee_id, id, is_deleted, model_config, role_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_assignment accepting db, current_user, assignment_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting asg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, approved_leaves, assignments, created_at, employee_code, full_name, hire_date, id, is_deleted, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n5. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id and JSON partial employee_id, department_id, role_id, effective_from, effective_to; it shall validate references and non-overlapping effective dates, update supplied Assignment fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchAssignment(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Assignment fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /departments/{department_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentResponse. Declare fields or class attributes: active, code, created_at, id, is_deleted, model_config, name, parent_department_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_department accepting db, current_user, department_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dep. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /departments/{department_id} to an authenticated user or admin, accepting a positive department_id and JSON partial code, name, parent_department_id, active; it shall validate department code, hierarchy, and cycle rule, update supplied Department fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchDepartment(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Department fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /roles/{role_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoleResponse. Declare fields or class attributes: active, annual_leave_days, code, created_at, id, is_deleted, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_role accepting db, current_user, role_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting role. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /roles/{role_id} to an authenticated user or admin, accepting a positive role_id and JSON partial code, title, annual_leave_days, active; it shall validate role code and entitlement range, update supplied Role fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchRole(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Role fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /assignments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AssignmentResponse. Declare fields or class attributes: active, created_at, department_id, effective_from, effective_to, employee_id, id, is_deleted, model_config, role_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_assignment accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting asg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, approved_leaves, assignments, created_at, employee_code, full_name, hire_date, id, is_deleted, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n5. DEFINE class AssignmentModel. Declare fields or class attributes: __tablename__, active, created_at, department, department_id, effective_from, effective_to, employee, employee_id, id, is_deleted, role, role_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /assignments to an authenticated user or admin, accepting JSON employee_id, department_id, role_id, effective_from, effective_to; it shall validate references and non-overlapping effective dates, create the Assignment and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateAssignment(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Assignment and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /departments",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DepartmentResponse. Declare fields or class attributes: active, code, created_at, id, is_deleted, model_config, name, parent_department_id, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_department accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dep. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class DepartmentModel. Declare fields or class attributes: __tablename__, active, assignments, code, created_at, id, is_deleted, name, parent_department, parent_department_id, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /departments to an authenticated user or admin, accepting JSON code, name, parent_department_id, active; it shall validate department code, hierarchy, and cycle rule, create the Department and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateDepartment(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Department and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /roles",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class RoleResponse. Declare fields or class attributes: active, annual_leave_days, code, created_at, id, is_deleted, model_config, title, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_role accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting role. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class RoleModel. Declare fields or class attributes: __tablename__, active, annual_leave_days, assignments, code, created_at, id, is_deleted, title, updated_at. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /roles to an authenticated user or admin, accepting JSON code, title, annual_leave_days, active; it shall validate role code and entitlement range, create the Role and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nC: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateRole(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Role and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

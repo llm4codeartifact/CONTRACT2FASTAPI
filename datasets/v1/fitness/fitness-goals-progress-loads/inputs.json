@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /fitness-goals/{fitnessgoal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_goal accepting db, current_user, fitnessgoal_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose DELETE /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteFitnessGoal(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /load-limits/{loadlimit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_limit accepting db, current_user, loadlimit_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /load-limits/{loadlimit_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteLoadLimit(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "DELETE /progress-events/{progressevent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_event accepting db, current_user, progressevent_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose DELETE /progress-events/{progressevent_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteProgressEvent(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class FitnessGoalListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_goals accepting db, current_user, user_id, metric, goal_status, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /fitness-goals to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListFitnessGoal(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals/{fitnessgoal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class FitnessGoalResponse. Declare fields or class attributes: created_at, current_value, end_date, exercise, id, is_deleted, metric, model_config, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_goal accepting db, current_user, fitnessgoal_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetFitnessGoal(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /fitness-goals/{fitnessgoal_id}/progress",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class GoalProgressResponse. Declare fields or class attributes: current_value, end_date, events, exercise, goal_id, latest_event_date, metric, model_config, progress_percentage, start_date, status, target_value, title, total_events."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_goal_progress accepting db, current_user, fitnessgoal_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id}/progress to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGoalProgress(request):\n    // REQ-9-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LoadLimitListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_limits accepting db, current_user, exercise, experience_level, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /load-limits to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListLoadLimit(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits/validate",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LoadValidationResponse. Declare fields or class attributes: exceeds_limit, exercise, experience_level, is_valid, load_kg, max_kg, model_config, requires_admin_validation."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine validate_load accepting db, current_user, exercise, experience_level, load_kg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /load-limits/validate to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleValidateLoad(request):\n    // REQ-9-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /load-limits/{loadlimit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LoadLimitResponse. Declare fields or class attributes: created_at, exercise, experience_level, id, max_kg, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_limit accepting db, current_user, loadlimit_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /load-limits/{loadlimit_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetLoadLimit(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /personal-records",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PersonalRecordsListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_personal_records accepting db, current_user, user_id, metric, exercise, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n3. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose GET /personal-records to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePersonalRecords(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /progress-events",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProgressEventListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_events accepting db, current_user, goal_id, is_validated, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n3. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose GET /progress-events to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListProgressEvent(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "GET /progress-events/{progressevent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProgressEventResponse. Declare fields or class attributes: created_at, event_date, exercise, goal_id, id, is_validated, model_config, notes, updated_at, validated_at, validated_by, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_event accepting db, current_user, progressevent_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n3. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose GET /progress-events/{progressevent_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetProgressEvent(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /fitness-goals/{fitnessgoal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class FitnessGoalResponse. Declare fields or class attributes: created_at, current_value, end_date, exercise, id, is_deleted, metric, model_config, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_goal accepting db, current_user, fitnessgoal_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose PATCH /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchFitnessGoal(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /load-limits/{loadlimit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LoadLimitResponse. Declare fields or class attributes: created_at, exercise, experience_level, id, max_kg, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_limit accepting db, current_user, loadlimit_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at."
+    },
+    "formal_requirement": "The system shall expose PATCH /load-limits/{loadlimit_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchLoadLimit(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "PATCH /progress-events/{progressevent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProgressEventResponse. Declare fields or class attributes: created_at, event_date, exercise, goal_id, id, is_validated, model_config, notes, updated_at, validated_at, validated_by, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_event accepting db, current_user, progressevent_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at.\n3. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n4. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose PATCH /progress-events/{progressevent_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchProgressEvent(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /fitness-goals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class FitnessGoalResponse. Declare fields or class attributes: created_at, current_value, end_date, exercise, id, is_deleted, metric, model_config, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_goal accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose POST /fitness-goals to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateFitnessGoal(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /load-limits",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LoadLimitResponse. Declare fields or class attributes: created_at, exercise, experience_level, id, max_kg, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_limit accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /load-limits to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateLoadLimit(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /progress-events",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProgressEventResponse. Declare fields or class attributes: created_at, event_date, exercise, goal_id, id, is_validated, model_config, notes, updated_at, validated_at, validated_by, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_event accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class LoadLimitModel. Declare fields or class attributes: __tablename__, created_at, exercise, experience_level, id, max_kg, updated_at.\n3. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n4. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose POST /progress-events to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateProgressEvent(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-goals-progress-loads",
+    "endpoint": "POST /progress-events/{progressevent_id}/validate",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProgressEventResponse. Declare fields or class attributes: created_at, event_date, exercise, goal_id, id, is_validated, model_config, notes, updated_at, validated_at, validated_by, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine validate_event accepting db, current_user, progressevent_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, experience_level, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class FitnessGoalModel. Declare fields or class attributes: __tablename__, created_at, current_value, end_date, exercise, id, is_deleted, metric, start_date, status, target_value, title, updated_at, user_id.\n3. DEFINE class ProgressEventModel. Declare fields or class attributes: __tablename__, created_at, event_date, exercise, goal_id, id, is_validated, notes, updated_at, validated_at, validated_by, value."
+    },
+    "formal_requirement": "The system shall expose POST /progress-events/{progressevent_id}/validate to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nC: Goals, progress, and load validation.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleValidateProgress(request):\n    // REQ-9-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

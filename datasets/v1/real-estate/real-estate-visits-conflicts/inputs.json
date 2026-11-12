@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "DELETE /agents/{agent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_agent accepting db, current_user, agent_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships.\n3. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /agents/{agent_id} to an authenticated user or admin, accepting a positive agent_id; it shall validate agent fields, soft-delete only an unreferenced agent, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteAgent(request):\n    // REQ-6-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an unreferenced agent. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "DELETE /properties/{property_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_property accepting db, current_user, property_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /properties/{property_id} to an authenticated user or admin, accepting a positive property_id; it shall validate property and active agent fields, soft-delete only an ARCHIVED property without visits, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteProperty(request):\n    // REQ-6-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE property and active agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an ARCHIVED property without visits. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "DELETE /visits/{visit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_visit accepting db, current_user, visit_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitHistoryModel. Declare fields or class attributes: __tablename__, action_time, created_at, from_state, id, to_state, user, user_id, visit, visit_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /visits/{visit_id} to an authenticated user or admin, accepting a positive visit_id; it shall validate UTC interval, ownership, and conflict rule, delete only a SCHEDULED visit and retain cancellation audit, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteVisit(request):\n    // REQ-6-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE UTC interval, ownership, and conflict rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only a SCHEDULED visit and retain cancellation audit. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /agents",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AgentListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_agents accepting db, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AgentModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, license_code, name, properties, updated_at, user, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /agents to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate agent fields and stable pagination, return an authorized stable page of agents, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAgent(request):\n    // REQ-6-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE agent fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /agents/{agent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AgentResponse. Declare fields or class attributes: active, created_at, id, license_code, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, agent_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting a. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AgentModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, license_code, name, properties, updated_at, user, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /agents/{agent_id} to an authenticated user or admin, accepting a positive agent_id; it shall validate agent fields, return the authorized Agent, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAgent(request):\n    // REQ-6-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE agent fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /agents/{agent_id}/visit-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_agent_conflicts accepting db, agent_id, start_at, end_at, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /agents/{agent_id}/visit-conflicts to an admin, accepting a positive agent_id, start_at, end_at, limit, and after_id; it shall validate UTC interval and overlap, return agent conflicts, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleAgentConflicts(request):\n    // REQ-6-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE UTC interval and overlap OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-6-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /properties",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PropertyListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_properties accepting db, status, agent_id, city, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /properties to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate property and active agent fields and stable pagination, return an authorized stable page of properties, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListProperty(request):\n    // REQ-6-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE property and active agent fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /properties/{property_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PropertyResponse. Declare fields or class attributes: address, agent_id, city, created_at, id, model_config, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, property_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /properties/{property_id} to an authenticated user or admin, accepting a positive property_id; it shall validate property and active agent fields, return the authorized Property, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetProperty(request):\n    // REQ-6-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE property and active agent fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /properties/{property_id}/visit-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_property_conflicts accepting db, property_id, start_at, end_at, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /properties/{property_id}/visit-conflicts to an admin, accepting a positive property_id, start_at, end_at, limit, and after_id; it shall validate UTC interval and overlap, return property conflicts, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePropertyConflicts(request):\n    // REQ-6-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE UTC interval and overlap OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /visits",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_visits accepting db, current_user, property_id, agent_id, status, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /visits to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate UTC interval, ownership, and conflict rule and stable pagination, return an authorized stable page of visits, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListVisit(request):\n    // REQ-6-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE UTC interval, ownership, and conflict rule and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "GET /visits/{visit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitResponse. Declare fields or class attributes: agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, id, model_config, property_id, start_at, status, updated_at, visitor_name, visitor_user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_by_id accepting db, visit_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting v. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /visits/{visit_id} to an authenticated user or admin, accepting a positive visit_id; it shall validate UTC interval, ownership, and conflict rule, return the authorized Visit, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetVisit(request):\n    // REQ-6-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE UTC interval, ownership, and conflict rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "PATCH /agents/{agent_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AgentResponse. Declare fields or class attributes: active, created_at, id, license_code, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_agent accepting db, current_user, agent_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting a. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AgentModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, license_code, name, properties, updated_at, user, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /agents/{agent_id} to an authenticated user or admin, accepting a positive agent_id and JSON partial name, license_code, active; it shall validate agent fields, update supplied Agent fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchAgent(request):\n    // REQ-6-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Agent fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "PATCH /properties/{property_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PropertyResponse. Declare fields or class attributes: address, agent_id, city, created_at, id, model_config, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_property accepting db, current_user, property_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /properties/{property_id} to an authenticated user or admin, accepting a positive property_id and JSON partial address, city, status, agent_id; it shall validate property and active agent fields, update supplied Property fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchProperty(request):\n    // REQ-6-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE property and active agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Property fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "PATCH /visits/{visit_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitResponse. Declare fields or class attributes: agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, id, model_config, property_id, start_at, status, updated_at, visitor_name, visitor_user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_visit accepting db, current_user, visit_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting v. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /visits/{visit_id} to an authenticated user or admin, accepting a positive visit_id and JSON partial property_id, agent_id, visitor_name, start_at, end_at; it shall validate UTC interval, ownership, and conflict rule, update supplied Visit fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchVisit(request):\n    // REQ-6-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE UTC interval, ownership, and conflict rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Visit fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "POST /agents",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AgentResponse. Declare fields or class attributes: active, created_at, id, license_code, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_agent accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting a. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class AgentModel. Declare fields or class attributes: __tablename__, active, created_at, id, is_deleted, license_code, name, properties, updated_at, user, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /agents to an authenticated user or admin, accepting JSON name, license_code, active; it shall validate agent fields, create the Agent and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateAgent(request):\n    // REQ-6-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Agent and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "POST /properties",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PropertyResponse. Declare fields or class attributes: address, agent_id, city, created_at, id, model_config, status, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_property accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting p. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class PropertyModel. Declare fields or class attributes: __tablename__, address, agent, agent_id, city, created_at, id, is_deleted, status, updated_at, visits. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /properties to an authenticated user or admin, accepting JSON address, city, status, agent_id; it shall validate property and active agent fields, create the Property and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateProperty(request):\n    // REQ-6-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE property and active agent fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Property and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "POST /visits",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitResponse. Declare fields or class attributes: agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, id, model_config, property_id, start_at, status, updated_at, visitor_name, visitor_user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_visit accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting v. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships.\n3. DEFINE class VisitHistoryModel. Declare fields or class attributes: __tablename__, action_time, created_at, from_state, id, to_state, user, user_id, visit, visit_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /visits to an authenticated user or admin, accepting JSON property_id, agent_id, visitor_name, start_at, end_at; it shall validate UTC interval, ownership, and conflict rule, create the Visit and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateVisit(request):\n    // REQ-6-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE UTC interval, ownership, and conflict rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Visit and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "POST /visits/{visit_id}/check-in",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitResponse. Declare fields or class attributes: agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, id, model_config, property_id, start_at, status, updated_at, visitor_name, visitor_user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine check_in accepting db, current_user, visit_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting v. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships.\n3. DEFINE class VisitHistoryModel. Declare fields or class attributes: __tablename__, action_time, created_at, from_state, id, to_state, user, user_id, visit, visit_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /visits/{visit_id}/check-in to visitor, assigned agent, or admin, accepting a positive visit_id and JSON checked_in_at; it shall validate allowed transition and timestamp, mark CHECKED_IN, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCheckIn(request):\n    // REQ-6-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE allowed transition and timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; mark CHECKED_IN. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "real-estate-visits-conflicts",
+    "endpoint": "POST /visits/{visit_id}/complete",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VisitResponse. Declare fields or class attributes: agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, id, model_config, property_id, start_at, status, updated_at, visitor_name, visitor_user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine complete accepting db, current_user, visit_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting v. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, agent, agent_id, id, role, token, token_hash, username, visits. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class VisitModel. Declare fields or class attributes: __tablename__, agent, agent_id, cancelled_at, checked_in_at, completed_at, created_at, end_at, histories, id, property, property_id, start_at, status, updated_at, visitor_name, visitor_user, visitor_user_id. Maintain the declared ORM relationships.\n3. DEFINE class VisitHistoryModel. Declare fields or class attributes: __tablename__, action_time, created_at, from_state, id, to_state, user, user_id, visit, visit_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /visits/{visit_id}/complete to visitor, assigned agent, or admin, accepting a positive visit_id and JSON completed_at; it shall validate allowed transition and timestamp, mark COMPLETED, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Real-estate management.\nB: Visits and agent-property conflicts.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleComplete(request):\n    // REQ-6-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE allowed transition and timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; mark COMPLETED. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

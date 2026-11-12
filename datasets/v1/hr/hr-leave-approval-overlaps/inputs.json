@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "DELETE /approval-delegations/{delegation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_delegation accepting db, current_user, delegation_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id; it shall validate manager relation and non-overlapping effective dates, end only the delegation without changing request history, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteDelegation(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; end only the delegation without changing request history. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "DELETE /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_employee accepting db, current_user, employee_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee and manager hierarchy fields, soft-delete only an employee without subordinate or request relations, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteEmployee(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an employee without subordinate or request relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "DELETE /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_request accepting db, current_user, leave_request_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate interval, ownership, and no-overlap rule, delete only a DRAFT request and preserve decisions, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteLeaveRequest(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only a DRAFT request and preserve decisions. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /approval-delegations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DelegationListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_delegations accepting db, current_user, manager_employee_id, delegate_employee_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ApprovalDelegationModel. Declare fields or class attributes: __tablename__, created_at, delegate_employee, delegate_employee_id, effective_from, effective_to, id, manager_employee, manager_employee_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /approval-delegations to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate manager relation and non-overlapping effective dates and stable pagination, return an authorized stable page of approval-delegations, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListDelegation(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE manager relation and non-overlapping effective dates and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /approval-delegations/{delegation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DelegationResponse. Declare fields or class attributes: created_at, delegate_employee_id, effective_from, effective_to, id, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_delegation accepting db, current_user, delegation_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dlg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ApprovalDelegationModel. Declare fields or class attributes: __tablename__, created_at, delegate_employee, delegate_employee_id, effective_from, effective_to, id, manager_employee, manager_employee_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id; it shall validate manager relation and non-overlapping effective dates, return the authorized Delegation, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetDelegation(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /employees",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_employees accepting db, current_user, department, manager_employee_id, active, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /employees to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate employee and manager hierarchy fields and stable pagination, return an authorized stable page of employees, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListEmployee(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee and manager hierarchy fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, department, employee_code, full_name, id, is_deleted, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_employee accepting db, current_user, employee_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee and manager hierarchy fields, return the authorized Employee, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetEmployee(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /employees/{employee_id}/leave-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_conflicts accepting db, current_user, employee_id, start_date, end_date, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-conflicts to employee manager or admin, accepting a positive employee_id, start_date, end_date, limit, and after_id; it shall validate inclusive interval and overlap rule, return conflicting requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleLeaveConflicts(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE inclusive interval and overlap rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /leave-requests",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_requests accepting db, current_user, employee_id, status_val, leave_type, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-requests to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate interval, ownership, and no-overlap rule and stable pagination, return an authorized stable page of leave-requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListLeaveRequest(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE interval, ownership, and no-overlap rule and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, decided_at, decider_employee_id, decision_reason, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_request accepting db, current_user, leave_request_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate interval, ownership, and no-overlap rule, return the authorized LeaveRequest, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetLeaveRequest(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "GET /leave-requests/{leave_request_id}/history",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HistoryListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_history accepting db, current_user, leave_request_id, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestHistoryModel. Declare fields or class attributes: __tablename__, action, actor_employee_id, id, leave_request_id, occurred_at, reason, request. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id}/history to requester, manager, or admin, accepting a positive leave_request_id, limit, and after_id; it shall validate request authorization and pagination, return immutable decision history, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleApprovalHistory(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE request authorization and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "PATCH /approval-delegations/{delegation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DelegationResponse. Declare fields or class attributes: created_at, delegate_employee_id, effective_from, effective_to, id, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_delegation accepting db, current_user, delegation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dlg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ApprovalDelegationModel. Declare fields or class attributes: __tablename__, created_at, delegate_employee, delegate_employee_id, effective_from, effective_to, id, manager_employee, manager_employee_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id and JSON partial manager_employee_id, delegate_employee_id, effective_from, effective_to; it shall validate manager relation and non-overlapping effective dates, update supplied Delegation fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchDelegation(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Delegation fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "PATCH /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, department, employee_code, full_name, id, is_deleted, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_employee accepting db, current_user, employee_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id and JSON partial employee_code, full_name, manager_employee_id, department, active; it shall validate employee and manager hierarchy fields, update supplied Employee fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchEmployee(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Employee fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "PATCH /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, decided_at, decider_employee_id, decision_reason, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id and JSON partial employee_id, leave_type, start_date, end_date, requested_days; it shall validate interval, ownership, and no-overlap rule, update supplied LeaveRequest fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchLeaveRequest(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveRequest fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "POST /approval-delegations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DelegationResponse. Declare fields or class attributes: created_at, delegate_employee_id, effective_from, effective_to, id, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_delegation accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting dlg. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class ApprovalDelegationModel. Declare fields or class attributes: __tablename__, created_at, delegate_employee, delegate_employee_id, effective_from, effective_to, id, manager_employee, manager_employee_id, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /approval-delegations to an authenticated user or admin, accepting JSON manager_employee_id, delegate_employee_id, effective_from, effective_to; it shall validate manager relation and non-overlapping effective dates, create the Delegation and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateDelegation(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Delegation and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "POST /employees",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, department, employee_code, full_name, id, is_deleted, manager_employee_id, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_employee accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /employees to an authenticated user or admin, accepting JSON employee_code, full_name, manager_employee_id, department, active; it shall validate employee and manager hierarchy fields, create the Employee and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateEmployee(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Employee and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "POST /leave-requests",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, decided_at, decider_employee_id, decision_reason, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_request accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, created_at, department, employee_code, full_name, id, is_deleted, leave_requests, manager_employee_id, subordinates, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships.\n4. DEFINE class LeaveRequestHistoryModel. Declare fields or class attributes: __tablename__, action, actor_employee_id, id, leave_request_id, occurred_at, reason, request. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests to an authenticated user or admin, accepting JSON employee_id, leave_type, start_date, end_date, requested_days; it shall validate interval, ownership, and no-overlap rule, create the LeaveRequest and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateLeaveRequest(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveRequest and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "POST /leave-requests/{leave_request_id}/approve",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, decided_at, decider_employee_id, decision_reason, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine approve_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class LeaveRequestHistoryModel. Declare fields or class attributes: __tablename__, action, actor_employee_id, id, leave_request_id, occurred_at, reason, request. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/approve to requester manager or admin, accepting a positive leave_request_id and JSON decided_at and decision_reason; it shall validate SUBMITTED state, manager authority, and no overlap, approve and persist decision, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleApprove(request):\n    // REQ-7-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE SUBMITTED state, manager authority, and no overlap OR RETURN 400 or 422.\n    BEGIN TRANSACTION; approve and persist decision. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-approval-overlaps",
+    "endpoint": "POST /leave-requests/{leave_request_id}/reject",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, decided_at, decider_employee_id, decision_reason, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine reject_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, decided_at, decider, decider_employee_id, decision_reason, employee, employee_id, end_date, histories, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships.\n3. DEFINE class LeaveRequestHistoryModel. Declare fields or class attributes: __tablename__, action, actor_employee_id, id, leave_request_id, occurred_at, reason, request. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/reject to requester manager or admin, accepting a positive leave_request_id and JSON decided_at and decision_reason; it shall validate SUBMITTED state and manager authority, reject and persist decision, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nB: Approval, rejection, and overlaps.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleReject(request):\n    // REQ-7-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE SUBMITTED state and manager authority OR RETURN 400 or 422.\n    BEGIN TRANSACTION; reject and persist decision. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

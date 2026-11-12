@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_exercise accepting db, current_user, exercise_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at."
+    },
+    "formal_requirement": "The system shall expose DELETE /exercises/{exercise_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteExercise(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /plan-blocks/{planblock_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_block accepting db, current_user, planblock_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose DELETE /plan-blocks/{planblock_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeletePlanBlock(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /workout-plans/{workoutplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_plan accepting db, current_user, workoutplan_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteWorkoutPlan(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_exercises accepting db, current_user, category, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /exercises to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListExercise(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, category, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_exercise accepting db, current_user, exercise_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /exercises/{exercise_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetExercise(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises/{exercise_id}/plan-usages",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExercisePlanUsageListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_plan_usages accepting db, current_user, exercise_id, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /exercises/{exercise_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleExerciseUsages(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /plan-blocks",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanBlockListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_blocks accepting db, current_user, plan_id, exercise_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose GET /plan-blocks to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListPlanBlock(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /plan-blocks/{planblock_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanBlockResponse. Declare fields or class attributes: created_at, exercise_id, id, model_config, notes, plan_id, position, sets, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_block accepting db, current_user, planblock_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose GET /plan-blocks/{planblock_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetPlanBlock(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_plans accepting db, current_user, user_id, plan_status, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /workout-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListWorkoutPlan(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans/{workoutplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanResponse. Declare fields or class attributes: created_at, description, id, model_config, name, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_plan accepting db, current_user, workoutplan_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetWorkoutPlan(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans/{workoutplan_id}/configuration",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanConfigurationResponse. Declare fields or class attributes: blocks, description, model_config, name, plan_id, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_configuration accepting db, current_user, workoutplan_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id}/configuration to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePlanConfiguration(request):\n    // REQ-9-026; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, category, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_exercise accepting db, current_user, exercise_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /exercises/{exercise_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchExercise(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /plan-blocks/{planblock_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanBlockResponse. Declare fields or class attributes: created_at, exercise_id, id, model_config, notes, plan_id, position, sets, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_block accepting db, current_user, planblock_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints.\n3. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n4. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n5. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose PATCH /plan-blocks/{planblock_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchPlanBlock(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /workout-plans/{workoutplan_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanResponse. Declare fields or class attributes: created_at, description, id, model_config, name, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_plan accepting db, current_user, workoutplan_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose PATCH /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchWorkoutPlan(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /exercises",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, category, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_exercise accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /exercises to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateExercise(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /plan-blocks",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanBlockResponse. Declare fields or class attributes: created_at, exercise_id, id, model_config, notes, plan_id, position, sets, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_block accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, category, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose POST /plan-blocks to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreatePlanBlock(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /plan-blocks/{planblock_id}/move",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PlanBlockResponse. Declare fields or class attributes: created_at, exercise_id, id, model_config, notes, plan_id, position, sets, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine move_block accepting db, current_user, planblock_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose POST /plan-blocks/{planblock_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleMoveBlock(request):\n    // REQ-9-027; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /workout-plans",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanResponse. Declare fields or class attributes: created_at, description, id, model_config, name, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_plan accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose POST /workout-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateWorkoutPlan(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /workout-plans/{workoutplan_id}/clone",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutPlanResponse. Declare fields or class attributes: created_at, description, id, model_config, name, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine clone_plan accepting db, current_user, workoutplan_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutPlanModel. Declare fields or class attributes: __tablename__, created_at, description, id, is_deleted, name, status, updated_at, user_id.\n3. DEFINE class PlanBlockModel. Declare fields or class attributes: __tablename__, created_at, exercise_id, id, notes, plan_id, position, updated_at.\n4. DEFINE class PlanBlockSetModel. Declare fields or class attributes: __tablename__, block_id, id, reps, rest_seconds, set_number, target_load_kg."
+    },
+    "formal_requirement": "The system shall expose POST /workout-plans/{workoutplan_id}/clone to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nA: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleClonePlan(request):\n    // REQ-9-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

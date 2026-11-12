@@ -1,0 +1,4149 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /assignments/{assignment_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/assignments/{assignment_id}",
+      "path_params": [
+        {
+          "name": "assignment_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AssignmentController",
+          "routine": "delete_assignment"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_assignment",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "assignment_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id; it shall validate references and non-overlapping effective dates, end assignment only when employee continuity remains, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteAssignment(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; end assignment only when employee continuity remains. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /departments/{department_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/departments/{department_id}",
+      "path_params": [
+        {
+          "name": "department_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "delete_department"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_department",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "department_id",
+          "model": "DepartmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /departments/{department_id} to an authenticated user or admin, accepting a positive department_id; it shall validate department code, hierarchy, and cycle rule, soft-delete only an unassigned department, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteDepartment(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an unassigned department. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "DELETE /roles/{role_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/roles/{role_id}",
+      "path_params": [
+        {
+          "name": "role_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoleController",
+          "routine": "delete_role"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_role",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "role_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /roles/{role_id} to an authenticated user or admin, accepting a positive role_id; it shall validate role code and entitlement range, soft-delete only an unassigned role, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRole(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an unassigned role. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /assignments",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/assignments",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "employee_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "department_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "role_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AssignmentController",
+          "routine": "list_assignments"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "employee_id",
+          "alias": "employee_id",
+          "model_field": "employee_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "department_id",
+          "alias": "department_id",
+          "model_field": "department_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "role_id",
+          "alias": "role_id",
+          "model_field": "role_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /assignments to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate references and non-overlapping effective dates and stable pagination, return an authorized stable page of assignments, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListAssignment(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE references and non-overlapping effective dates and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /assignments/{assignment_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/assignments/{assignment_id}",
+      "path_params": [
+        {
+          "name": "assignment_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AssignmentController",
+          "routine": "get_assignment"
+        },
+        {
+          "controller_class": "AssignmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_assignment",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "assignment_id",
+          "model": "AssignmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id; it shall validate references and non-overlapping effective dates, return the authorized Assignment, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetAssignment(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/departments",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "parent_department_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "list_departments"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "parent_department_id",
+          "alias": "parent_department_id",
+          "model_field": "parent_department_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /departments to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate department code, hierarchy, and cycle rule and stable pagination, return an authorized stable page of departments, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListDepartment(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE department code, hierarchy, and cycle rule and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments/{department_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/departments/{department_id}",
+      "path_params": [
+        {
+          "name": "department_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "get_department"
+        },
+        {
+          "controller_class": "DepartmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "department_id",
+          "model": "DepartmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /departments/{department_id} to an authenticated user or admin, accepting a positive department_id; it shall validate department code, hierarchy, and cycle rule, return the authorized Department, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetDepartment(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /departments/{department_id}/hierarchy",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/departments/{department_id}/hierarchy",
+      "path_params": [
+        {
+          "name": "department_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "get_hierarchy"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "department_id",
+          "model": "DepartmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /departments/{department_id}/hierarchy to an admin, accepting a positive department_id, limit, and after_id; it shall validate hierarchy and pagination, return deterministic department tree projection, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDepartmentHierarchy(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE hierarchy and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /employees/{employee_id}/leave-report",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/employees/{employee_id}/leave-report",
+      "path_params": [
+        {
+          "name": "employee_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "year",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReportController",
+          "routine": "employee_leave_report"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ApprovedLeaveRecordModel",
+          "table": "approved_leave_records",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "approved_leave_records",
+        "assignments",
+        "employees",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "employee_leave_report",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "employee_id",
+          "model": "EmployeeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "year",
+          "alias": "year",
+          "model_field": "year",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-report to employee or admin, accepting a positive employee_id and year; it shall validate ownership and year range, compute employee leave entitlement report, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleEmployeeReport(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE ownership and year range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /leave-reports/by-department",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-reports/by-department",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "year",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "department_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReportController",
+          "routine": "report_by_department"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ApprovedLeaveRecordModel",
+          "table": "approved_leave_records",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "approved_leave_records",
+        "assignments",
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "year",
+          "alias": "year",
+          "model_field": "year",
+          "operator": "=="
+        },
+        {
+          "parameter": "department_id",
+          "alias": "department_id",
+          "model_field": "department_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-reports/by-department to an admin, accepting year, optional department_id, limit, and after_id; it shall validate year, department, and pagination, compute approved leave totals by department, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDepartmentReport(request):\n    // REQ-7-025; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE year, department, and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /leave-reports/by-role",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/leave-reports/by-role",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "year",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "role_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReportController",
+          "routine": "report_by_role"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ApprovedLeaveRecordModel",
+          "table": "approved_leave_records",
+          "fields": [
+            "created_at",
+            "employee_id",
+            "end_date",
+            "id",
+            "leave_type",
+            "requested_days",
+            "start_date",
+            "status",
+            "year"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        },
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "approved_leave_records",
+        "assignments",
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "year",
+          "alias": "year",
+          "model_field": "year",
+          "operator": "=="
+        },
+        {
+          "parameter": "role_id",
+          "alias": "role_id",
+          "model_field": "role_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /leave-reports/by-role to an admin, accepting year, optional role_id, limit, and after_id; it shall validate year, role, and pagination, compute approved leave totals by role, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleRoleReport(request):\n    // REQ-7-026; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE year, role, and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /roles",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/roles",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoleController",
+          "routine": "list_roles"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /roles to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate role code and entitlement range and stable pagination, return an authorized stable page of roles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRole(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE role code and entitlement range and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "GET /roles/{role_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/roles/{role_id}",
+      "path_params": [
+        {
+          "name": "role_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoleController",
+          "routine": "get_role"
+        },
+        {
+          "controller_class": "RoleController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "role_id",
+          "model": "RoleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /roles/{role_id} to an authenticated user or admin, accepting a positive role_id; it shall validate role code and entitlement range, return the authorized Role, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRole(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /assignments/{assignment_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/assignments/{assignment_id}",
+      "path_params": [
+        {
+          "name": "assignment_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AssignmentController",
+          "routine": "patch_assignment"
+        },
+        {
+          "controller_class": "AssignmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "departments",
+        "employees",
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "assignment_id",
+          "model": "AssignmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /assignments/{assignment_id} to an authenticated user or admin, accepting a positive assignment_id and JSON partial employee_id, department_id, role_id, effective_from, effective_to; it shall validate references and non-overlapping effective dates, update supplied Assignment fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchAssignment(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Assignment fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /departments/{department_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/departments/{department_id}",
+      "path_params": [
+        {
+          "name": "department_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "patch_department"
+        },
+        {
+          "controller_class": "DepartmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "department_id",
+          "model": "DepartmentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /departments/{department_id} to an authenticated user or admin, accepting a positive department_id and JSON partial code, name, parent_department_id, active; it shall validate department code, hierarchy, and cycle rule, update supplied Department fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchDepartment(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Department fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "PATCH /roles/{role_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/roles/{role_id}",
+      "path_params": [
+        {
+          "name": "role_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoleController",
+          "routine": "patch_role"
+        },
+        {
+          "controller_class": "RoleController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "role_id",
+          "model": "RoleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /roles/{role_id} to an authenticated user or admin, accepting a positive role_id and JSON partial code, title, annual_leave_days, active; it shall validate role code and entitlement range, update supplied Role fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRole(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Role fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /assignments",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/assignments",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AssignmentController",
+          "routine": "create_assignment"
+        },
+        {
+          "controller_class": "AssignmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AssignmentModel",
+          "table": "assignments",
+          "fields": [
+            "active",
+            "created_at",
+            "department_id",
+            "effective_from",
+            "effective_to",
+            "employee_id",
+            "id",
+            "is_deleted",
+            "role_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "department_id",
+              "target": "departments.id"
+            },
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            },
+            {
+              "field": "role_id",
+              "target": "roles.id"
+            }
+          ]
+        },
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "EmployeeModel",
+          "table": "employees",
+          "fields": [
+            "active",
+            "created_at",
+            "employee_code",
+            "full_name",
+            "hire_date",
+            "id",
+            "is_deleted",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "assignments",
+        "departments",
+        "employees",
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id",
+        "roles.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_assignment",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /assignments to an authenticated user or admin, accepting JSON employee_id, department_id, role_id, effective_from, effective_to; it shall validate references and non-overlapping effective dates, create the Assignment and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateAssignment(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE references and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Assignment and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /departments",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/departments",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "DepartmentController",
+          "routine": "create_department"
+        },
+        {
+          "controller_class": "DepartmentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "DepartmentModel",
+          "table": "departments",
+          "fields": [
+            "active",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "parent_department_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_department_id",
+              "target": "departments.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "departments",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "departments.id",
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_department",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /departments to an authenticated user or admin, accepting JSON code, name, parent_department_id, active; it shall validate department code, hierarchy, and cycle rule, create the Department and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateDepartment(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE department code, hierarchy, and cycle rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Department and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "hr-departments-roles-reports",
+    "endpoint": "POST /roles",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Human resources",
+      "variant": "C: Departments, roles, and leave reports",
+      "summary": "Application domain: Human resources.\nBackend variant: C: Departments, roles, and leave reports.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/roles",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RoleController",
+          "routine": "create_role"
+        },
+        {
+          "controller_class": "RoleController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RoleModel",
+          "table": "roles",
+          "fields": [
+            "active",
+            "annual_leave_days",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "employee_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "employee_id",
+              "target": "employees.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "roles",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "employees.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_role",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /roles to an authenticated user or admin, accepting JSON code, title, annual_leave_days, active; it shall validate role code and entitlement range, create the Role and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRole(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE role code and entitlement range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Role and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-7-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-7-002",
+          "requirement": "Departments have unique code ^[A-Z0-9-]{2,12}$, name 2..100, optional parent without cycles, and active boolean."
+        },
+        {
+          "id": "REQ-7-003",
+          "requirement": "Roles have unique code, title 2..120, annual_leave_days 0..365 in 0.5 increments, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

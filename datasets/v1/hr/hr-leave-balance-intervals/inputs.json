@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_employee accepting db, current_user, employee_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee fields, soft-delete only an employee without leave relations and never cascade, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteEmployee(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an employee without leave relations and never cascade. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /leave-balances/{leave_balance_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_balance accepting db, current_user, leave_balance_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id; it shall validate balance year, type, and range, delete only an unused balance without changing requests, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteLeaveBalance(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only an unused balance without changing requests. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "DELETE /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine delete_request accepting db, current_user, leave_request_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate date interval, ownership, and overlap rules, delete only a DRAFT request and retain approved history, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteLeaveRequest(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only a DRAFT request and retain approved history. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_employees accepting db, current_user, active, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /employees to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate employee fields and stable pagination, return an authorized stable page of employees, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListEmployee(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, employee_code, full_name, hire_date, id, is_deleted, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_employee accepting db, current_user, employee_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee fields, return the authorized Employee, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetEmployee(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /employees/{employee_id}/leave-calendar",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_calendar accepting db, current_user, employee_id, date_from, date_to, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-calendar to the employee or an admin, accepting a positive employee_id, date_from, date_to, limit, and after_id; it shall validate inclusive range and ownership, return approved and submitted intervals, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleLeaveCalendar(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE inclusive range and ownership OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveBalanceListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_balances accepting db, current_user, employee_id, leave_type, year, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-balances to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate balance year, type, and range and stable pagination, return an authorized stable page of leave-balances, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListLeaveBalance(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance year, type, and range and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances/{leave_balance_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveBalanceResponse. Declare fields or class attributes: created_at, employee_id, id, leave_type, model_config, opening_days, remaining_days, updated_at, used_days, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_balance accepting db, current_user, leave_balance_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting bal. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id; it shall validate balance year, type, and range, return the authorized LeaveBalance, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetLeaveBalance(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-balances/{leave_balance_id}/history",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveBalanceHistoryListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_history accepting db, current_user, leave_balance_id, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveBalanceHistoryModel. Declare fields or class attributes: __tablename__, amount, balance, change_type, created_at, id, leave_balance_id, note, resulting_remaining_days. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-balances/{leave_balance_id}/history to the employee or an admin, accepting a positive leave_balance_id, limit, and after_id; it shall validate balance ownership and pagination, return immutable balance history, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleBalanceHistory(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE balance ownership and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-requests",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_requests accepting db, current_user, employee_id, leave_type, status_val, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-requests to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate date interval, ownership, and overlap rules and stable pagination, return an authorized stable page of leave-requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListLeaveRequest(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE date interval, ownership, and overlap rules and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "GET /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_request accepting db, current_user, leave_request_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate date interval, ownership, and overlap rules, return the authorized LeaveRequest, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetLeaveRequest(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /employees/{employee_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, employee_code, full_name, hire_date, id, is_deleted, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_employee accepting db, current_user, employee_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id and JSON partial employee_code, full_name, hire_date, active; it shall validate employee fields, update supplied Employee fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchEmployee(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Employee fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /leave-balances/{leave_balance_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveBalanceResponse. Declare fields or class attributes: created_at, employee_id, id, leave_type, model_config, opening_days, remaining_days, updated_at, used_days, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_balance accepting db, current_user, leave_balance_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting bal. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships.\n4. DEFINE class LeaveBalanceHistoryModel. Declare fields or class attributes: __tablename__, amount, balance, change_type, created_at, id, leave_balance_id, note, resulting_remaining_days. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /leave-balances/{leave_balance_id} to an authenticated user or admin, accepting a positive leave_balance_id and JSON partial employee_id, leave_type, year, opening_days; it shall validate balance year, type, and range, update supplied LeaveBalance fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchLeaveBalance(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveBalance fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "PATCH /leave-requests/{leave_request_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id and JSON partial employee_id, leave_type, start_date, end_date, requested_days; it shall validate date interval, ownership, and overlap rules, update supplied LeaveRequest fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchLeaveRequest(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveRequest fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /employees",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class EmployeeResponse. Declare fields or class attributes: active, created_at, employee_code, full_name, hire_date, id, is_deleted, model_config, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_employee accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting emp. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /employees to an authenticated user or admin, accepting JSON employee_code, full_name, hire_date, active; it shall validate employee fields, create the Employee and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateEmployee(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Employee and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-balances",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveBalanceResponse. Declare fields or class attributes: created_at, employee_id, id, leave_type, model_config, opening_days, remaining_days, updated_at, used_days, year."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_balance accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting bal. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships.\n4. DEFINE class LeaveBalanceHistoryModel. Declare fields or class attributes: __tablename__, amount, balance, change_type, created_at, id, leave_balance_id, note, resulting_remaining_days. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-balances to an authenticated user or admin, accepting JSON employee_id, leave_type, year, opening_days; it shall validate balance year, type, and range, create the LeaveBalance and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateLeaveBalance(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE balance year, type, and range OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveBalance and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_request accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class EmployeeModel. Declare fields or class attributes: __tablename__, active, balances, created_at, employee_code, full_name, hire_date, id, is_deleted, leave_requests, updated_at, user. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests to an authenticated user or admin, accepting JSON employee_id, leave_type, start_date, end_date, requested_days; it shall validate date interval, ownership, and overlap rules, create the LeaveRequest and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateLeaveRequest(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE date interval, ownership, and overlap rules OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveRequest and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests/{leave_request_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine cancel_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveBalanceModel. Declare fields or class attributes: __tablename__, created_at, employee, employee_id, histories, id, leave_type, opening_days, remaining_days, updated_at, used_days, year. Maintain the declared ORM relationships.\n3. DEFINE class LeaveBalanceHistoryModel. Declare fields or class attributes: __tablename__, amount, balance, change_type, created_at, id, leave_balance_id, note, resulting_remaining_days. Maintain the declared ORM relationships.\n4. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/cancel to its employee or an admin, accepting a positive leave_request_id and JSON cancelled_at; it shall validate allowed cancellation and balance restoration, cancel request and restore approved balance, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelLeave(request):\n    // REQ-7-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE allowed cancellation and balance restoration OR RETURN 400 or 422.\n    BEGIN TRANSACTION; cancel request and restore approved balance. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "hr-leave-balance-intervals",
+    "endpoint": "POST /leave-requests/{leave_request_id}/submit",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class LeaveRequestResponse. Declare fields or class attributes: cancelled_at, created_at, employee_id, end_date, id, leave_type, model_config, requested_days, start_date, status, submitted_at, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine submit_request accepting db, current_user, leave_request_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize accepting req. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, employee, employee_id, id, role, token, token_hash, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class LeaveRequestModel. Declare fields or class attributes: __tablename__, cancelled_at, created_at, employee, employee_id, end_date, id, leave_type, requested_days, start_date, status, submitted_at, updated_at. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/submit to its employee or an admin, accepting a positive leave_request_id and JSON submitted_at; it shall validate DRAFT transition, mark request SUBMITTED, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Human resources.\nA: Leave balances and date intervals.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleSubmitLeave(request):\n    // REQ-7-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE DRAFT transition OR RETURN 400 or 422.\n    BEGIN TRANSACTION; mark request SUBMITTED. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

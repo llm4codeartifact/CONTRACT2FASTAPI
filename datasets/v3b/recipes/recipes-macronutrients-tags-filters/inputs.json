@@ -1,0 +1,3648 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /ingredients/{ingredient_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/ingredients/{ingredient_id}",
+      "path_params": [
+        {
+          "name": "ingredient_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "delete_ingredient"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "RecipeComponentModel",
+          "table": "recipe_components",
+          "fields": [
+            "created_at",
+            "id",
+            "ingredient_id",
+            "quantity_grams",
+            "recipe_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "ingredient_id",
+              "target": "ingredients.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "recipe_components",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "ingredients.id",
+        "recipes.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_ingredient",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "ingredient_id",
+          "model": "IngredientModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /ingredients/{ingredient_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteIngredient(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "delete_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /recipes/{recipe_id}/tags/{tag_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/recipes/{recipe_id}/tags/{tag_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        },
+        {
+          "name": "tag_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "remove_tag_from_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeTagModel",
+          "table": "recipe_tags",
+          "fields": [
+            "created_at",
+            "id",
+            "recipe_id",
+            "tag_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            },
+            {
+              "field": "tag_id",
+              "target": "tags.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipe_tags",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "recipes.id",
+        "tags.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "remove_tag_from_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        },
+        {
+          "parameter": "tag_id",
+          "model": "RecipeTagModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id}/tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleRemoveTag(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "DELETE /tags/{tag_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/tags/{tag_id}",
+      "path_params": [
+        {
+          "name": "tag_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "delete_tag"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeTagModel",
+          "table": "recipe_tags",
+          "fields": [
+            "created_at",
+            "id",
+            "recipe_id",
+            "tag_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            },
+            {
+              "field": "tag_id",
+              "target": "tags.id"
+            }
+          ]
+        },
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipe_tags",
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "recipes.id",
+        "tags.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_tag",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "tag_id",
+          "model": "TagModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteTag(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /ingredients",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/ingredients",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "list_ingredients"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_ingredients",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /ingredients to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListIngredient(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /ingredients/{ingredient_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/ingredients/{ingredient_id}",
+      "path_params": [
+        {
+          "name": "ingredient_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "get_ingredient"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_ingredient",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "ingredient_id",
+          "model": "IngredientModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /ingredients/{ingredient_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetIngredient(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "list_recipes"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_recipes",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/search",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes/search",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "tag_ids",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "max_calories",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 0
+          }
+        },
+        {
+          "name": "min_protein",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 0
+          }
+        },
+        {
+          "name": "q",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "search_recipes"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "search_recipes",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "tag_ids",
+          "alias": "tag_ids",
+          "model_field": "tag_ids",
+          "operator": "=="
+        },
+        {
+          "parameter": "max_calories",
+          "alias": "max_calories",
+          "model_field": "max_calories",
+          "operator": "=="
+        },
+        {
+          "parameter": "min_protein",
+          "alias": "min_protein",
+          "model_field": "min_protein",
+          "operator": "=="
+        },
+        {
+          "parameter": "q",
+          "alias": "q",
+          "model_field": "q",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes/search to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleSearchRecipes(request):\n    // REQ-10-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "get_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /recipes/{recipe_id}/nutrition",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/recipes/{recipe_id}/nutrition",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "get_recipe_nutrition"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_recipe_nutrition",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/nutrition to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleRecipeNutrition(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /tags",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/tags",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "dietary_type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "list_tags"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_tags",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "dietary_type",
+          "alias": "dietary_type",
+          "model_field": "dietary_type",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /tags to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListTag(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "GET /tags/{tag_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/tags/{tag_id}",
+      "path_params": [
+        {
+          "name": "tag_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "get_tag"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_tag",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "tag_id",
+          "model": "TagModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /tags/{tag_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetTag(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /ingredients/{ingredient_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/ingredients/{ingredient_id}",
+      "path_params": [
+        {
+          "name": "ingredient_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "patch_ingredient"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_ingredient",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "ingredient_id",
+          "model": "IngredientModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /ingredients/{ingredient_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchIngredient(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /recipes/{recipe_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/recipes/{recipe_id}",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "patch_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "RecipeComponentModel",
+          "table": "recipe_components",
+          "fields": [
+            "created_at",
+            "id",
+            "ingredient_id",
+            "quantity_grams",
+            "recipe_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "ingredient_id",
+              "target": "ingredients.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "recipe_components",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "ingredients.id",
+        "recipes.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "PATCH /tags/{tag_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/tags/{tag_id}",
+      "path_params": [
+        {
+          "name": "tag_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "patch_tag"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_tag",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "tag_id",
+          "model": "TagModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /tags/{tag_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchTag(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /ingredients",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/ingredients",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "create_ingredient"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_ingredient",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /ingredients to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateIngredient(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /recipes",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/recipes",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "create_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "IngredientModel",
+          "table": "ingredients",
+          "fields": [
+            "calories_kcal",
+            "carbs_g",
+            "created_at",
+            "fat_g",
+            "id",
+            "name",
+            "protein_g",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "RecipeComponentModel",
+          "table": "recipe_components",
+          "fields": [
+            "created_at",
+            "id",
+            "ingredient_id",
+            "quantity_grams",
+            "recipe_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "ingredient_id",
+              "target": "ingredients.id"
+            },
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "ingredients",
+        "recipe_components",
+        "recipes",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "ingredients.id",
+        "recipes.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /recipes/{recipe_id}/tags",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/recipes/{recipe_id}/tags",
+      "path_params": [
+        {
+          "name": "recipe_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "_format_recipe"
+        },
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "add_tag_to_recipe"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RecipeModel",
+          "table": "recipes",
+          "fields": [
+            "created_at",
+            "id",
+            "instructions",
+            "servings",
+            "title",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "RecipeTagModel",
+          "table": "recipe_tags",
+          "fields": [
+            "created_at",
+            "id",
+            "recipe_id",
+            "tag_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "recipe_id",
+              "target": "recipes.id"
+            },
+            {
+              "field": "tag_id",
+              "target": "tags.id"
+            }
+          ]
+        },
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "recipe_tags",
+        "recipes",
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "recipes.id",
+        "tags.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "_format_recipe",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "recipe_id",
+          "model": "RecipeModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /recipes/{recipe_id}/tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleAddTag(request):\n    // REQ-10-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "recipes-macronutrients-tags-filters",
+    "endpoint": "POST /tags",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Recipe management",
+      "variant": "C: Macronutrients, tags, and dietary filters",
+      "summary": "Application domain: Recipe management.\nBackend variant: C: Macronutrients, tags, and dietary filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/tags",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RecipeVariantCController",
+          "routine": "create_tag"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TagModel",
+          "table": "tags",
+          "fields": [
+            "created_at",
+            "dietary_type",
+            "id",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tags",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_tag",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateTag(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-10-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-10-002",
+          "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+        },
+        {
+          "id": "REQ-10-003",
+          "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

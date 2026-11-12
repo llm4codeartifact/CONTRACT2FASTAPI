@@ -1,0 +1,347 @@
+[
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "DELETE /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /tables/{table_id} to an admin, accepting a positive table_id; it shall atomically soft-delete only a table with no reservations under REQ-4-009, be idempotent only insofar as a deleted id is 404, never cascade, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteTable(request, table_id):\n    // REQ-4-016; preconditions: existing table and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF any reservation references table THEN ROLLBACK; RETURN 409. END IF MARK deleted; COMMIT; RETURN 204.\n    // REQ-4-009; repeat is 404 and rollback leaves all reservation relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /availability",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableAvailabilityOut. Declare fields or class attributes: can_book, model_config, overbook_remaining, overbook_seats, seats, standard_remaining, table_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_availability accepting db, table_id, start_at, end_at, party_size. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /availability to an authenticated user or admin, accepting positive table_id, start_at, end_at, and party_size 1..20; it shall validate REQ-4-001 through REQ-4-005 and the half-open interval, calculate standard and overbook remaining seats without reserving them, make no persistent change, and emit only 200, 400, 401, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAvailability(request):\n    // REQ-4-024; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE ids, interval, and party size OR RETURN 400 or 422; missing table is 404.\n    READ overlap demand and return standard_remaining plus overbook_remaining under REQ-4-004 and REQ-4-005. Transaction: none; postcondition: no capacity is held; errors leave state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_health accepting db. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization, check only local persistence without writing state, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-4-011; preconditions: none; authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no persistent effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /reservations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_reservations accepting db, current_user, table_id, res_status, from_time, to_time, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /reservations to an authenticated user or admin, accepting optional positive table_id, status, from, to, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, REQ-4-006, and REQ-4-010, restrict users to creator-owned rows, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListReservations(request):\n    // REQ-4-017; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE filters, half-open interval, and pagination OR RETURN 400 or 422; unknown table is 404.\n    READ overlapping rows by id, constrained to creator for user; RETURN 200 page. Transaction: none; state unchanged on all results.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /reservations/{reservation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_reservation accepting db, current_user, reservation_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /reservations/{reservation_id} to its creator user or an admin, accepting a positive reservation_id; it shall enforce REQ-4-001 and REQ-4-008, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetReservation(request, reservation_id):\n    // REQ-4-019; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid or absent id; REQUIRE creator or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: data unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_tables accepting db, zone, min_seats, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, overbook_seats, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables to an authenticated user or admin, accepting optional zone, min_seats 1..20, active boolean, limit, and after_id; it shall validate REQ-4-002 and REQ-4-010, return a stable page without effects, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTables(request):\n    // REQ-4-012; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422.\n    READ non-deleted tables by id; RETURN 200 page. Transaction: none; postcondition and errors leave state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, overbook_seats, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, overbook_seats, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables/{table_id} to an authenticated user or admin, accepting a positive table_id; it shall enforce REQ-4-001, return the non-deleted table without effects, and emit only 200, 401, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTable(request, table_id):\n    // REQ-4-014; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; IF id is non-positive, absent, or deleted THEN RETURN 404. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors do not alter relationships.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables/{table_id}/reservation-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_conflicts accepting db, table_id, start_at, end_at, exclude_reservation_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /tables/{table_id}/reservation-conflicts to an admin, accepting a positive table_id, start_at, end_at, optional positive exclude_reservation_id, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, and REQ-4-010, return PENDING and CONFIRMED overlaps under REQ-4-004 without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleReservationConflicts(request, table_id):\n    // REQ-4-025; preconditions: persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent table; VALIDATE interval, exclude id, and pagination OR RETURN 400 or 422.\n    READ PENDING and CONFIRMED half-open overlaps excluding requested id, order by id, RETURN 200 page. Transaction: none; postcondition: state unchanged on every error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "PATCH /reservations/{reservation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_reservation accepting db, current_user, reservation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /reservations/{reservation_id} to its creator user or an admin, accepting a positive reservation_id and JSON guest_name, party_size, table_id, start_at, or end_at; it shall require application/json, permit PENDING only, validate resulting REQ-4-003 and REQ-4-004, atomically lock and update supplied fields, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchReservation(request, reservation_id):\n    // REQ-4-020; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415. BEGIN TRANSACTION; IF status is not PENDING THEN ROLLBACK; RETURN 409. END IF\n    VALIDATE result OR ROLLBACK; RETURN 400 or 422; lock target interval; IF missing table THEN ROLLBACK; RETURN 404; IF active demand exceeds limit THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Idempotent identical payload; rollback preserves reservation and capacity state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "PATCH /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, overbook_seats, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_table accepting db, table_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, overbook_seats, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /tables/{table_id} to an admin, accepting a positive table_id and JSON code, seats, overbook_seats, zone, or active; it shall require application/json, validate the resulting REQ-4-002, REQ-4-004, REQ-4-005, and REQ-4-009 conditions, atomically update supplied fields, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTable(request, table_id):\n    // REQ-4-015; preconditions: existing table, JSON, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE partial result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock table and active reservations; IF capacity would be below active or confirmed demand, duplicate code, or invalid deactivation THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Identical payload idempotent; rollback preserves all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_reservation accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations to an authenticated user or admin, accepting JSON positive table_id, guest_name, party_size, start_at, and end_at; it shall require application/json, validate REQ-4-001 through REQ-4-004, atomically create a PENDING reservation while locking the table interval, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateReservation(request):\n    // REQ-4-018; preconditions: JSON, active table, persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-003 OR RETURN 400 or 422; missing table is 404.\n    BEGIN TRANSACTION; lock table and overlap set; IF active demand violates REQ-4-004 THEN ROLLBACK; RETURN 409. END IF CREATE PENDING owner caller; COMMIT; RETURN 201 with Location.\n    // REQ-4-007: non-idempotent, rollback preserves capacity and relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine cancel_reservation accepting db, current_user, reservation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/cancel to its creator user or an admin, accepting a positive reservation_id and JSON cancelled_at plus cancellation_reason of 3..500 characters; it shall require application/json, validate REQ-4-001 and REQ-4-006, atomically transition PENDING or CONFIRMED to CANCELLED while retaining history, be non-idempotent, release active demand, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelReservation(request, reservation_id):\n    // REQ-4-022; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE cancellation fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF terminal status THEN ROLLBACK; RETURN 409. END IF SET CANCELLED and immutable history; COMMIT; RETURN 200.\n    // REQ-4-006 and REQ-4-007; non-idempotent, rollback leaves capacity and relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/confirm",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine confirm_reservation accepting db, current_user, reservation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/confirm to its creator user or an admin, accepting a positive reservation_id and JSON confirmed_at; it shall require application/json, validate REQ-4-001, permit PENDING only, atomically lock demand and transition to CONFIRMED only under REQ-4-005, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleConfirmReservation(request, reservation_id):\n    // REQ-4-021; preconditions: JSON, existing PENDING reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock table and overlap set; IF status not PENDING or confirmed demand exceeds seats THEN ROLLBACK; RETURN 409. END IF SET CONFIRMED; COMMIT; RETURN 200.\n    // REQ-4-005 and REQ-4-007; non-idempotent and rollback preserves demand.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/no-show",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, model_config, no_show_at, no_show_by_user_id, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine no_show_reservation accepting db, current_user, reservation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, confirmed_at, created_at, end_at, guest_name, id, no_show_at, no_show_by_user, no_show_by_user_id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/no-show to its creator user or an admin, accepting a positive reservation_id and JSON no_show_at; it shall require application/json, validate REQ-4-001 and REQ-4-006, atomically transition PENDING or CONFIRMED to NO_SHOW while retaining history, be non-idempotent, release active demand, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleNoShowReservation(request, reservation_id):\n    // REQ-4-023; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF terminal status THEN ROLLBACK; RETURN 409. END IF SET NO_SHOW and actor history; COMMIT; RETURN 200.\n    // REQ-4-006; non-idempotent and rollback preserves all persistent state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, overbook_seats, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_table accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, overbook_seats, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /tables to an admin, accepting JSON code, seats, overbook_seats, zone, and optional active default true; it shall require application/json, validate REQ-4-002, atomically create a unique table, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nB: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTable(request):\n    // REQ-4-013; preconditions: JSON and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF code exists THEN ROLLBACK; RETURN 409. END IF CREATE table; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves all tables and reservation relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

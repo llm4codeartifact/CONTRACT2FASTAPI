@@ -1,0 +1,462 @@
+[
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "DELETE /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_exercise accepting db, current_user, exercise_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose DELETE /exercises/{exercise_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteExercise(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "DELETE /performed-sets/{performedset_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_set accepting db, current_user, performedset_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose DELETE /performed-sets/{performedset_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeletePerformedSet(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "DELETE /workout-sessions/{workoutsession_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_session accepting db, current_user, workoutsession_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /workout-sessions/{workoutsession_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteWorkoutSession(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /exercises",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_exercises accepting db, current_user, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /exercises to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListExercise(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_exercise accepting db, current_user, exercise_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /exercises/{exercise_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetExercise(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /exercises/{exercise_id}/one-rm",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class OneRepMaxResponse. Declare fields or class attributes: achieved_at, based_on_set_id, exercise_code, exercise_id, exercise_name, load_kg, max_1rm, model_config, reps, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine calculate_one_rm accepting db, current_user, exercise_id, user_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose GET /exercises/{exercise_id}/one-rm to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleOneRm(request):\n    // REQ-9-026; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /performed-sets",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PerformedSetListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_sets accepting db, current_user, session_id, exercise_id, is_void, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose GET /performed-sets to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListPerformedSet(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /performed-sets/{performedset_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PerformedSetResponse. Declare fields or class attributes: calculated_1rm, created_at, exercise_id, id, is_void, load_kg, model_config, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_set accepting db, current_user, performedset_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose GET /performed-sets/{performedset_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetPerformedSet(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /workout-sessions",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutSessionListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_sessions accepting db, current_user, user_id, session_status, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /workout-sessions to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListWorkoutSession(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /workout-sessions/{workoutsession_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutSessionResponse. Declare fields or class attributes: created_at, ended_at, id, model_config, notes, started_at, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_session accepting db, current_user, workoutsession_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose GET /workout-sessions/{workoutsession_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetWorkoutSession(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "GET /workout-sessions/{workoutsession_id}/volume",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SessionVolumeResponse. Declare fields or class attributes: exercise_breakdown, model_config, session_id, total_reps, total_sets, total_volume_kg."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine calculate_volume accepting db, current_user, workoutsession_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose GET /workout-sessions/{workoutsession_id}/volume to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleSessionVolume(request):\n    // REQ-9-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "PATCH /exercises/{exercise_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_exercise accepting db, current_user, exercise_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /exercises/{exercise_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchExercise(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "PATCH /performed-sets/{performedset_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PerformedSetResponse. Declare fields or class attributes: calculated_1rm, created_at, exercise_id, id, is_void, load_kg, model_config, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_set accepting db, current_user, performedset_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose PATCH /performed-sets/{performedset_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchPerformedSet(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "PATCH /workout-sessions/{workoutsession_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutSessionResponse. Declare fields or class attributes: created_at, ended_at, id, model_config, notes, started_at, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_session accepting db, current_user, workoutsession_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose PATCH /workout-sessions/{workoutsession_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchWorkoutSession(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "POST /exercises",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ExerciseResponse. Declare fields or class attributes: active, code, created_at, id, model_config, name, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_exercise accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /exercises to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateExercise(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "POST /performed-sets",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PerformedSetResponse. Declare fields or class attributes: calculated_1rm, created_at, exercise_id, id, is_void, load_kg, model_config, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_set accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ExerciseModel. Declare fields or class attributes: __tablename__, active, code, created_at, id, is_deleted, name, updated_at. Enforce the declared uniqueness constraints.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose POST /performed-sets to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreatePerformedSet(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "POST /performed-sets/{performedset_id}/void",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class PerformedSetResponse. Declare fields or class attributes: calculated_1rm, created_at, exercise_id, id, is_void, load_kg, model_config, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine void_set accepting db, current_user, performedset_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id.\n3. DEFINE class PerformedSetModel. Declare fields or class attributes: __tablename__, calculated_1rm, created_at, exercise_id, id, is_void, load_kg, reps, rpe, session_id, set_order, updated_at, void_reason."
+    },
+    "formal_requirement": "The system shall expose POST /performed-sets/{performedset_id}/void to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleVoidSet(request):\n    // REQ-9-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "POST /workout-sessions",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutSessionResponse. Declare fields or class attributes: created_at, ended_at, id, model_config, notes, started_at, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_session accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose POST /workout-sessions to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateWorkoutSession(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "fitness-sessions-sets-1rm",
+    "endpoint": "POST /workout-sessions/{workoutsession_id}/complete",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WorkoutSessionResponse. Declare fields or class attributes: created_at, ended_at, id, model_config, notes, started_at, status, updated_at, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine complete_session accepting db, current_user, workoutsession_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WorkoutSessionModel. Declare fields or class attributes: __tablename__, created_at, ended_at, id, is_deleted, notes, started_at, status, updated_at, user_id."
+    },
+    "formal_requirement": "The system shall expose POST /workout-sessions/{workoutsession_id}/complete to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Fitness management.\nB: Sessions, sets, and one-repetition maximum.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCompleteSession(request):\n    // REQ-9-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

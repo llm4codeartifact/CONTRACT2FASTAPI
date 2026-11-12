@@ -1,0 +1,3642 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "DELETE /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "delete_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /products/{product_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Products have name 2..160 and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProduct(request):\n    // REQ-8-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "DELETE /stock-levels/{stocklevel_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/stock-levels/{stocklevel_id}",
+      "path_params": [
+        {
+          "name": "stocklevel_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "delete_stock_level"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_stock_level",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stocklevel_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /stock-levels/{stocklevel_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Products have name 2..160 and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteStockLevel(request):\n    // REQ-8-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "DELETE /stock-movements/{stockmovement_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/stock-movements/{stockmovement_id}",
+      "path_params": [
+        {
+          "name": "stockmovement_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "delete_movement"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_movement",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stockmovement_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /stock-movements/{stockmovement_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Products have name 2..160 and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteStockMovement(request):\n    // REQ-8-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-8-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /products",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "name",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "list_products"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "active",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "name",
+          "alias": "name",
+          "model_field": "name",
+          "operator": "=="
+        },
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProduct(request):\n    // REQ-8-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "ProductController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "active",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products/{product_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProduct(request):\n    // REQ-8-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /products/{product_id}/stock-ledger",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products/{product_id}/stock-ledger",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "get_ledger"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products/{product_id}/stock-ledger to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStockLedger(request):\n    // REQ-8-026; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /stock-levels",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/stock-levels",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "product_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "location",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "list_stock_levels"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "product_id",
+          "alias": "product_id",
+          "model_field": "product_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "location",
+          "alias": "location",
+          "model_field": "location",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /stock-levels to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListStockLevel(request):\n    // REQ-8-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /stock-levels/{stocklevel_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/stock-levels/{stocklevel_id}",
+      "path_params": [
+        {
+          "name": "stocklevel_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "StockLevelController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stocklevel_id",
+          "model": "StockLevelModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /stock-levels/{stocklevel_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetStockLevel(request):\n    // REQ-8-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /stock-movements",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/stock-movements",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "product_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "location",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "movement_type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "list_movements"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "product_id",
+          "alias": "product_id",
+          "model_field": "product_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "location",
+          "alias": "location",
+          "model_field": "location",
+          "operator": "=="
+        },
+        {
+          "parameter": "movement_type",
+          "alias": "movement_type",
+          "model_field": "movement_type",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /stock-movements to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListStockMovement(request):\n    // REQ-8-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /stock-movements/{stockmovement_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/stock-movements/{stockmovement_id}",
+      "path_params": [
+        {
+          "name": "stockmovement_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "StockMovementController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stockmovement_id",
+          "model": "StockMovementModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /stock-movements/{stockmovement_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetStockMovement(request):\n    // REQ-8-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "GET /stock/availability",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/stock/availability",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "product_id",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true,
+            "gt": 0
+          }
+        },
+        {
+          "name": "location",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "get_by_id"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "active",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "product_id",
+          "alias": "product_id",
+          "model_field": "product_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "location",
+          "alias": "location",
+          "model_field": "location",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /stock/availability to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Products have name 2..160 and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleAvailability(request):\n    // REQ-8-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "PATCH /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "patch_product"
+        },
+        {
+          "controller_class": "ProductController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "active",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /products/{product_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProduct(request):\n    // REQ-8-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "PATCH /stock-levels/{stocklevel_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/stock-levels/{stocklevel_id}",
+      "path_params": [
+        {
+          "name": "stocklevel_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "patch_stock_level"
+        },
+        {
+          "controller_class": "StockLevelController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stocklevel_id",
+          "model": "StockLevelModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /stock-levels/{stocklevel_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchStockLevel(request):\n    // REQ-8-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "PATCH /stock-movements/{stockmovement_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/stock-movements/{stockmovement_id}",
+      "path_params": [
+        {
+          "name": "stockmovement_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "patch_movement"
+        },
+        {
+          "controller_class": "StockMovementController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stockmovement_id",
+          "model": "StockMovementModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /stock-movements/{stockmovement_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchStockMovement(request):\n    // REQ-8-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "POST /products",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/products",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ProductController",
+          "routine": "create_product"
+        },
+        {
+          "controller_class": "ProductController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "active",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /products to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProduct(request):\n    // REQ-8-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "POST /stock-levels",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/stock-levels",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "create_stock_level"
+        },
+        {
+          "controller_class": "StockLevelController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_stock_level",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /stock-levels to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateStockLevel(request):\n    // REQ-8-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "POST /stock-levels/{stocklevel_id}/reconcile",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/stock-levels/{stocklevel_id}/reconcile",
+      "path_params": [
+        {
+          "name": "stocklevel_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockLevelController",
+          "routine": "reconcile_stock"
+        },
+        {
+          "controller_class": "StockLevelController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stocklevel_id",
+          "model": "StockLevelModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /stock-levels/{stocklevel_id}/reconcile to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReconcileStock(request):\n    // REQ-8-027; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "POST /stock-movements",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/stock-movements",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "create_movement"
+        },
+        {
+          "controller_class": "StockMovementController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_movement",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /stock-movements to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateStockMovement(request):\n    // REQ-8-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-stock-movements-nonnegative",
+    "endpoint": "POST /stock-movements/{stockmovement_id}/reverse",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "A: Stock intake, issue, and non-negative inventory",
+      "summary": "Application domain: Inventory management.\nBackend variant: A: Stock intake, issue, and non-negative inventory.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/stock-movements/{stockmovement_id}/reverse",
+      "path_params": [
+        {
+          "name": "stockmovement_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "StockMovementController",
+          "routine": "reverse_movement"
+        },
+        {
+          "controller_class": "StockMovementController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "StockMovementModel",
+          "table": "stock_movements",
+          "fields": [
+            "created_at",
+            "id",
+            "is_reversed",
+            "location",
+            "movement_type",
+            "product_id",
+            "quantity",
+            "reference",
+            "reversed_movement_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            },
+            {
+              "field": "reversed_movement_id",
+              "target": "stock_movements.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "stock_levels",
+        "stock_movements",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id",
+        "stock_movements.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "stockmovement_id",
+          "model": "StockMovementModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /stock-movements/{stockmovement_id}/reverse to an authenticated user or admin, accepting JSON declared route fields; it shall validate Products have name 2..160 and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReverseMovement(request):\n    // REQ-8-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Products have name 2..160 and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Products have name 2..160 and active flag"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Stock levels are unique by product and location and quantity is decimal 0..1000000"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

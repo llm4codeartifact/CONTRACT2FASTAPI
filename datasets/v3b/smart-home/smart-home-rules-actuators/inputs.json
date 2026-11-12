@@ -1,0 +1,2803 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "DELETE /actuators/{actuator_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/actuators/{actuator_id}",
+      "path_params": [
+        {
+          "name": "actuator_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "delete_actuator"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "CommandModel",
+          "table": "actuator_commands",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleActionModel",
+          "table": "rule_actions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuator_commands",
+        "actuators",
+        "rule_actions",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_actuator",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "actuator_id",
+          "model": "ActuatorModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /actuators/{actuator_id} as an admin-only endpoint accepting a positive path id; it shall atomically delete only an actuator without rule-action or command references, shall not cascade-delete audit records, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteActuator(request, actuator_id):\n    // REQ-2-016; Preconditions: persistence available. REQUIRE admin or RETURN 401/403.\n    IF actuator_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF referenced by action or command THEN ROLLBACK; RETURN 409 under REQ-2-009. END IF DELETE actuator; COMMIT; RETURN 204.\n    // Repeat returns 404; rollback preserves every relation on error.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-009",
+          "requirement": "An actuator cannot be deleted while referenced by a rule action or any command. Deleting a rule deletes only its action definitions and retains execution and command snapshots; an executed rule cannot be deleted."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "DELETE /automation-rules/{rule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/automation-rules/{rule_id}",
+      "path_params": [
+        {
+          "name": "rule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "delete_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExecutionModel",
+          "table": "automation_executions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_executions",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "rule_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /automation-rules/{rule_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall atomically delete an unexecuted rule and its action definitions only, retain no orphan actions, reject an executed rule to preserve audit history, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRule(request, rule_id):\n    // REQ-2-023; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF rule_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF any execution exists THEN ROLLBACK; RETURN 409 under REQ-2-009. END IF DELETE action definitions then rule; COMMIT; RETURN 204.\n    // Repeat returns 404; any error rolls back and preserves rule/actions/audit history.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-009",
+          "requirement": "An actuator cannot be deleted while referenced by a rule action or any command. Deleting a rule deletes only its action definitions and retains execution and command snapshots; an executed rule cannot be deleted."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /actuators",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/actuators",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "serial_prefix",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "owner_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "list_actuators"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "type",
+          "alias": "type",
+          "model_field": "type",
+          "operator": "=="
+        },
+        {
+          "parameter": "serial_prefix",
+          "alias": "serial_prefix",
+          "model_field": "serial_prefix",
+          "operator": "=="
+        },
+        {
+          "parameter": "owner_id",
+          "alias": "owner_id",
+          "model_field": "owner_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /actuators as an authenticated user-or-admin endpoint accepting optional type enum, serial_prefix of 1..32 uppercase serial characters, owner_id for admins only, limit, and after_id; it shall apply exact and normalized-prefix filtering, enforce REQ-2-010, paginate stably, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListActuators(request):\n    // REQ-2-012; Preconditions: persistence available. REQUIRE authenticated user/admin or RETURN 401.\n    VALIDATE filters and pagination or RETURN 422. IF owner_id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and owner_id is another user THEN RETURN 403. END IF\n    READ visible filtered actuators, sort id ascending, page, RETURN 200.\n    // Transaction: none; postcondition: actuators, rules, commands, events, executions unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-010",
+          "requirement": "A user may access and operate only actuators, rules, events, executions, and commands owned by that user; an admin may access all. Private routes deny by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /actuators/{actuator_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/actuators/{actuator_id}",
+      "path_params": [
+        {
+          "name": "actuator_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "get_actuator_by_id"
+        },
+        {
+          "controller_class": "ActuatorController",
+          "routine": "serialize_actuator"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_actuator_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "actuator_id",
+          "model": "ActuatorModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /actuators/{actuator_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the actuator and current_value after authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetActuator(request, actuator_id):\n    // REQ-2-014; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF actuator_id <= 0 OR absent THEN RETURN 404. IF user caller is not owner THEN RETURN 403. END IF\n    READ actuator; RETURN 200. // Transaction: none; postcondition: state is unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /actuators/{actuator_id}/commands",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/actuators/{actuator_id}/commands",
+      "path_params": [
+        {
+          "name": "actuator_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "origin",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "list_commands"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CommandModel",
+          "table": "actuator_commands",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuator_commands",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "actuator_id",
+          "model": "CommandModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "origin",
+          "alias": "origin",
+          "model_field": "origin",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /actuators/{actuator_id}/commands as an authenticated owner-or-admin endpoint accepting a positive path id, optional origin enum MANUAL or RULE, limit, and after_id; it shall return command history with exact origin filtering and stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListActuatorCommands(request, actuator_id):\n    // REQ-2-018; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF actuator_id <= 0 OR absent THEN RETURN 404. VALIDATE origin and pagination or RETURN 422.\n    READ matching immutable commands by id page; RETURN 200.\n    // Transaction: none; postcondition: command and actuator state remain unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /automation-executions",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/automation-executions",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "rule_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "outcome",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "client_event_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExecutionController",
+          "routine": "list_executions"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "EventModel",
+          "table": "automation_events",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "ExecutionModel",
+          "table": "automation_executions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_events",
+        "automation_executions",
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "rule_id",
+          "alias": "rule_id",
+          "model_field": "rule_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "outcome",
+          "alias": "outcome",
+          "model_field": "outcome",
+          "operator": "=="
+        },
+        {
+          "parameter": "client_event_id",
+          "alias": "client_event_id",
+          "model_field": "client_event_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /automation-executions as an authenticated user-or-admin endpoint accepting optional rule_id, outcome enum APPLIED or SUPPRESSED, client_event_id, limit, and after_id; it shall validate filters, enforce ownership through the execution owner, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListExecutions(request):\n    // REQ-2-027; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE filters and pagination or RETURN 422; IF rule_id is non-positive or absent THEN RETURN 404.\n    IF user caller does not own selected rule THEN RETURN 403. READ owner-visible immutable executions, sort id, page, RETURN 200.\n    // Transaction: none; postcondition: events, executions, commands, actuators, and rules remain unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /automation-rules",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/automation-rules",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "enabled",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "source_kind",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "owner_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "list_rules"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [
+        {
+          "parameter": "enabled",
+          "alias": "enabled",
+          "model_field": "enabled",
+          "operator": "=="
+        },
+        {
+          "parameter": "source_kind",
+          "alias": "source_kind",
+          "model_field": "source_kind",
+          "operator": "=="
+        },
+        {
+          "parameter": "owner_id",
+          "alias": "owner_id",
+          "model_field": "owner_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /automation-rules as an authenticated user-or-admin endpoint accepting optional enabled boolean, source_kind enum, owner_id for admins only, limit, and after_id; it shall apply exact filters, enforce REQ-2-010, paginate stably, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRules(request):\n    // REQ-2-019; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE filters and pagination or RETURN 422; reject invalid owner_id with 404 and other-user owner query with 403.\n    READ caller-owned or admin-visible rules, ascending id page; RETURN 200.\n    // Transaction: none; postcondition: all records unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-010",
+          "requirement": "A user may access and operate only actuators, rules, events, executions, and commands owned by that user; an admin may access all. Private routes deny by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /automation-rules/{rule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/automation-rules/{rule_id}",
+      "path_params": [
+        {
+          "name": "rule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "get_rule_by_id"
+        },
+        {
+          "controller_class": "RuleController",
+          "routine": "serialize_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "rule_id",
+          "model": "RuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /automation-rules/{rule_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the rule and ordered action definitions without persistent effects, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRule(request, rule_id):\n    // REQ-2-021; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF rule_id <= 0 OR absent THEN RETURN 404. IF user caller is not owner THEN RETURN 403. END IF\n    READ rule plus actions ordered by action.order; RETURN 200.\n    // Transaction: none; postcondition: persistent state unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health as a public endpoint without input or authorization; it shall report deterministic local persistence health without reading or changing domain data and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-2-011; Preconditions: none. Authorization: public. Transaction: none.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Postcondition: every persistent domain record is unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "PATCH /actuators/{actuator_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/actuators/{actuator_id}",
+      "path_params": [
+        {
+          "name": "actuator_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "patch_actuator"
+        },
+        {
+          "controller_class": "ActuatorController",
+          "routine": "serialize_actuator"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_actuator",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "actuator_id",
+          "model": "ActuatorModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /actuators/{actuator_id} as an admin-only endpoint accepting application/json with one or both of name and owner_id; it shall validate a non-empty patch and REQ-2-001, atomically update only supplied metadata without changing command history or rule relations, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchActuator(request, actuator_id):\n    // REQ-2-015; Preconditions: JSON and persistence available. REQUIRE admin or RETURN 401/403; REQUIRE JSON or RETURN 415.\n    IF actuator_id <= 0 OR absent THEN RETURN 404. Parse or RETURN 400; VALIDATE resulting non-empty patch and owner or RETURN 422.\n    BEGIN TRANSACTION; update supplied metadata only; COMMIT; RETURN 200.\n    // Identical valid patch is idempotent. On error rollback preserves actuator, rules, commands, events, executions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /actuators",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/actuators",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "create_actuator"
+        },
+        {
+          "controller_class": "ActuatorController",
+          "routine": "serialize_actuator"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_actuator",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /actuators as an admin-only endpoint accepting application/json owner_id, serial, name, type, and initial_value valid for the type; it shall validate REQ-2-001 and REQ-2-002, require a positive existing owner, reject duplicate serials, atomically create the actuator, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateActuator(request):\n    // REQ-2-013; Preconditions: JSON and persistence available. REQUIRE admin or RETURN 401/403.\n    REQUIRE application/json or RETURN 415; parse JSON or RETURN 400; VALIDATE REQ-2-001/-002 or RETURN 422.\n    IF owner_id <= 0 OR owner absent THEN RETURN 404. BEGIN TRANSACTION. IF serial exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE actuator with initial_value; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; errors roll back and leave all relations unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /actuators/{actuator_id}/commands",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/actuators/{actuator_id}/commands",
+      "path_params": [
+        {
+          "name": "actuator_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ActuatorController",
+          "routine": "create_manual_command"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CommandModel",
+          "table": "actuator_commands",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuator_commands",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_manual_command",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "actuator_id",
+          "model": "CommandModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /actuators/{actuator_id}/commands as an authenticated owner-or-admin endpoint accepting application/json value; it shall validate REQ-2-002, atomically create an immutable MANUAL APPLIED command and set current_value, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateManualCommand(request, actuator_id):\n    // REQ-2-017; Preconditions: JSON, positive actuator, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; VALIDATE value for type under REQ-2-002 or RETURN 422.\n    BEGIN TRANSACTION; CREATE MANUAL APPLIED command; update actuator.current_value; COMMIT; RETURN 201 with Location.\n    // REQ-2-008. Non-idempotent; rollback keeps actuator and command history unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-008",
+          "requirement": "Manual commands are immutable audit records with origin MANUAL and update the target actuator atomically; automation commands have origin RULE and reference one immutable execution."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /automation-events",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/automation-events",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AutomationEventController",
+          "routine": "create_and_evaluate_event"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CommandModel",
+          "table": "actuator_commands",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "EventModel",
+          "table": "automation_events",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "ExecutionModel",
+          "table": "automation_executions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuator_commands",
+        "automation_events",
+        "automation_executions",
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_and_evaluate_event",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /automation-events as an authenticated user-or-admin endpoint accepting application/json client_event_id, source_kind, value, and occurred_at; an admin may additionally provide owner_id while a user is always owner; it shall validate REQ-2-005, atomically persist a new event and process rules under REQ-2-006 and REQ-2-007, return the prior result idempotently for an identical duplicate event, return 201 with Location for a new event or 200 for a duplicate, and emit only 200, 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateAutomationEvent(request):\n    // REQ-2-026; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    RESOLVE authorized owner; VALIDATE event or RETURN 422. BEGIN TRANSACTION; lock owner event key.\n    IF same client_event_id exists with identical payload THEN COMMIT; RETURN 200 prior result. IF same key differs THEN ROLLBACK; RETURN 409. END IF\n    CREATE event; evaluate matching enabled rules id ascending; create APPLIED/SUPPRESSED executions and commands atomically; COMMIT; RETURN 201 Location.\n    // Errors roll back event, executions, commands, and actuator values together.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-005",
+          "requirement": "An automation event is immutable, has a client_event_id matching ^[A-Za-z0-9-]{8,64}$ unique per owner, a UTC occurred_at timestamp with second precision, and a numeric value within -50.0..5000.0."
+        },
+        {
+          "id": "REQ-2-006",
+          "requirement": "For an accepted event, enabled matching rules are evaluated in ascending rule id. A rule executes at most once per client_event_id and is suppressed when its last successful execution is fewer than cooldown_seconds before the event occurred_at."
+        },
+        {
+          "id": "REQ-2-007",
+          "requirement": "Creating an execution atomically creates ordered command records and updates each target actuator current_value to the action value; command and execution records are immutable audit history with outcome APPLIED or SUPPRESSED."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /automation-rules",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/automation-rules",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "create_rule"
+        },
+        {
+          "controller_class": "RuleController",
+          "routine": "serialize_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleActionModel",
+          "table": "rule_actions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "automation_rules",
+        "rule_actions",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /automation-rules as an authenticated user-or-admin endpoint accepting application/json name, source_kind, comparator, threshold, cooldown_seconds, and one to five ordered actions; an admin may additionally provide owner_id while a user is always owner; it shall validate REQ-2-003 and REQ-2-004, reject duplicate owner names, atomically create rule and action definitions, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRule(request):\n    // REQ-2-020; Preconditions: JSON and persistence available. REQUIRE authenticated caller or RETURN 401; REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    RESOLVE owner: caller for user, explicit existing positive owner for admin; reject forbidden owner choice with 403/404. VALIDATE rule/actions or RETURN 422.\n    BEGIN TRANSACTION; verify action actuators exist and same owner; if name duplicate ROLLBACK RETURN 409; CREATE rule/actions; COMMIT RETURN 201 Location.\n    // Non-idempotent. Rollback preserves all rules, actuators, commands, events, and executions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        },
+        {
+          "id": "REQ-2-004",
+          "requirement": "A rule has one to five actions targeting distinct existing actuators owned by the same user as the rule. Each action has order 1..5 and a command valid for its actuator under REQ-2-002."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /automation-rules/{rule_id}/disable",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/automation-rules/{rule_id}/disable",
+      "path_params": [
+        {
+          "name": "rule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "serialize_rule"
+        },
+        {
+          "controller_class": "RuleController",
+          "routine": "set_enabled"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "rule_id",
+          "model": "RuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /automation-rules/{rule_id}/disable as an authenticated owner-or-admin endpoint accepting no body; it shall atomically set enabled false, be idempotent when already disabled, preserve actions and audit relations, return 200, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDisableRule(request, rule_id):\n    // REQ-2-025; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF rule_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION; SET enabled = false; COMMIT; RETURN 200.\n    // Idempotent. Rollback preserves all rule relations; disabled rule will not execute under REQ-2-006.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-006",
+          "requirement": "For an accepted event, enabled matching rules are evaluated in ascending rule id. A rule executes at most once per client_event_id and is suppressed when its last successful execution is fewer than cooldown_seconds before the event occurred_at."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "POST /automation-rules/{rule_id}/enable",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/automation-rules/{rule_id}/enable",
+      "path_params": [
+        {
+          "name": "rule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "serialize_rule"
+        },
+        {
+          "controller_class": "RuleController",
+          "routine": "set_enabled"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "automation_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "rule_id",
+          "model": "RuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /automation-rules/{rule_id}/enable as an authenticated owner-or-admin endpoint accepting no body; it shall atomically set enabled true, be idempotent when already enabled, preserve actions and audit relations, return 200, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleEnableRule(request, rule_id):\n    // REQ-2-024; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF rule_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION; SET enabled = true; COMMIT; RETURN 200.\n    // Idempotent. On error rollback preserves rule, actions, commands, and executions.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-001",
+          "requirement": "An actuator has a unique positive id, an existing owner, a unique serial matching ^[A-Z0-9-]{6,32}$, a name of 1..80 characters, and type SWITCH, DIMMER, or THERMOSTAT."
+        },
+        {
+          "id": "REQ-2-002",
+          "requirement": "Legal actuator commands are SWITCH ON or OFF, DIMMER integer 0..100, and THERMOSTAT decimal 5.0..35.0 Celsius; a command value outside its type capability is invalid."
+        },
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "smart-home-rules-actuators",
+    "endpoint": "PUT /automation-rules/{rule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Smart home",
+      "variant": "Automation rules and actuators",
+      "summary": "Application domain: Smart home.\nBackend variant: Automation rules and actuators.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PUT",
+      "path": "/automation-rules/{rule_id}",
+      "path_params": [
+        {
+          "name": "rule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "RuleController",
+          "routine": "replace_rule"
+        },
+        {
+          "controller_class": "RuleController",
+          "routine": "serialize_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ActuatorModel",
+          "table": "actuators",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleActionModel",
+          "table": "rule_actions",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "RuleModel",
+          "table": "automation_rules",
+          "fields": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "actuators",
+        "automation_rules",
+        "rule_actions",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "rule_id",
+          "model": "RuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PUT /automation-rules/{rule_id} as an authenticated owner-or-admin endpoint accepting a complete application/json replacement of name, source_kind, comparator, threshold, cooldown_seconds, enabled, and actions; it shall validate REQ-2-003 and REQ-2-004, reject duplicate owner names, atomically replace only action definitions while retaining execution and command history, be idempotent for an identical valid representation, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReplaceRule(request, rule_id):\n    // REQ-2-022; Preconditions: JSON, positive existing rule, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; VALIDATE complete replacement and same-owner actuators or RETURN 422/404.\n    BEGIN TRANSACTION; if different rule has same owner/name ROLLBACK RETURN 409; REPLACE action definitions; update rule; COMMIT RETURN 200.\n    // Identical representation is idempotent. Rollback preserves prior definition and all audit relations.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-2-003",
+          "requirement": "An automation rule has an owner, a per-owner unique name of 3..80 characters, enabled boolean, source_kind TEMPERATURE, HUMIDITY, or MOTION, comparator GT, GTE, LT, LTE, or EQ, threshold in -50.0..5000.0, and cooldown_seconds 0..86400."
+        },
+        {
+          "id": "REQ-2-004",
+          "requirement": "A rule has one to five actions targeting distinct existing actuators owned by the same user as the rule. Each action has order 1..5 and a command valid for its actuator under REQ-2-002."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

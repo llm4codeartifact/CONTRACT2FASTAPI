@@ -1,0 +1,3891 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /exercises/{exercise_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/exercises/{exercise_id}",
+      "path_params": [
+        {
+          "name": "exercise_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "delete_exercise"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "plan_blocks",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_exercise",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "exercise_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /exercises/{exercise_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteExercise(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /plan-blocks/{planblock_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/plan-blocks/{planblock_id}",
+      "path_params": [
+        {
+          "name": "planblock_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "delete_block"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_block",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "planblock_id",
+          "model": "PlanBlockModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /plan-blocks/{planblock_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeletePlanBlock(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "DELETE /workout-plans/{workoutplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/workout-plans/{workoutplan_id}",
+      "path_params": [
+        {
+          "name": "workoutplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "delete_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "workoutplan_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteWorkoutPlan(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/exercises",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "category",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "list_exercises"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_exercises",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "category",
+          "alias": "category",
+          "model_field": "category",
+          "operator": "=="
+        },
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /exercises to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListExercise(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises/{exercise_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/exercises/{exercise_id}",
+      "path_params": [
+        {
+          "name": "exercise_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "get_exercise"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_exercise",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "exercise_id",
+          "model": "ExerciseModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /exercises/{exercise_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetExercise(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /exercises/{exercise_id}/plan-usages",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/exercises/{exercise_id}/plan-usages",
+      "path_params": [
+        {
+          "name": "exercise_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "get_plan_usages"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_plan_usages",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "exercise_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /exercises/{exercise_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleExerciseUsages(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /plan-blocks",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/plan-blocks",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "plan_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "exercise_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "list_blocks"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_blocks",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "plan_id",
+          "alias": "plan_id",
+          "model_field": "plan_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "exercise_id",
+          "alias": "exercise_id",
+          "model_field": "exercise_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /plan-blocks to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListPlanBlock(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /plan-blocks/{planblock_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/plan-blocks/{planblock_id}",
+      "path_params": [
+        {
+          "name": "planblock_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "get_block"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_block",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "planblock_id",
+          "model": "PlanBlockModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /plan-blocks/{planblock_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetPlanBlock(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/workout-plans",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "user_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "status",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "list_plans"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_plans",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "user_id",
+          "alias": "user_id",
+          "model_field": "user_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "status",
+          "alias": "status",
+          "model_field": "status",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /workout-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListWorkoutPlan(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans/{workoutplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/workout-plans/{workoutplan_id}",
+      "path_params": [
+        {
+          "name": "workoutplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "get_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "workoutplan_id",
+          "model": "WorkoutPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetWorkoutPlan(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "GET /workout-plans/{workoutplan_id}/configuration",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/workout-plans/{workoutplan_id}/configuration",
+      "path_params": [
+        {
+          "name": "workoutplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "get_configuration"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "plan_block_sets",
+        "plan_blocks",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_configuration",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "workoutplan_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id}/configuration to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePlanConfiguration(request):\n    // REQ-9-026; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /exercises/{exercise_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/exercises/{exercise_id}",
+      "path_params": [
+        {
+          "name": "exercise_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "patch_exercise"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_exercise",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "exercise_id",
+          "model": "ExerciseModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /exercises/{exercise_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchExercise(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /plan-blocks/{planblock_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/plan-blocks/{planblock_id}",
+      "path_params": [
+        {
+          "name": "planblock_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "patch_block"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_block",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "planblock_id",
+          "model": "PlanBlockModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /plan-blocks/{planblock_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchPlanBlock(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "PATCH /workout-plans/{workoutplan_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/workout-plans/{workoutplan_id}",
+      "path_params": [
+        {
+          "name": "workoutplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "patch_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "workoutplan_id",
+          "model": "WorkoutPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchWorkoutPlan(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /exercises",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/exercises",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ExerciseController",
+          "routine": "create_exercise"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_exercise",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /exercises to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateExercise(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /plan-blocks",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/plan-blocks",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "create_block"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ExerciseModel",
+          "table": "exercises",
+          "fields": [
+            "active",
+            "category",
+            "code",
+            "created_at",
+            "id",
+            "is_deleted",
+            "name",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "exercises",
+        "plan_block_sets",
+        "plan_blocks",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_block",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /plan-blocks to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreatePlanBlock(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /plan-blocks/{planblock_id}/move",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/plan-blocks/{planblock_id}/move",
+      "path_params": [
+        {
+          "name": "planblock_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PlanBlockController",
+          "routine": "move_block"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "move_block",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "planblock_id",
+          "model": "PlanBlockModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /plan-blocks/{planblock_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleMoveBlock(request):\n    // REQ-9-027; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /workout-plans",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/workout-plans",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "create_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /workout-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateWorkoutPlan(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "fitness-plans-exercises-configurations",
+    "endpoint": "POST /workout-plans/{workoutplan_id}/clone",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Fitness management",
+      "variant": "A: Workout plans, exercises, and nested configurations",
+      "summary": "Application domain: Fitness management.\nBackend variant: A: Workout plans, exercises, and nested configurations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/workout-plans/{workoutplan_id}/clone",
+      "path_params": [
+        {
+          "name": "workoutplan_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "WorkoutPlanController",
+          "routine": "clone_plan"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PlanBlockModel",
+          "table": "plan_blocks",
+          "fields": [
+            "created_at",
+            "exercise_id",
+            "id",
+            "notes",
+            "plan_id",
+            "position",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "exercise_id",
+              "target": "exercises.id"
+            },
+            {
+              "field": "plan_id",
+              "target": "workout_plans.id"
+            }
+          ]
+        },
+        {
+          "name": "PlanBlockSetModel",
+          "table": "plan_block_sets",
+          "fields": [
+            "block_id",
+            "id",
+            "reps",
+            "rest_seconds",
+            "set_number",
+            "target_load_kg"
+          ],
+          "foreign_keys": [
+            {
+              "field": "block_id",
+              "target": "plan_blocks.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "WorkoutPlanModel",
+          "table": "workout_plans",
+          "fields": [
+            "created_at",
+            "description",
+            "id",
+            "is_deleted",
+            "name",
+            "status",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "plan_block_sets",
+        "plan_blocks",
+        "users",
+        "workout_plans"
+      ],
+      "allowed_foreign_key_targets": [
+        "exercises.id",
+        "plan_blocks.id",
+        "users.id",
+        "workout_plans.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "clone_plan",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "workoutplan_id",
+          "model": "WorkoutPlanModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /workout-plans/{workoutplan_id}/clone to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleClonePlan(request):\n    // REQ-9-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-9-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+        },
+        {
+          "id": "REQ-9-002",
+          "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+        },
+        {
+          "id": "REQ-9-003",
+          "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

@@ -1,0 +1,370 @@
+[
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "DELETE /sensors/{sensor_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_sensor accepting db, current_user, sensor_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /sensors/{sensor_id} as an admin-only endpoint accepting a positive path id; it shall atomically delete a sensor only when it has no readings, policy, or alerts, shall not cascade-delete telemetry, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteSensor(request, sensor_id):\n    // REQ-2-016; Preconditions: available persistence. REQUIRE admin or RETURN 401/403.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. BEGIN TRANSACTION.\n    IF reading, policy, or alert exists THEN ROLLBACK; RETURN 409 under REQ-2-008. END IF\n    DELETE sensor; COMMIT; RETURN 204.\n    // A repeat returns 404. On error rollback preserves the sensor and every relation.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "DELETE /sensors/{sensor_id}/thresholds",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_threshold accepting db, current_user, sensor_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /sensors/{sensor_id}/thresholds as an authenticated owner-or-admin endpoint accepting a positive path id; it shall atomically delete only the active policy, retain all readings and alerts unchanged, be non-idempotent after success, return 204, and emit only 204, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteThreshold(request, sensor_id):\n    // REQ-2-020; Preconditions: available persistence. REQUIRE owner/admin or RETURN 401/403.\n    IF sensor_id <= 0 OR sensor/policy absent THEN RETURN 404. BEGIN TRANSACTION; DELETE policy only; COMMIT; RETURN 204.\n    // REQ-2-009 preserves alerts. Repeat is 404; errors roll back and preserve policy, sensor, readings, alerts.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /alerts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AlertListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_alerts accepting db, current_user, sensor_id, direction, resolved, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AlertModel. Declare fields or class attributes: __tablename__, created_at, direction, id, reading, reading_id, reading_value, resolved, sensor, sensor_id, threshold_lower, threshold_upper. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /alerts as an authenticated user-or-admin endpoint accepting optional sensor_id, direction enum BELOW or ABOVE, resolved boolean, limit, and after_id; it shall validate optional sensor existence and filters, restrict users to alerts derived from their sensors, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAlerts(request):\n    // REQ-2-026; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    VALIDATE filter enums and pagination or RETURN 422. IF sensor_id supplied and non-positive/absent THEN RETURN 404. END IF\n    IF user caller requests another owner's sensor THEN RETURN 403. READ matching owner-visible alerts; order by id and page; RETURN 200.\n    // Transaction: none. Postcondition: alerts and every related resource remain unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_health accepting db. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health as a public endpoint with no input or authorization, returning deterministic local persistence health without persistent effects; it shall emit only 200 or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-2-011; Preconditions: none. Authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Transaction: none. Postcondition: all persistent state is unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /readings/{reading_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReadingOut. Declare fields or class attributes: captured_at, created_at, id, model_config, sensor_id, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_reading accepting db, current_user, reading_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ReadingModel. Declare fields or class attributes: __table_args__, __tablename__, alerts, captured_at, created_at, id, sensor, sensor_id, value. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /readings/{reading_id} as an authenticated reading-owner-or-admin endpoint accepting a positive path id; it shall return the immutable reading after sensor ownership authorization, make no persistent changes, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetReading(request, reading_id):\n    // REQ-2-023; Preconditions: available persistence. REQUIRE authenticated caller or RETURN 401.\n    IF reading_id <= 0 OR reading absent THEN RETURN 404. IF user caller does not own reading.sensor THEN RETURN 403. END IF\n    RETURN 200 with immutable reading.\n    // Transaction: none. Postcondition: persistent state is unchanged under REQ-2-003.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SensorListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_sensors accepting db, current_user, sensor_type, serial_prefix, owner_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors as an authenticated user-or-admin endpoint accepting optional type enum, serial_prefix of 1..32 uppercase serial characters, owner_id for admins only, limit, and after_id; it shall apply exact type, normalized prefix, and owner filters, enforce REQ-2-010, use stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListSensors(request):\n    // REQ-2-012; Preconditions: local persistence is available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401.\n    VALIDATE filters, limit, and after_id; RETURN 422 if invalid. IF supplied owner_id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user AND owner_id names another user THEN RETURN 403. END IF\n    READ only caller-owned sensors for user, or filtered sensors for admin; order by id and page; RETURN 200.\n    // Transaction: none. Postcondition and all error paths leave sensors, readings, policies, and alerts unchanged; RETURN 500 or 503 only for local failures.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors/{sensor_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SensorDetailOut. Declare fields or class attributes: created_at, id, model_config, name, owner_id, serial, threshold_policy, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_sensor accepting db, current_user, sensor_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine build_sensor_detail accepting sensor. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors/{sensor_id} as an authenticated owner-or-admin endpoint accepting a positive path id; it shall authorize under REQ-2-010, return the sensor and current policy summary without modifying state, treat non-positive or absent ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetSensor(request, sensor_id):\n    // REQ-2-014; Preconditions: persistence is available. REQUIRE authenticated user or admin or RETURN 401.\n    IF sensor_id <= 0 OR sensor absent THEN RETURN 404. END IF\n    IF caller is user AND caller does not own sensor THEN RETURN 403. END IF\n    READ sensor and policy summary; RETURN 200.\n    // Transaction: none. Postcondition: persistent sensor, reading, policy, and alert state is unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors/{sensor_id}/latest",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReadingOut. Declare fields or class attributes: captured_at, created_at, id, model_config, sensor_id, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_latest_reading accepting db, current_user, sensor_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ReadingModel. Declare fields or class attributes: __table_args__, __tablename__, alerts, captured_at, created_at, id, sensor, sensor_id, value. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors/{sensor_id}/latest as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the most recent reading by captured_at then id or null when none exists, make no persistent changes, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetLatestReading(request, sensor_id):\n    // REQ-2-024; Preconditions: available persistence. REQUIRE owner/admin or RETURN 401/403.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. END IF\n    READ greatest captured_at, breaking ties by greatest id; RETURN 200 with reading or null.\n    // Transaction: none; postcondition: no persistent state changes.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors/{sensor_id}/range",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TelemetryRangeOut. Declare fields or class attributes: average, count, from_time, max, min, model_config, readings, sensor_id, to_time."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_range accepting db, current_user, sensor_id, from_time, to_time. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ReadingModel. Declare fields or class attributes: __table_args__, __tablename__, alerts, captured_at, created_at, id, sensor, sensor_id, value. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors/{sensor_id}/range as an authenticated owner-or-admin endpoint accepting a positive path id and required from and to UTC timestamps; it shall enforce REQ-2-007, return matching readings and deterministic minimum, maximum, average rounded to four decimal places, and count, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTelemetryRange(request, sensor_id):\n    // REQ-2-025; Preconditions: available persistence. REQUIRE owner/admin or RETURN 401/403.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. VALIDATE required UTC dates and interval under REQ-2-007 or RETURN 422.\n    READ readings in [from,to), calculate count/min/max/average deterministically; RETURN 200.\n    // Transaction: none. Postcondition: all persistent telemetry and alert state is unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors/{sensor_id}/readings",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReadingListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_readings accepting db, current_user, sensor_id, from_time, to_time, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ReadingModel. Declare fields or class attributes: __table_args__, __tablename__, alerts, captured_at, created_at, id, sensor, sensor_id, value. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors/{sensor_id}/readings as an authenticated owner-or-admin endpoint accepting a positive path id, optional from and to UTC timestamps, limit, and after_id; it shall apply inclusive from and exclusive to filters to captured_at, validate REQ-2-007 when both timestamps are supplied, use stable id pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListReadings(request, sensor_id):\n    // REQ-2-022; Preconditions: persistence available. REQUIRE owner/admin or RETURN 401/403.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. VALIDATE UTC filters, cursor, and limit; RETURN 422 if invalid.\n    IF both dates supplied THEN enforce REQ-2-007 or RETURN 422. END IF\n    READ owned readings matching from <= captured_at < to; order by id and page; RETURN 200.\n    // Transaction: none; postcondition: readings, policies, and alerts are unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "GET /sensors/{sensor_id}/thresholds",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ThresholdPolicyOut. Declare fields or class attributes: created_at, id, lower_bound, model_config, sensor_id, updated_at, upper_bound."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_threshold accepting db, current_user, sensor_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ThresholdPolicyModel. Declare fields or class attributes: __tablename__, created_at, id, lower_bound, sensor, sensor_id, updated_at, upper_bound. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /sensors/{sensor_id}/thresholds as an authenticated owner-or-admin endpoint accepting a positive path id; it shall return the optional active policy, make no persistent changes, treat non-positive or absent sensor ids as 404, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetThreshold(request, sensor_id):\n    // REQ-2-017; Preconditions: persistence available. REQUIRE authenticated caller or RETURN 401.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. IF user caller is not owner THEN RETURN 403. END IF\n    READ active policy, possibly null; RETURN 200.\n    // Transaction: none. Postcondition: all persistent state is unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "PATCH /sensors/{sensor_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SensorDetailOut. Declare fields or class attributes: created_at, id, model_config, name, owner_id, serial, threshold_policy, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_sensor accepting db, current_user, sensor_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine build_sensor_detail accepting sensor. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /sensors/{sensor_id} as an admin-only endpoint accepting application/json with one or both of name and owner_id; it shall validate the non-empty patch, REQ-2-001, and a positive existing owner_id, atomically update only supplied fields without transferring or deleting telemetry relations, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchSensor(request, sensor_id):\n    // REQ-2-015; Preconditions: JSON and available persistence. REQUIRE admin or RETURN 401/403; REQUIRE JSON media type or RETURN 415.\n    IF sensor_id <= 0 OR absent THEN RETURN 404. Parse JSON or RETURN 400; VALIDATE non-empty resulting patch and owner, or RETURN 422.\n    BEGIN TRANSACTION; APPLY supplied name/owner fields only; COMMIT; RETURN 200.\n    // Identical valid patch is idempotent. On error ROLLBACK; sensor and all telemetry relations remain unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "PATCH /sensors/{sensor_id}/thresholds",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ThresholdPolicyOut. Declare fields or class attributes: created_at, id, lower_bound, model_config, sensor_id, updated_at, upper_bound."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_threshold accepting db, current_user, sensor_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ThresholdPolicyModel. Declare fields or class attributes: __tablename__, created_at, id, lower_bound, sensor, sensor_id, updated_at, upper_bound. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose PATCH /sensors/{sensor_id}/thresholds as an authenticated owner-or-admin endpoint accepting application/json with at least one supplied lower_bound or upper_bound; it shall validate the complete resulting policy under REQ-2-005, atomically update only supplied bounds without rewriting alerts, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchThreshold(request, sensor_id):\n    // REQ-2-019; Preconditions: JSON, available persistence, existing sensor and policy. REQUIRE owner/admin or RETURN 401/403.\n    IF sensor_id <= 0 OR sensor/policy absent THEN RETURN 404. REQUIRE JSON or RETURN 415; parse or RETURN 400.\n    VALIDATE non-empty complete resulting bounds under REQ-2-005 or RETURN 422. BEGIN TRANSACTION; UPDATE bounds only; COMMIT; RETURN 200.\n    // Identical payload is idempotent. On rollback sensor, policy, readings, and immutable alerts stay unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "POST /sensors",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class SensorDetailOut. Declare fields or class attributes: created_at, id, model_config, name, owner_id, serial, threshold_policy, type."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_sensor accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n2. DEFINE routine build_sensor_detail accepting sensor. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class SensorModel. Declare fields or class attributes: __tablename__, alerts, created_at, id, name, owner, owner_id, readings, serial, threshold_policy, type. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /sensors as an admin-only endpoint accepting application/json owner_id, serial, name, and type; it shall validate REQ-2-001, require a positive existing owner_id, reject a duplicate serial, atomically create the sensor without derived relations, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateSensor(request):\n    // REQ-2-013; Preconditions: JSON body and available persistence.\n    REQUIRE authenticated admin or RETURN 401/403; REQUIRE application/json or RETURN 415; parse JSON or RETURN 400.\n    VALIDATE REQ-2-001; RETURN 422 if invalid. IF owner_id <= 0 OR owner absent THEN RETURN 404. END IF\n    BEGIN TRANSACTION. IF serial exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE sensor; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. On every error rollback; sensor, readings, policy, and alerts remain unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "POST /sensors/{sensor_id}/readings",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReadingOut. Declare fields or class attributes: captured_at, created_at, id, model_config, sensor_id, value."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_reading accepting db, current_user, sensor_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ReadingModel. Declare fields or class attributes: __table_args__, __tablename__, alerts, captured_at, created_at, id, sensor, sensor_id, value. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class AlertModel. Declare fields or class attributes: __tablename__, created_at, direction, id, reading, reading_id, reading_value, resolved, sensor, sensor_id, threshold_lower, threshold_upper. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /sensors/{sensor_id}/readings as an authenticated owner-or-admin endpoint accepting application/json value and captured_at; it shall validate the positive existing sensor, REQ-2-002 through REQ-2-006, reject a duplicate captured_at, atomically create one reading and any required alert, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateReading(request, sensor_id):\n    // REQ-2-021; Preconditions: JSON, positive existing sensor, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE JSON or RETURN 415; parse or RETURN 400; VALIDATE UTC timestamp and physical range or RETURN 422.\n    BEGIN TRANSACTION; lock sensor. IF captured_at already exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE immutable reading; evaluate policy; create exactly one alert if breached; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Any error rolls back reading and alert together, leaving all state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "smart-home-telemetry-range",
+    "endpoint": "POST /sensors/{sensor_id}/thresholds",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ThresholdPolicyOut. Declare fields or class attributes: created_at, id, lower_bound, model_config, sensor_id, updated_at, upper_bound."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_threshold accepting db, current_user, sensor_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, sensors, token, username. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n2. DEFINE class ThresholdPolicyModel. Declare fields or class attributes: __tablename__, created_at, id, lower_bound, sensor, sensor_id, updated_at, upper_bound. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /sensors/{sensor_id}/thresholds as an authenticated owner-or-admin endpoint accepting application/json lower_bound and/or upper_bound; it shall validate REQ-2-002 and REQ-2-005 against the sensor type, reject an existing policy, atomically create one policy, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Smart home.\nTelemetry and sensor ranges.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateThreshold(request, sensor_id):\n    // REQ-2-018; Preconditions: JSON, positive existing sensor, persistence available. REQUIRE owner/admin or RETURN 401/403.\n    REQUIRE application/json or RETURN 415; parse or RETURN 400; VALIDATE bounds under REQ-2-002/-005 or RETURN 422.\n    BEGIN TRANSACTION. IF policy exists THEN ROLLBACK; RETURN 409. END IF CREATE policy; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Errors roll back and leave sensor, readings, policy, and alerts unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

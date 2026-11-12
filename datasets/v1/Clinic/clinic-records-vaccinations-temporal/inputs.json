@@ -1,0 +1,416 @@
+[
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "DELETE /animals/{animal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_animal accepting db, current_user, animal_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at.\n3. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose DELETE /animals/{animal_id} to its client user or an admin, accepting a positive animal_id; it shall atomically soft-delete only an animal without clinical-record or vaccination references under REQ-3-008, be idempotent only insofar as a previously deleted id is 404, never cascade to medical data, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteAnimal(request, animal_id):\n    // REQ-3-016; preconditions: existing non-deleted authorized animal and persistence available.\n    REQUIRE authenticated animal client or admin OR RETURN 401 or 403. RETURN 404 for invalid or absent id.\n    BEGIN TRANSACTION; lock animal, clinical records, and vaccinations. IF any record or vaccination references animal THEN ROLLBACK; RETURN 409. END IF\n    MARK animal deleted; COMMIT; RETURN 204.\n    // REQ-3-008. Repeat is 404; failure rollback preserves animal and every clinical relation.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "DELETE /clinical-records/{record_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_record accepting db, current_user, record_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose DELETE /clinical-records/{record_id} to an admin, accepting a positive record_id; it shall atomically hard-delete only a DRAFT record under REQ-3-004, be idempotent only insofar as an absent id is 404, never alter the referenced animal or vaccinations, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteClinicalRecord(request, record_id):\n    // REQ-3-022; preconditions: existing record and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. RETURN 404 for non-positive or absent id.\n    BEGIN TRANSACTION; lock record. IF status is FINAL THEN ROLLBACK; RETURN 409. END IF DELETE DRAFT record only; preserve animal and vaccinations; COMMIT; RETURN 204.\n    // REQ-3-004. Repeat is 404; rollback leaves record and every relation unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /animals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_animals accepting db, current_user, species, active, client_account_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /animals to an authenticated user or admin, accepting optional species, active boolean, client_account_id permitted only to admins, limit, and after_id; it shall validate REQ-3-002 and REQ-3-010, restrict users to their own animals, return stable pages without persistent effects, and emit only 200, 400, 401, 403, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAnimals(request):\n    // REQ-3-012; preconditions: local persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE admin for client_account_id OR RETURN 403.\n    VALIDATE filters and ordinary-list pagination under REQ-3-002 and REQ-3-010 OR RETURN 400 or 422.\n    READ caller-owned animals for user or filtered animals for admin, ordered by id; RETURN 200 page. Transaction: none; all state remains unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /animals/{animal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalResponse. Declare fields or class attributes: active, client_account_id, created_at, id, model_config, name, species, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_animal accepting db, current_user, animal_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /animals/{animal_id} to its client user or an admin, accepting a positive animal_id; it shall enforce REQ-3-001 and REQ-3-002, return no deleted animal, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAnimal(request, animal_id):\n    // REQ-3-014; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. IF animal_id is non-positive, absent, or deleted THEN RETURN 404. END IF\n    REQUIRE caller owns animal or is admin under REQ-3-002 OR RETURN 403. RETURN 200 with animal.\n    // Transaction: none; postcondition: state unchanged and errors have no persistent effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /animals/{animal_id}/clinical-timeline",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalTimelineResponse. Declare fields or class attributes: items, limit, model_config, next_after_event_date, next_after_event_id, next_after_event_kind."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_clinical_timeline accepting db, current_user, animal_id, event_from, event_to, include_void, limit, after_event_date, after_event_kind, after_event_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at.\n3. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose GET /animals/{animal_id}/clinical-timeline to its client user or an admin, accepting a positive animal_id, optional event_from, event_to, include_void boolean permitted only to admins, limit 1..100 default 20, and optional three-part after_event_date, after_event_kind, after_event_id cursor; it shall validate REQ-3-001, REQ-3-007, REQ-3-009, and REQ-3-010, merge clinical records and vaccination events in the specified stable chronological order without persistent effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetClinicalTimeline(request, animal_id):\n    // REQ-3-028; preconditions: persistence available.\n    REQUIRE authenticated animal client or admin OR RETURN 401 or 403. RETURN 404 for invalid or absent animal. REQUIRE admin for include_void true OR RETURN 403.\n    VALIDATE inclusive event range, limit, and cursor where all three parts are supplied together and kind is RECORD or VACCINATION OR RETURN 400 or 422.\n    READ records plus allowed vaccination events, sort by event_date, RECORD before VACCINATION, then id; apply cursor and RETURN 200 with next composite cursor.\n    // Transaction: none; postcondition: all clinical records, vaccination rows, and relationships remain unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /animals/{animal_id}/vaccination-status",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VaccinationStatusResponse. Declare fields or class attributes: animal_id, as_of, model_config, statuses."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_vaccination_status accepting db, current_user, animal_id, as_of, requested_code. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose GET /animals/{animal_id}/vaccination-status to its client user or an admin, accepting a positive animal_id, required as_of date, and optional vaccine_code; it shall validate REQ-3-001, REQ-3-005, and REQ-3-009, compute CURRENT, EXPIRED, or NOT_RECORDED only from non-void events according to REQ-3-009, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetVaccinationStatus(request, animal_id):\n    // REQ-3-027; preconditions: persistence available and explicit as_of date.\n    REQUIRE authenticated animal client or admin OR RETURN 401 or 403. RETURN 404 for invalid or absent animal. VALIDATE as_of range and optional code enum OR RETURN 400 or 422.\n    READ non-void vaccinations for animal and compute each requested status under REQ-3-009 using as_of; RETURN 200.\n    // Transaction: none; postcondition: no vaccine, record, or animal is altered by computation or errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /clinical-records",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalRecordListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_records accepting db, current_user, animal_id, record_type, record_status, occurred_from, occurred_to, diagnosis_code_prefix, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /clinical-records to an authenticated user or admin, accepting optional positive animal_id, record_type, status, occurred_from, occurred_to, diagnosis_code_prefix of 1..20 uppercase characters, limit, and after_id; it shall validate REQ-3-001, REQ-3-003, REQ-3-009, and REQ-3-010, use inclusive occurred_on filters, restrict a user to that user's animals, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListClinicalRecords(request):\n    // REQ-3-017; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. VALIDATE ids, enums, code prefix, inclusive date range, and pagination OR RETURN 400 or 422.\n    RETURN 404 for an unknown supplied animal. READ matching records for caller-owned animals when user, otherwise all matching records, ordered by id; RETURN 200 page.\n    // Transaction: none; postcondition: clinical records, vaccinations, and animals are unchanged on success and errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /clinical-records/{record_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalRecordResponse. Declare fields or class attributes: animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, model_config, occurred_on, record_type, status, summary, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_record accepting db, current_user, record_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose GET /clinical-records/{record_id} to the record animal's client user or an admin, accepting a positive record_id; it shall enforce REQ-3-001 and REQ-3-002, return the clinical record without persistent effects, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetClinicalRecord(request, record_id):\n    // REQ-3-019; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. RETURN 404 for non-positive or absent record. REQUIRE caller owns referenced animal or is admin OR RETURN 403.\n    RETURN 200 with record. Transaction: none; postcondition: all persistent state unchanged on any result.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall probe only local persistence, return deterministic service status, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-3-011; preconditions: none.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200 with status ok.\n    // Authorization: public. Transaction: none. Postcondition: persistent state remains unchanged; failure has no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /vaccinations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VaccinationListResponse. Declare fields or class attributes: items, limit, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_vaccinations accepting db, current_user, animal_id, vaccine_code, administered_from, administered_to, expires_from, expires_to, include_void, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose GET /vaccinations to an authenticated user or admin, accepting optional positive animal_id, vaccine_code, administered_from, administered_to, expires_from, expires_to, include_void boolean permitted only to admins, limit, and after_id; it shall validate REQ-3-001, REQ-3-005, REQ-3-007, REQ-3-009, and REQ-3-010, use inclusive date filters, restrict a user to that user's animals and non-void rows, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListVaccinations(request):\n    // REQ-3-023; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE admin for include_void true OR RETURN 403. VALIDATE positive ids, vaccine enum, both inclusive date pairs, and pagination OR RETURN 400 or 422.\n    RETURN 404 for unknown supplied animal. READ matching non-void caller-owned rows for user or requested admin rows, ordered by id; RETURN 200 page.\n    // Transaction: none; all vaccination and clinical state stays unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "GET /vaccinations/{vaccination_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VaccinationResponse. Declare fields or class attributes: administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, model_config, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_vaccination accepting db, current_user, vaccination_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose GET /vaccinations/{vaccination_id} to the vaccination animal's client user or an admin, accepting a positive vaccination_id; it shall enforce REQ-3-001 and REQ-3-002, return the retained event including void metadata when applicable, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetVaccination(request, vaccination_id):\n    // REQ-3-025; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. RETURN 404 for non-positive or absent id. REQUIRE caller owns referenced animal or is admin OR RETURN 403.\n    RETURN 200 with immutable vaccination event. Transaction: none; postcondition: persistent state remains unchanged even on error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "PATCH /animals/{animal_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalResponse. Declare fields or class attributes: active, client_account_id, created_at, id, model_config, name, species, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_animal accepting db, current_user, animal_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose PATCH /animals/{animal_id} to its client user or an admin, accepting a positive animal_id and JSON name, species, or active; it shall require application/json, validate the resulting animal under REQ-3-002, atomically update only supplied fields without changing clinical relations, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchAnimal(request, animal_id):\n    // REQ-3-015; preconditions: JSON request, existing non-deleted animal, and persistence available.\n    REQUIRE authenticated animal client or admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE nonempty partial result under REQ-3-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; UPDATE supplied fields only; preserve clinical records and vaccinations; COMMIT; RETURN 200.\n    // Identical valid payload is idempotent. Any persistence error rolls back and leaves all relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "PATCH /clinical-records/{record_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalRecordResponse. Declare fields or class attributes: animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, model_config, occurred_on, record_type, status, summary, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_record accepting db, current_user, record_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose PATCH /clinical-records/{record_id} to an admin, accepting a positive record_id and JSON record_type, occurred_on, summary, or diagnosis_code; it shall require application/json, permit only DRAFT records, validate the resulting record under REQ-3-003, atomically update only supplied fields, be idempotent for an identical valid payload, retain the same animal relation, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchClinicalRecord(request, record_id):\n    // REQ-3-020; preconditions: JSON request, existing record, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415.\n    BEGIN TRANSACTION; lock record. IF record status is FINAL THEN ROLLBACK; RETURN 409. END IF VALIDATE nonempty partial result under REQ-3-003 OR ROLLBACK; RETURN 400 or 422.\n    UPDATE supplied fields only; preserve animal relation; COMMIT; RETURN 200.\n    // REQ-3-004. Identical valid payload is idempotent; rollback preserves clinical history.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "POST /animals",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AnimalResponse. Declare fields or class attributes: active, client_account_id, created_at, id, model_config, name, species, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_animal accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /animals to an authenticated user or admin, accepting JSON name, species, optional active default true, and optional positive client_account_id permitted only to admins; it shall require application/json, validate REQ-3-001 and REQ-3-002, require a supplied client_account_id to identify an existing account, map a user-created animal to the caller account, atomically create it, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateAnimal(request):\n    // REQ-3-013; preconditions: JSON request and local persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401. REQUIRE application/json OR RETURN 415. VALIDATE REQ-3-001 and REQ-3-002 OR RETURN 400 or 422.\n    REQUIRE admin when assigning a different client account OR RETURN 403; unknown supplied client_account_id is 404. BEGIN TRANSACTION; CREATE animal for permitted account; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. On any error rollback leaves animals and future clinical relationships unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "POST /animals/{animal_id}/clinical-records",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalRecordResponse. Declare fields or class attributes: animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, model_config, occurred_on, record_type, status, summary, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_record accepting db, current_user, animal_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /animals/{animal_id}/clinical-records to an admin, accepting a positive animal_id and JSON record_type, occurred_on, summary, and optional diagnosis_code; it shall require application/json, validate REQ-3-001 and REQ-3-003, atomically create a DRAFT record for a non-deleted animal, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateClinicalRecord(request, animal_id):\n    // REQ-3-018; preconditions: JSON request, positive non-deleted animal, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. RETURN 404 for invalid or absent animal.\n    VALIDATE clinical body under REQ-3-001 and REQ-3-003 OR RETURN 400 or 422. BEGIN TRANSACTION; CREATE DRAFT clinical record linked to animal; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Any error rolls back and leaves animal and existing clinical history unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "POST /animals/{animal_id}/vaccinations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VaccinationResponse. Declare fields or class attributes: administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, model_config, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_vaccination accepting db, current_user, animal_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class AnimalModel. Declare fields or class attributes: __tablename__, active, client_account_id, created_at, id, is_deleted, name, species, updated_at.\n3. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose POST /animals/{animal_id}/vaccinations to an admin, accepting a positive animal_id and JSON vaccine_code, vaccine_name, administered_on, expires_on, and batch_number; it shall require application/json, validate REQ-3-001 and REQ-3-005 through REQ-3-006, atomically create an immutable non-void vaccination for a non-deleted animal, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateVaccination(request, animal_id):\n    // REQ-3-024; preconditions: JSON request, positive non-deleted animal, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. RETURN 404 for invalid or absent animal. VALIDATE REQ-3-001 and REQ-3-005 body OR RETURN 400 or 422.\n    BEGIN TRANSACTION. IF non-void animal, code, administered_on tuple exists THEN ROLLBACK; RETURN 409. END IF CREATE vaccination; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Errors rollback and preserve the animal and all vaccination history.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "POST /clinical-records/{record_id}/finalize",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ClinicalRecordResponse. Declare fields or class attributes: animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, model_config, occurred_on, record_type, status, summary, updated_at."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine finalize_record accepting db, current_user, record_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ClinicalRecordModel. Declare fields or class attributes: __tablename__, animal_id, created_at, diagnosis_code, finalized_at, finalized_by, id, occurred_on, record_type, status, summary, updated_at."
+    },
+    "formal_requirement": "The system shall expose POST /clinical-records/{record_id}/finalize to an admin, accepting a positive record_id and JSON finalized_at; it shall require application/json, validate REQ-3-001, allow only a DRAFT record to transition to FINAL, atomically set finalized_at and finalized_by and preserve the animal relation, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleFinalizeClinicalRecord(request, record_id):\n    // REQ-3-021; preconditions: JSON request, existing DRAFT record, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE finalized_at under REQ-3-001 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock record. IF status is not DRAFT THEN ROLLBACK; RETURN 409. END IF SET status FINAL, finalized_at, and finalized_by caller; COMMIT; RETURN 200.\n    // REQ-3-004. Non-idempotent; rollback keeps the draft and all medical relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "clinic-records-vaccinations-temporal",
+    "endpoint": "POST /vaccinations/{vaccination_id}/void",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VaccinationResponse. Declare fields or class attributes: administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, model_config, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine void_vaccination accepting db, current_user, vaccination_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VaccinationModel. Declare fields or class attributes: __tablename__, administered_on, animal_id, batch_number, created_at, expires_on, id, is_void, vaccine_code, vaccine_name, void_reason, voided_by, voided_on."
+    },
+    "formal_requirement": "The system shall expose POST /vaccinations/{vaccination_id}/void to an admin, accepting a positive vaccination_id and JSON voided_on plus void_reason; it shall require application/json, validate REQ-3-001 and REQ-3-007, atomically mark a non-void event void while retaining its animal relation and clinical facts, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Veterinary clinic.\nC: Clinical records, vaccinations, and temporal filters.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleVoidVaccination(request, vaccination_id):\n    // REQ-3-026; preconditions: JSON request, existing non-void vaccination, and persistence available.\n    REQUIRE authenticated admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE void data under REQ-3-001 and REQ-3-007 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock vaccination. IF already void or voided_on precedes administered_on THEN ROLLBACK; RETURN 409. END IF RECORD void fields and caller; COMMIT; RETURN 200.\n    // REQ-3-006 and REQ-3-007. Non-idempotent; rollback leaves event, status calculations, and animal relation unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

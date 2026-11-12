@@ -1,0 +1,278 @@
+[
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall return deterministic local service status without persistent effects and shall emit only 200 or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-fleet-maintenance-planning-v1-011; preconditions: none.\n    IF local persistence unavailable THEN RETURN 503. END IF\n    RETURN 200 with status = ok. // No authorization, transaction, or state change.",
+      "generated_by": "gpt-5-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /maintenances",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_maintenances accepting db, current_user, vehicle_id, status, type_val, from_dt, to_dt, include_cancelled, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, current_state, id, license_plate, maintenances, manufacturer, model, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /maintenances as an authenticated endpoint accepting optional vehicle_id, status, type, from, to, include_cancelled boolean default true, limit, and after_id; it shall validate ids, enums, UTC range, boolean, and pagination, restrict users to owned records while admins view all, persist no changes, and emit only 200, 400, 401, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListMaintenances(request):\n    // REQ-fleet-maintenance-planning-v1-013; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. VALIDATE filters or RETURN 422/400.\n    IF supplied vehicle id is non-positive or absent THEN RETURN 404. END IF\n    READ matching records after cursor; users require requester_id = caller.id under REQ-fleet-maintenance-planning-v1-008.\n    RETURN 200 with stable page. // Transaction none; state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /maintenances/{maintenance_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_maintenance_by_id accepting db, current_user, maintenance_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /maintenances/{maintenance_id} as an authenticated endpoint accepting a positive id; it shall return a maintenance only to its requester or an admin, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 403, 404, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-015; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF\n    RETURN 200. // Transaction none; persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /maintenances/{maintenance_id}/history",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceHistoryListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_history accepting db, current_user, maintenance_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceHistoryEventModel. Declare fields or class attributes: __tablename__, actor, actor_id, effective_at, id, maintenance, maintenance_id, new_status, previous_status, reason. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /maintenances/{maintenance_id}/history as an authenticated endpoint accepting a positive id, limit, and after_id; it shall return immutable status history only to requester or admin using stable ascending event-id pagination, persist no changes, and emit only 200, 401, 403, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetMaintenanceHistory(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-020; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF id <= 0 OR absent THEN RETURN 404.\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF VALIDATE cursor or RETURN 422.\n    READ immutable history after cursor ordered ascending; RETURN 200 with page.\n    // REQ-fleet-maintenance-planning-v1-007; transaction none and persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /vehicles",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class VehicleListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_vehicles accepting db, active, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, current_state, id, license_plate, maintenances, manufacturer, model, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /vehicles as an admin-only endpoint accepting optional active boolean, limit, and after_id; it shall validate inputs, use stable pagination, persist no changes, and emit only 200, 401, 403, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListVehicles(request):\n    // REQ-fleet-maintenance-planning-v1-012; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. VALIDATE boolean and pagination or RETURN 422.\n    READ matching vehicles after cursor ordered by id; RETURN 200 with page.\n    // Transaction none; postcondition persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /vehicles/{vehicle_id}/maintenance-availability",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine check_maintenance_availability accepting db, vehicle_id, planned_start, planned_end, exclude_maintenance_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/maintenance-availability as an authenticated user or admin endpoint accepting a positive vehicle id, planned_start, planned_end, optional exclude_maintenance_id, limit, and after_id; it shall validate UTC interval and pagination, return overlapping active maintenance records without persistent effects, and emit only 200, 400, 401, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleMaintenanceAvailability(request, vehicle_id):\n    // REQ-fleet-maintenance-planning-v1-022; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclusion id, and pagination or RETURN 422/400.\n    READ SCHEDULED/IN_PROGRESS records overlapping interval under REQ-fleet-maintenance-planning-v1-004; paginate by id.\n    RETURN 200. // Transaction none; postcondition persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "GET /vehicles/{vehicle_id}/maintenance-history",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_vehicle_maintenance_history accepting db, vehicle_id, status, type_val, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/maintenance-history as an admin-only endpoint accepting a positive vehicle id, optional status and type, limit, and after_id; it shall validate inputs, return every maintenance including cancelled and completed records in stable order, persist no changes, and emit only 200, 401, 403, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetVehicleMaintenanceHistory(request, vehicle_id):\n    // REQ-fleet-maintenance-planning-v1-021; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE enum filters and cursor or RETURN 422.\n    READ all matching vehicle maintenance, including terminal records, ordered by id; RETURN 200 with stable page.\n    // REQ-fleet-maintenance-planning-v1-006/-009; transaction none and state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "PATCH /maintenances/{maintenance_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_maintenance accepting db, current_user, maintenance_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /maintenances/{maintenance_id} as an authenticated endpoint accepting JSON title, description, planned_start, or planned_end; it shall permit only requester or admin to change SCHEDULED maintenance, validate resulting values under REQ-fleet-maintenance-planning-v1-002, REQ-fleet-maintenance-planning-v1-004, and REQ-fleet-maintenance-planning-v1-010, atomically update it, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-016; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. IF status != SCHEDULED THEN RETURN 409.\n    VALIDATE resulting fields or RETURN 422/400. BEGIN TRANSACTION; lock intervals.\n    IF overlap THEN ROLLBACK; RETURN 409. END IF UPDATE record; COMMIT; RETURN 200.\n    // Idempotent for same valid payload; rollback preserves maintenance, history, and vehicle.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "POST /maintenances",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceCreateRequest. Declare fields or class attributes: description, model_config, planned_end, planned_start, title, type, vehicle_id.\n2. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_maintenance accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships.\n3. DEFINE class MaintenanceHistoryEventModel. Declare fields or class attributes: __tablename__, actor, actor_id, effective_at, id, maintenance, maintenance_id, new_status, previous_status, reason. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /maintenances as an authenticated user or admin endpoint accepting JSON vehicle_id, type, title, optional description, planned_start, and planned_end; it shall validate REQ-fleet-maintenance-planning-v1-002, REQ-fleet-maintenance-planning-v1-004, and REQ-fleet-maintenance-planning-v1-010, assign the caller as requester, atomically create a SCHEDULED record and its first history event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateMaintenance(request):\n    // REQ-fleet-maintenance-planning-v1-014; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    VALIDATE body or RETURN 422/400. IF vehicle id <= 0 OR absent THEN RETURN 404. END IF\n    BEGIN TRANSACTION; lock vehicle active intervals. IF overlap exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE SCHEDULED maintenance and SCHEDULED history event with caller actor; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves record, history, and vehicle unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "POST /maintenances/{maintenance_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceCancelRequest. Declare fields or class attributes: cancellation_reason, cancelled_at, model_config, next_vehicle_state.\n2. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine cancel_maintenance accepting db, current_user, maintenance_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships.\n3. DEFINE class MaintenanceHistoryEventModel. Declare fields or class attributes: __tablename__, actor, actor_id, effective_at, id, maintenance, maintenance_id, new_status, previous_status, reason. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/cancel as an authenticated endpoint accepting JSON cancelled_at, cancellation_reason of 3..500 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE only for IN_PROGRESS maintenance; it shall permit requester or admin to cancel SCHEDULED or IN_PROGRESS maintenance, atomically append CANCELLED history and conditionally update vehicle state, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-019; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE body under REQ-fleet-maintenance-planning-v1-006/-010 or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, and active set. IF status terminal THEN ROLLBACK; RETURN 409. END IF\n    CANCEL record and append history; if it was IN_PROGRESS and last active then update vehicle state; COMMIT; RETURN 200.\n    // Non-idempotent. Rollback keeps cancellation history, maintenance, and state unchanged on error.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "POST /maintenances/{maintenance_id}/complete",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceCompleteRequest. Declare fields or class attributes: actual_end, completion_notes, model_config, next_vehicle_state.\n2. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine complete_maintenance accepting db, current_user, maintenance_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships.\n3. DEFINE class MaintenanceHistoryEventModel. Declare fields or class attributes: __tablename__, actor, actor_id, effective_at, id, maintenance, maintenance_id, new_status, previous_status, reason. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/complete as an authenticated endpoint accepting JSON actual_end, completion_notes of 1..2000 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE; it shall permit requester or admin to complete only IN_PROGRESS maintenance, atomically append COMPLETED history and conditionally update vehicle state, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCompleteMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-018; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, and active maintenance set.\n    IF not IN_PROGRESS OR actual_end before actual_start THEN ROLLBACK; RETURN 409. END IF\n    COMPLETE record and append history; if last active record then update vehicle state; COMMIT; RETURN 200.\n    // REQ-fleet-maintenance-planning-v1-003, -005, -007, -010; non-idempotent; rollback preserves relations.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-maintenance-planning",
+    "endpoint": "POST /maintenances/{maintenance_id}/start",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MaintenanceStartRequest. Declare fields or class attributes: actual_start, model_config.\n2. DEFINE class MaintenanceResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, id, model_config, planned_end, planned_start, requester_id, status, title, type, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine start_maintenance accepting db, current_user, maintenance_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_maintenance accepting m. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MaintenanceModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, completion_notes, description, history_events, id, planned_end, planned_start, requester, requester_id, status, title, type, vehicle, vehicle_id. Maintain the declared ORM relationships.\n3. DEFINE class MaintenanceHistoryEventModel. Declare fields or class attributes: __tablename__, actor, actor_id, effective_at, id, maintenance, maintenance_id, new_status, previous_status, reason. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/start as an authenticated endpoint accepting a positive id and JSON actual_start; it shall permit requester or admin to start only SCHEDULED maintenance at or after planned_start when the vehicle is MAINTENANCE, atomically create an IN_PROGRESS history event and update status, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nMaintenance planning, cancellation, and history.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleStartMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-017; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE actual_start or RETURN 422/400.\n    BEGIN TRANSACTION; lock maintenance and vehicle.\n    IF not SCHEDULED, time before plan, or vehicle state != MAINTENANCE THEN ROLLBACK; RETURN 409. END IF\n    SET IN_PROGRESS and append history event; COMMIT; RETURN 200.\n    // REQ-fleet-maintenance-planning-v1-003, -005, -007; non-idempotent and errors roll back all relations.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  }
+]

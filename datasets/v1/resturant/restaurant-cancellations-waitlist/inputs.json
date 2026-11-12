@@ -1,0 +1,393 @@
+[
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "DELETE /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /tables/{table_id} to an admin, accepting a positive table_id; it shall atomically soft-delete only a table without reservation references under REQ-4-008, be idempotent only insofar as an absent id is 404, not cascade to history, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteTable(request, table_id):\n    // REQ-4-016; preconditions: existing table and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF reservation references table THEN ROLLBACK; RETURN 409. END IF MARK deleted; COMMIT; RETURN 204.\n    // REQ-4-008; repeat is 404 and rollback preserves all state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "DELETE /waitlist/{waitlist_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine cancel_waitlist_entry accepting db, current_user, waitlist_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose DELETE /waitlist/{waitlist_id} to its creator user or an admin, accepting a positive waitlist_id; it shall atomically mark a WAITING or OFFERED entry CANCELLED, release an OFFERED hold, retain historical data, be non-idempotent, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelWaitlistEntry(request, waitlist_id):\n    // REQ-4-024; preconditions: existing WAITING or OFFERED entry and persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF terminal entry THEN ROLLBACK; RETURN 409. END IF SET CANCELLED and release hold; COMMIT; RETURN 204.\n    // REQ-4-005 and REQ-4-010; non-idempotent, rollback preserves capacity and history.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /availability",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableAvailabilityOut. Declare fields or class attributes: available_seats, code, model_config, seats, table_id, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_availability accepting db, start_at, end_at, party_size, zone. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, offered_waitlist_entries, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /availability to an authenticated user or admin, accepting start_at, end_at, party_size 1..20, and optional zone; it shall validate REQ-4-001 through REQ-4-004 and REQ-4-009, return matching tables and remaining seats without creating a hold, make no persistent change, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetAvailability(request):\n    // REQ-4-027; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE interval, party size, and zone OR RETURN 400 or 422.\n    READ active tables and current BOOKED/OFFERED demand; RETURN 200 candidates under REQ-4-004. Transaction: none; postcondition: no capacity hold exists and errors change nothing.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_health accepting db. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization, probe only local persistence, make no persistent change, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-4-011; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: persistent state unchanged; error has no effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /reservations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_reservations accepting db, current_user, table_id, res_status, from_time, to_time, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /reservations to an authenticated user or admin, accepting optional positive table_id, status in BOOKED or CANCELLED, from, to, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, ordered half-open time filters, and REQ-4-010, restrict users to their rows, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListReservations(request):\n    // REQ-4-017; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422; unknown table is 404.\n    READ matching rows by id, restricted to creator for user; RETURN 200 page. Transaction: none; state unchanged on all outcomes.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /reservations/{reservation_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, created_at, end_at, guest_name, id, model_config, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_reservation accepting db, current_user, reservation_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /reservations/{reservation_id} to its creator user or an admin, accepting a positive reservation_id; it shall enforce REQ-4-001 and REQ-4-008, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetReservation(request, reservation_id):\n    // REQ-4-019; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid or absent id; REQUIRE creator or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: persistent state unchanged even after errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_tables accepting db, zone, min_seats, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, offered_waitlist_entries, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables to an authenticated user or admin, accepting optional zone, min_seats 1..20, active boolean, limit, and after_id; it shall validate REQ-4-002 and REQ-4-010, return stable non-deleted rows without effects, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTables(request):\n    // REQ-4-012; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422.\n    READ matching tables by id; RETURN 200 page. Transaction: none; postcondition and errors leave state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_table accepting db, table_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, offered_waitlist_entries, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /tables/{table_id} to an authenticated user or admin, accepting a positive table_id; it shall apply REQ-4-001, make no persistent change, and emit only 200, 401, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTable(request, table_id):\n    // REQ-4-014; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; IF invalid, absent, or deleted id THEN RETURN 404. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors preserve all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /waitlist",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WaitlistListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_waitlist accepting db, current_user, wait_status, from_time, to_time, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /waitlist to an authenticated user or admin, accepting optional status, from, to, limit, and after_id; it shall validate REQ-4-001, REQ-4-005, ordered interval filters, and REQ-4-010, restrict users to caller-created entries, make no persistent change, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListWaitlist(request):\n    // REQ-4-021; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE enum, range, and pagination OR RETURN 400 or 422.\n    READ matching entries by id, restricted to creator for user; RETURN 200 page. Transaction: none; postcondition: wait order and persistent state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "GET /waitlist/{waitlist_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WaitlistOut. Declare fields or class attributes: accepted_at, created_at, end_at, guest_name, held_table_id, id, model_config, offer_expires_at, party_size, start_at, status, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_waitlist_entry accepting db, current_user, waitlist_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /waitlist/{waitlist_id} to its creator user or an admin, accepting a positive waitlist_id; it shall enforce REQ-4-001 and REQ-4-008, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetWaitlistEntry(request, waitlist_id):\n    // REQ-4-023; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid or absent id; REQUIRE creator or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: state unchanged on all errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "PATCH /tables/{table_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_table accepting db, table_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, offered_waitlist_entries, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships.\n4. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /tables/{table_id} to an admin, accepting a positive table_id and JSON code, seats, zone, or active; it shall require application/json, validate the resulting REQ-4-002 and REQ-4-004 capacity, atomically update supplied fields, be idempotent for an identical valid payload, preserve reservations and waitlist holds, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTable(request, table_id):\n    // REQ-4-015; preconditions: existing table, JSON, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF duplicate code, deactivation with holds, or new seats below active demand THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Identical payload idempotent; rollback keeps capacity relations unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /reservations",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, created_at, end_at, guest_name, id, model_config, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_reservation accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations to an authenticated user or admin, accepting JSON positive table_id, guest_name, party_size, start_at, and end_at; it shall require application/json, validate REQ-4-001 through REQ-4-004, atomically create a BOOKED reservation only when capacity remains, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateReservation(request):\n    // REQ-4-018; preconditions: JSON, active table, persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE request OR RETURN 400 or 422; missing table is 404.\n    BEGIN TRANSACTION; lock table and interval; IF REQ-4-004 capacity fails THEN ROLLBACK; RETURN 409. END IF CREATE BOOKED caller-owned row; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves availability and waitlist state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /reservations/{reservation_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, created_at, end_at, guest_name, id, model_config, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine cancel_reservation accepting db, current_user, reservation_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships.\n3. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/cancel to its creator user or an admin, accepting a positive reservation_id and JSON cancelled_at, cancellation_reason, and offer_expires_at; it shall require application/json, validate REQ-4-001, REQ-4-004, and REQ-4-006, atomically cancel BOOKED status and offer the released table capacity to the first fitting WAITING entry, be non-idempotent, retain reservation history, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelReservation(request, reservation_id):\n    // REQ-4-020; preconditions: JSON, existing BOOKED reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE cancellation and later offer expiry OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock table, reservation, matching waitlist, and interval; IF not BOOKED THEN ROLLBACK; RETURN 409. END IF CANCEL reservation; OFFER lowest-id fitting WAITING entry on this table and store held_table_id if any; COMMIT; RETURN 200.\n    // REQ-4-006; non-idempotent; rollback preserves cancellation, waitlist, and capacity state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /tables",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TableOut. Declare fields or class attributes: active, code, id, model_config, seats, zone."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_table accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TableModel. Declare fields or class attributes: __tablename__, active, code, id, is_deleted, offered_waitlist_entries, reservations, seats, zone. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /tables to an admin, accepting JSON code, seats, zone, and optional active default true; it shall require application/json, validate REQ-4-002, atomically create a unique table, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTable(request):\n    // REQ-4-013; preconditions: JSON and local persistence.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF code exists THEN ROLLBACK; RETURN 409. END IF CREATE table; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves reservations and waitlist relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /waitlist",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WaitlistOut. Declare fields or class attributes: accepted_at, created_at, end_at, guest_name, held_table_id, id, model_config, offer_expires_at, party_size, start_at, status, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_waitlist_entry accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /waitlist to an authenticated user or admin, accepting JSON guest_name, party_size, start_at, and end_at; it shall require application/json, validate REQ-4-001, REQ-4-003, and REQ-4-005, atomically create a WAITING entry owned by the caller without holding capacity, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateWaitlistEntry(request):\n    // REQ-4-022; preconditions: JSON and persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE request OR RETURN 400 or 422.\n    BEGIN TRANSACTION; CREATE WAITING entry with caller; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves order and all availability relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /waitlist/{waitlist_id}/accept",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ReservationOut. Declare fields or class attributes: cancellation_reason, cancelled_at, cancelled_by_user_id, created_at, end_at, guest_name, id, model_config, party_size, start_at, status, table_id, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine accept_waitlist_entry accepting db, current_user, waitlist_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ReservationModel. Declare fields or class attributes: __tablename__, cancellation_reason, cancelled_at, cancelled_by_user, cancelled_by_user_id, created_at, end_at, guest_name, id, party_size, start_at, status, table, table_id, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /waitlist/{waitlist_id}/accept to its creator user or an admin, accepting a positive waitlist_id and JSON accepted_at; it shall require application/json, validate REQ-4-001, REQ-4-002, REQ-4-004, and REQ-4-007, atomically turn a valid OFFERED entry into one BOOKED reservation on its held_table_id, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleAcceptWaitlistEntry(request, waitlist_id):\n    // REQ-4-025; preconditions: JSON, existing OFFERED entry with held table, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE accepted_at OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock entry, held table, and interval; IF not OFFERED, expiry passed, held table absent, or capacity fails THEN ROLLBACK; RETURN 409 or 404. END IF CREATE BOOKED reservation on held table; SET ACCEPTED; COMMIT; RETURN 201 with Location.\n    // REQ-4-007; non-idempotent and rollback preserves hold and all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "restaurant-cancellations-waitlist",
+    "endpoint": "POST /waitlist/{waitlist_id}/expire",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class WaitlistOut. Declare fields or class attributes: accepted_at, created_at, end_at, guest_name, held_table_id, id, model_config, offer_expires_at, party_size, start_at, status, user_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine expire_waitlist_entry accepting db, current_user, waitlist_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class WaitlistModel. Declare fields or class attributes: __tablename__, accepted_at, created_at, end_at, guest_name, held_table, held_table_id, id, offer_expires_at, party_size, start_at, status, user, user_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /waitlist/{waitlist_id}/expire to an admin, accepting a positive waitlist_id and JSON expired_at; it shall require application/json, validate REQ-4-001 and REQ-4-007, atomically expire only an OFFERED entry at or after its offer_expires_at, release its hold, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Restaurant management.\nC: Cancellations, waitlist, and availability.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleExpireWaitlistEntry(request, waitlist_id):\n    // REQ-4-026; preconditions: JSON, existing OFFERED entry, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE expired_at OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF not OFFERED or expired_at before offer expiry THEN ROLLBACK; RETURN 409. END IF SET EXPIRED and release hold; COMMIT; RETURN 200.\n    // REQ-4-007; non-idempotent; rollback leaves capacity and history unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]

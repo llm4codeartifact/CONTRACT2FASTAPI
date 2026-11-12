@@ -1,0 +1,278 @@
+[
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /drivers",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class DriverListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_drivers accepting db, active, employee_code_prefix, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose GET /drivers as an admin-only endpoint accepting optional active, employee_code_prefix, limit, and after_id; it shall validate boolean, prefix length 1..20, and pagination, use normalized prefix matching and stable pagination, persist no changes, and emit only 200, 400, 401, 403, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListDrivers(request):\n    // REQ-fleet-temporal-conflict-v1-012; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. VALIDATE query or RETURN 422/400.\n    READ filtered drivers where id > after_id, order by id ascending, and build next_after_id.\n    RETURN 200. // Transaction none; persistent state unchanged; 429/500/503 only when applicable.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /drivers/{driver_id}/trip-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_driver_by_id accepting db, driver_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /drivers/{driver_id}/trip-conflicts as an admin-only endpoint accepting a positive driver id, planned_start, planned_end, optional exclude_trip_id, limit, and after_id; it shall validate UTC interval and pagination, return active overlapping trips using the same overlap semantics as REQ-fleet-temporal-conflict-v1-005 without persistent effects, and emit only 200, 400, 401, 403, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDriverTripConflicts(request, driver_id):\n    // REQ-fleet-temporal-conflict-v1-021; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF driver_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclude id, and pagination or RETURN 422/400.\n    READ PLANNED/IN_PROGRESS trips for driver whose interval overlaps query; exclude requested trip; paginate stably.\n    RETURN 200. // Transaction none; postcondition unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No controller code is required by this endpoint."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall return deterministic local service status without persistent effects and shall emit only 200 or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-fleet-temporal-conflict-v1-011; preconditions: none.\n    IF local persistence unavailable THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Authorization and transaction: none; postcondition: persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /trips",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine list_trips accepting db, current_user, driver_id, vehicle_id, status, from_dt, to_dt, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /trips as an authenticated endpoint accepting optional driver_id, vehicle_id, status, from, to, limit, and after_id; it shall validate ids, enum, UTC date range, and pagination, restrict users to requester-owned trips while admins view all, persist no changes, and emit only 200, 400, 401, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTrips(request):\n    // REQ-fleet-temporal-conflict-v1-014; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. VALIDATE filters or RETURN 422/400.\n    IF supplied driver_id or vehicle_id is non-positive or absent THEN RETURN 404. END IF\n    READ matching trips after cursor; users require requester_id = caller.id under REQ-fleet-temporal-conflict-v1-010.\n    RETURN 200 with stable page. // No transaction or persistent effect.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /trips/{trip_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine get_trip_by_id accepting db, current_user, trip_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /trips/{trip_id} as an authenticated endpoint accepting a positive id; it shall return a trip only to its requester or an admin, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 403, 404, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-016; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF trip_id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF\n    RETURN 200 with trip. // Transaction none; postcondition: state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "GET /vehicles/{vehicle_id}/trip-conflicts",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/trip-conflicts as an admin-only endpoint accepting a positive vehicle id, planned_start, planned_end, optional exclude_trip_id, limit, and after_id; it shall validate UTC interval and pagination, return active overlapping trips using REQ-fleet-temporal-conflict-v1-004 without persistent effects, and emit only 200, 400, 401, 403, 404, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleVehicleTripConflicts(request, vehicle_id):\n    // REQ-fleet-temporal-conflict-v1-022; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclude id, and pagination or RETURN 422/400.\n    READ overlapping PLANNED/IN_PROGRESS vehicle trips, exclude requested trip, and paginate by id.\n    RETURN 200. // Transaction none; persistent state remains unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "PATCH /trips/{trip_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine patch_trip accepting db, current_user, trip_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /trips/{trip_id} as an authenticated endpoint accepting JSON purpose, driver_id, vehicle_id, planned_start, or planned_end; it shall permit only a requester or admin to modify a PLANNED trip, validate REQ-fleet-temporal-conflict-v1-003 through REQ-fleet-temporal-conflict-v1-005, atomically update it, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-017; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. IF status != PLANNED THEN RETURN 409.\n    VALIDATE resulting trip or RETURN 422/400. BEGIN TRANSACTION; lock affected driver and vehicle schedules.\n    IF a conflict exists THEN ROLLBACK; RETURN 409. END IF UPDATE trip; COMMIT; RETURN 200.\n    // Identical payload is idempotent; rollback preserves all relations.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "POST /drivers",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. Preserve the supplied implementation block and its declared behavior.\n2. DEFINE class DriverResponse. Declare fields or class attributes: active, employee_code, full_name, id, model_config."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine require_admin accepting current_user. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_driver accepting db, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints."
+    },
+    "formal_requirement": "The system shall expose POST /drivers as an admin-only endpoint accepting JSON employee_code, full_name, and optional active=true; it shall validate REQ-fleet-temporal-conflict-v1-002, atomically create a unique driver, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateDriver(request):\n    // REQ-fleet-temporal-conflict-v1-013; preconditions: JSON and persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. REQUIRE application/json or RETURN 415.\n    VALIDATE REQ-fleet-temporal-conflict-v1-002 or RETURN 422/400. BEGIN TRANSACTION.\n    IF employee_code exists THEN ROLLBACK; RETURN 409. END IF CREATE driver; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves persistent state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "POST /trips",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripCreateRequest. Declare fields or class attributes: driver_id, model_config, planned_end, planned_start, purpose, vehicle_id.\n2. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine create_trip accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class DriverModel. Declare fields or class attributes: __tablename__, active, employee_code, full_name, id, trips. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n4. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /trips as an authenticated user or admin endpoint accepting JSON driver_id, vehicle_id, purpose, planned_start, and planned_end; it shall validate REQ-fleet-temporal-conflict-v1-003 through REQ-fleet-temporal-conflict-v1-005, assign the caller as requester, atomically create a PLANNED trip, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTrip(request):\n    // REQ-fleet-temporal-conflict-v1-015; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    VALIDATE body or RETURN 422/400; require positive existing active driver and vehicle or RETURN 404/409.\n    BEGIN TRANSACTION; lock driver and vehicle active-trip intervals.\n    IF driver or vehicle interval overlaps THEN ROLLBACK; RETURN 409. END IF\n    CREATE PLANNED trip with requester_id = caller.id; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves all trip, driver, and vehicle state unchanged.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "POST /trips/{trip_id}/cancel",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripCancelRequest. Declare fields or class attributes: cancellation_reason, cancelled_at, model_config.\n2. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine cancel_trip accepting db, current_user, trip_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /trips/{trip_id}/cancel as an authenticated endpoint accepting a positive id and JSON cancelled_at plus cancellation_reason of 3..500 characters; it shall allow only requester or admin to cancel PLANNED or IN_PROGRESS trips, atomically retain cancellation history and return the vehicle to AVAILABLE when required, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCancelTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-020; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    AUTHORIZE requester/admin; RETURN 404 or 403 when applicable; VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, and active trips.\n    IF status is terminal THEN ROLLBACK; RETURN 409. END IF\n    SET CANCELLED and immutable cancellation fields; if last active trip set vehicle AVAILABLE; COMMIT; RETURN 200.\n    // REQ-fleet-temporal-conflict-v1-006, -008, -009; non-idempotent; rollback preserves all relations.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "POST /trips/{trip_id}/complete",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripCompleteRequest. Declare fields or class attributes: actual_end, model_config.\n2. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine complete_trip accepting db, current_user, trip_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /trips/{trip_id}/complete as an authenticated endpoint accepting a positive id and JSON actual_end; it shall allow only requester or admin to complete an IN_PROGRESS trip satisfying REQ-fleet-temporal-conflict-v1-007, atomically set COMPLETED and return its vehicle to AVAILABLE when no active trip remains, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCompleteTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-019; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    AUTHORIZE requester/admin; RETURN 404 or 403 when applicable; VALIDATE actual_end or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, and active trips.\n    IF trip not IN_PROGRESS OR actual_end violates REQ-fleet-temporal-conflict-v1-007 THEN ROLLBACK; RETURN 409. END IF\n    COMPLETE trip; if no active trip remains set vehicle AVAILABLE; COMMIT; RETURN 200.\n    // Non-idempotent; errors rollback trip and vehicle changes.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  },
+  {
+    "dataset_key": "fleet-temporal-conflict",
+    "endpoint": "POST /trips/{trip_id}/start",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TripStartRequest. Declare fields or class attributes: actual_start, model_config.\n2. DEFINE class TripResponse. Declare fields or class attributes: actual_end, actual_start, cancellation_reason, cancelled_at, driver_id, id, model_config, planned_end, planned_start, purpose, requester_id, status, vehicle_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_current_user accepting authorization, db. Resolve declared dependencies before executing the routine. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch.\n2. DEFINE routine start_trip accepting db, current_user, trip_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch.\n3. DEFINE routine serialize_trip accepting t. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token_hash, username. Enforce the declared uniqueness constraints.\n2. DEFINE class VehicleModel. Declare fields or class attributes: __tablename__, active, id, license_plate, manufacturer, model, status, trips, year. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class TripModel. Declare fields or class attributes: __tablename__, actual_end, actual_start, cancellation_reason, cancelled_at, driver, driver_id, id, planned_end, planned_start, purpose, requester, requester_id, status, vehicle, vehicle_id. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /trips/{trip_id}/start as an authenticated endpoint accepting a positive id and JSON actual_start; it shall allow only requester or admin to start a PLANNED trip at or after planned_start when the vehicle is AVAILABLE, atomically set IN_PROGRESS and vehicle ASSIGNED, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 429, 500, or 503.",
+    "context_requirements": "Application domain: Corporate fleet management.\nTemporal conflicts among trips, drivers, and vehicles.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleStartTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-018; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD trip; RETURN 404 if invalid/absent; RETURN 403 if user is not requester; VALIDATE timestamp or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, driver, and schedules.\n    IF trip not PLANNED, timestamp before plan, conflicts exist, or vehicle not AVAILABLE THEN ROLLBACK; RETURN 409. END IF\n    SET trip IN_PROGRESS and vehicle ASSIGNED; COMMIT; RETURN 200.\n    // REQ-fleet-temporal-conflict-v1-004, -005, -007, -008; non-idempotent; rollback preserves relations.",
+      "generated_by": "gpt-5.6-Terra"
+    }
+  }
+]

@@ -1,0 +1,234 @@
+{
+  "source": "secure_code_dataset.json",
+  "format": "paired JSON arrays; inputs[i] corresponds to outputs[i] in each backend directory",
+  "input_fields": [
+    "dataset_key",
+    "endpoint",
+    "schemas_pseudocode",
+    "controller_pseudocode",
+    "orm_model_pseudocode",
+    "formal_requirement",
+    "context_requirements",
+    "pseudocode"
+  ],
+  "output_fields": [
+    "route_code",
+    "schemas_code",
+    "controller_code",
+    "orm_model_code"
+  ],
+  "backends": [
+    {
+      "dataset_key": "clinic-appointments-rooms-conflicts",
+      "records": 18,
+      "specification": "backends/clinica_veterinaria/v1_appuntamenti_sale_conflitti_orari/appuntamenti_sale_conflitti_orari.specification.json",
+      "inputs": "clinic-appointments-rooms-conflicts/inputs.json",
+      "outputs": "clinic-appointments-rooms-conflicts/outputs.json"
+    },
+    {
+      "dataset_key": "clinic-owners-animals-relations",
+      "records": 17,
+      "specification": "backends/clinica_veterinaria/v1_proprietari_animali_cancellazione_relazioni/proprietari_animali_cancellazione_relazioni.specification.json",
+      "inputs": "clinic-owners-animals-relations/inputs.json",
+      "outputs": "clinic-owners-animals-relations/outputs.json"
+    },
+    {
+      "dataset_key": "clinic-records-vaccinations-temporal",
+      "records": 18,
+      "specification": "backends/clinica_veterinaria/v1_cartelle_cliniche_vaccinazioni_filtri_temporali/cartelle_cliniche_vaccinazioni_filtri_temporali.specification.json",
+      "inputs": "clinic-records-vaccinations-temporal/inputs.json",
+      "outputs": "clinic-records-vaccinations-temporal/outputs.json"
+    },
+    {
+      "dataset_key": "fitness-goals-progress-loads",
+      "records": 20,
+      "specification": "backends/fitness/v1_obiettivi_progressi_validazione_carichi/obiettivi_progressi_validazione_carichi.specification.json",
+      "inputs": "fitness-goals-progress-loads/inputs.json",
+      "outputs": "fitness-goals-progress-loads/outputs.json"
+    },
+    {
+      "dataset_key": "fitness-plans-exercises-configurations",
+      "records": 20,
+      "specification": "backends/fitness/v1_schede_esercizi_configurazioni_nidificate/schede_esercizi_configurazioni_nidificate.specification.json",
+      "inputs": "fitness-plans-exercises-configurations/inputs.json",
+      "outputs": "fitness-plans-exercises-configurations/outputs.json"
+    },
+    {
+      "dataset_key": "fitness-sessions-sets-1rm",
+      "records": 20,
+      "specification": "backends/fitness/v1_sessioni_serie_calcolo_1rm/sessioni_serie_calcolo_1rm.specification.json",
+      "inputs": "fitness-sessions-sets-1rm/inputs.json",
+      "outputs": "fitness-sessions-sets-1rm/outputs.json"
+    },
+    {
+      "dataset_key": "fleet-maintenance-planning",
+      "records": 12,
+      "specification": "backends/Fleet/maintenance_planning/maintenance_planning_cancellation_history.specification.json",
+      "inputs": "fleet-maintenance-planning/inputs.json",
+      "outputs": "fleet-maintenance-planning/outputs.json"
+    },
+    {
+      "dataset_key": "fleet-temporal-conflict",
+      "records": 12,
+      "specification": "backends/Fleet/temporal_conflict/temporal_conflicts_trip_driver_vehicle.specification.json",
+      "inputs": "fleet-temporal-conflict/inputs.json",
+      "outputs": "fleet-temporal-conflict/outputs.json"
+    },
+    {
+      "dataset_key": "fleet-vehicle-states",
+      "records": 16,
+      "specification": "backends/Fleet/vehicle_states/vehicle_states_maintenance.specification.json",
+      "inputs": "fleet-vehicle-states/inputs.json",
+      "outputs": "fleet-vehicle-states/outputs.json"
+    },
+    {
+      "dataset_key": "hr-departments-roles-reports",
+      "records": 20,
+      "specification": "backends/hr/v1_dipartimenti_ruoli_report_ferie/dipartimenti_ruoli_report_ferie.specification.json",
+      "inputs": "hr-departments-roles-reports/inputs.json",
+      "outputs": "hr-departments-roles-reports/outputs.json"
+    },
+    {
+      "dataset_key": "hr-leave-approval-overlaps",
+      "records": 20,
+      "specification": "backends/hr/v1_approvazione_rifiuto_sovrapposizioni/approvazione_rifiuto_sovrapposizioni.specification.json",
+      "inputs": "hr-leave-approval-overlaps/inputs.json",
+      "outputs": "hr-leave-approval-overlaps/outputs.json"
+    },
+    {
+      "dataset_key": "hr-leave-balance-intervals",
+      "records": 20,
+      "specification": "backends/hr/v1_saldo_ferie_intervalli_date/saldo_ferie_intervalli_date.specification.json",
+      "inputs": "hr-leave-balance-intervals/inputs.json",
+      "outputs": "hr-leave-balance-intervals/outputs.json"
+    },
+    {
+      "dataset_key": "inventory-multiwarehouse-transfers",
+      "records": 20,
+      "specification": "backends/inventario/v1_multi_magazzino_trasferimenti_atomici/multi_magazzino_trasferimenti_atomici.specification.json",
+      "inputs": "inventory-multiwarehouse-transfers/inputs.json",
+      "outputs": "inventory-multiwarehouse-transfers/outputs.json"
+    },
+    {
+      "dataset_key": "inventory-sku-categories-reorder",
+      "records": 21,
+      "specification": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "inputs": "inventory-sku-categories-reorder/inputs.json",
+      "outputs": "inventory-sku-categories-reorder/outputs.json"
+    },
+    {
+      "dataset_key": "inventory-stock-movements-nonnegative",
+      "records": 20,
+      "specification": "backends/inventario/v1_carico_scarico_giacenza_non_negativa/carico_scarico_giacenza_non_negativa.specification.json",
+      "inputs": "inventory-stock-movements-nonnegative/inputs.json",
+      "outputs": "inventory-stock-movements-nonnegative/outputs.json"
+    },
+    {
+      "dataset_key": "kanban-columns-bulk-updates",
+      "records": 16,
+      "specification": "backends/kanban/v1_spostamento_colonne_aggiornamenti_massivi/spostamento_colonne_aggiornamenti_massivi.specification.json",
+      "inputs": "kanban-columns-bulk-updates/inputs.json",
+      "outputs": "kanban-columns-bulk-updates/outputs.json"
+    },
+    {
+      "dataset_key": "kanban-filters-priorities-audit",
+      "records": 15,
+      "specification": "backends/kanban/v1_filtri_priorita_audit_permessi_progetto/filtri_priorita_audit_permessi_progetto.specification.json",
+      "inputs": "kanban-filters-priorities-audit/inputs.json",
+      "outputs": "kanban-filters-priorities-audit/outputs.json"
+    },
+    {
+      "dataset_key": "kanban-tickets-assignees-transitions",
+      "records": 15,
+      "specification": "backends/kanban/v1_ticket_assegnatari_transizioni_stato/ticket_assegnatari_transizioni_stato.specification.json",
+      "inputs": "kanban-tickets-assignees-transitions/inputs.json",
+      "outputs": "kanban-tickets-assignees-transitions/outputs.json"
+    },
+    {
+      "dataset_key": "real-estate-listings-publication",
+      "records": 20,
+      "specification": "backends/immobiliare/v1_pubblicazione_annunci_stato_autorizzazioni/pubblicazione_annunci_stato_autorizzazioni.specification.json",
+      "inputs": "real-estate-listings-publication/inputs.json",
+      "outputs": "real-estate-listings-publication/outputs.json"
+    },
+    {
+      "dataset_key": "real-estate-search-filters",
+      "records": 20,
+      "specification": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "inputs": "real-estate-search-filters/inputs.json",
+      "outputs": "real-estate-search-filters/outputs.json"
+    },
+    {
+      "dataset_key": "real-estate-visits-conflicts",
+      "records": 20,
+      "specification": "backends/immobiliare/v1_visite_conflitti_agente_immobile/visite_conflitti_agente_immobile.specification.json",
+      "inputs": "real-estate-visits-conflicts/inputs.json",
+      "outputs": "real-estate-visits-conflicts/outputs.json"
+    },
+    {
+      "dataset_key": "recipes-ingredients-servings",
+      "records": 20,
+      "specification": "backends/ricettario/v1_ricette_ingredienti_porzione/ricette_ingredienti_porzione.specification.json",
+      "inputs": "recipes-ingredients-servings/inputs.json",
+      "outputs": "recipes-ingredients-servings/outputs.json"
+    },
+    {
+      "dataset_key": "recipes-macronutrients-tags-filters",
+      "records": 20,
+      "specification": "backends/ricettario/v1_macro_nutrienti_tag_filtri_alimentari/macro_nutrienti_tag_filtri_alimentari.specification.json",
+      "inputs": "recipes-macronutrients-tags-filters/inputs.json",
+      "outputs": "recipes-macronutrients-tags-filters/outputs.json"
+    },
+    {
+      "dataset_key": "recipes-weekly-plan-references",
+      "records": 20,
+      "specification": "backends/ricettario/v1_piano_settimanale_riferimenti_integri/piano_settimanale_riferimenti_integri.specification.json",
+      "inputs": "recipes-weekly-plan-references/inputs.json",
+      "outputs": "recipes-weekly-plan-references/outputs.json"
+    },
+    {
+      "dataset_key": "restaurant-cancellations-waitlist",
+      "records": 17,
+      "specification": "backends/ristoranti/v1_cancellazioni_lista_attesa_disponibilita/cancellazioni_lista_attesa_disponibilita.specification.json",
+      "inputs": "restaurant-cancellations-waitlist/inputs.json",
+      "outputs": "restaurant-cancellations-waitlist/outputs.json"
+    },
+    {
+      "dataset_key": "restaurant-capacity-tables-shifts",
+      "records": 16,
+      "specification": "backends/ristoranti/v1_capacita_tavoli_turni/capacita_tavoli_turni.specification.json",
+      "inputs": "restaurant-capacity-tables-shifts/inputs.json",
+      "outputs": "restaurant-capacity-tables-shifts/outputs.json"
+    },
+    {
+      "dataset_key": "restaurant-overbooking-reservations",
+      "records": 15,
+      "specification": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "inputs": "restaurant-overbooking-reservations/inputs.json",
+      "outputs": "restaurant-overbooking-reservations/outputs.json"
+    },
+    {
+      "dataset_key": "smart-home-hub-rooms-patch",
+      "records": 17,
+      "specification": "backends/smart_home/v1_hub_stanze_patch/hub_stanze_dispositivi_patch.specification.json",
+      "inputs": "smart-home-hub-rooms-patch/inputs.json",
+      "outputs": "smart-home-hub-rooms-patch/outputs.json"
+    },
+    {
+      "dataset_key": "smart-home-rules-actuators",
+      "records": 17,
+      "specification": "backends/smart_home/v1_regole_attuatori/regole_automazione_attuatori.specification.json",
+      "inputs": "smart-home-rules-actuators/inputs.json",
+      "outputs": "smart-home-rules-actuators/outputs.json"
+    },
+    {
+      "dataset_key": "smart-home-telemetry-range",
+      "records": 16,
+      "specification": "backends/smart_home/v1_telemetria_range/telemetria_range_sensori.specification.json",
+      "inputs": "smart-home-telemetry-range/inputs.json",
+      "outputs": "smart-home-telemetry-range/outputs.json"
+    }
+  ],
+  "backend_count": 30,
+  "record_count": 538
+}

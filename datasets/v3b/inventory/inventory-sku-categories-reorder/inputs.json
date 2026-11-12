@@ -1,0 +1,3963 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "DELETE /categories/{category_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/categories/{category_id}",
+      "path_params": [
+        {
+          "name": "category_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "delete_category"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_category",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "category_id",
+          "model": "CategoryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /categories/{category_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteCategory(request):\n    // REQ-8-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "DELETE /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "delete_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /products/{product_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProduct(request):\n    // REQ-8-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "DELETE /reorder-rules/{reorderrule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/reorder-rules/{reorderrule_id}",
+      "path_params": [
+        {
+          "name": "reorderrule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "delete_reorder_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_reorder_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reorderrule_id",
+          "model": "ReorderRuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteReorderRule(request):\n    // REQ-8-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /categories",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/categories",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "parent_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "list_categories"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_categories",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "parent_id",
+          "alias": "parent_id",
+          "model_field": "parent_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /categories to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListCategory(request):\n    // REQ-8-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /categories/{category_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/categories/{category_id}",
+      "path_params": [
+        {
+          "name": "category_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "get_category"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_category",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "category_id",
+          "model": "CategoryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /categories/{category_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetCategory(request):\n    // REQ-8-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-8-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /products",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "category_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "is_active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "sku",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "list_products"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_products",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "category_id",
+          "alias": "category_id",
+          "model_field": "category_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "is_active",
+          "alias": "is_active",
+          "model_field": "is_active",
+          "operator": "=="
+        },
+        {
+          "parameter": "sku",
+          "alias": "sku",
+          "model_field": "sku",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProduct(request):\n    // REQ-8-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "get_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products/{product_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProduct(request):\n    // REQ-8-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /products/{product_id}/stock-summary",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/products/{product_id}/stock-summary",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "get_stock_summary"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location_code",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "reorder_rules",
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_stock_summary",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /products/{product_id}/stock-summary to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStockSummary(request):\n    // REQ-8-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /reorder-candidates",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/reorder-candidates",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "location_code",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "list_reorder_candidates"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location_code",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "reorder_rules",
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_reorder_candidates",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "location_code",
+          "alias": "location_code",
+          "model_field": "location_code",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /reorder-candidates to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReorderCandidates(request):\n    // REQ-8-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /reorder-rules",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/reorder-rules",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "product_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "location_code",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "is_active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "list_reorder_rules"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_reorder_rules",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "product_id",
+          "alias": "product_id",
+          "model_field": "product_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "location_code",
+          "alias": "location_code",
+          "model_field": "location_code",
+          "operator": "=="
+        },
+        {
+          "parameter": "is_active",
+          "alias": "is_active",
+          "model_field": "is_active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /reorder-rules to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListReorderRule(request):\n    // REQ-8-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "GET /reorder-rules/{reorderrule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/reorder-rules/{reorderrule_id}",
+      "path_params": [
+        {
+          "name": "reorderrule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "get_reorder_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_reorder_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reorderrule_id",
+          "model": "ReorderRuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetReorderRule(request):\n    // REQ-8-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "PATCH /categories/{category_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/categories/{category_id}",
+      "path_params": [
+        {
+          "name": "category_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "patch_category"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_category",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "category_id",
+          "model": "CategoryModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /categories/{category_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchCategory(request):\n    // REQ-8-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "PATCH /products/{product_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/products/{product_id}",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "patch_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "products",
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /products/{product_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProduct(request):\n    // REQ-8-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "PATCH /reorder-rules/{reorderrule_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/reorder-rules/{reorderrule_id}",
+      "path_params": [
+        {
+          "name": "reorderrule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "patch_reorder_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_reorder_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reorderrule_id",
+          "model": "ReorderRuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchReorderRule(request):\n    // REQ-8-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /categories",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/categories",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "create_category"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_category",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /categories to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateCategory(request):\n    // REQ-8-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /products",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/products",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "create_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "CategoryModel",
+          "table": "categories",
+          "fields": [
+            "created_at",
+            "id",
+            "name",
+            "parent_id",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "parent_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "categories",
+        "products",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /products to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProduct(request):\n    // REQ-8-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /products/{product_id}/deactivate",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/products/{product_id}/deactivate",
+      "path_params": [
+        {
+          "name": "product_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "deactivate_product"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "deactivate_product",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "product_id",
+          "model": "ProductModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /products/{product_id}/deactivate to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeactivateProduct(request):\n    // REQ-8-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /reorder-rules",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reorder-rules",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "create_reorder_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_reorder_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reorder-rules to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateReorderRule(request):\n    // REQ-8-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /reorder-rules/{reorderrule_id}/acknowledge",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reorder-rules/{reorderrule_id}/acknowledge",
+      "path_params": [
+        {
+          "name": "reorderrule_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "acknowledge_reorder_rule"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReorderRuleModel",
+          "table": "reorder_rules",
+          "fields": [
+            "acknowledged_at",
+            "created_at",
+            "id",
+            "is_acknowledged",
+            "is_active",
+            "location_code",
+            "product_id",
+            "reorder_point",
+            "target_level",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reorder_rules",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "acknowledge_reorder_rule",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reorderrule_id",
+          "model": "ReorderRuleModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reorder-rules/{reorderrule_id}/acknowledge to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleAcknowledgeRule(request):\n    // REQ-8-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "inventory-sku-categories-reorder",
+    "endpoint": "POST /stock-levels",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/inventario/v1_sku_categorie_soglie_riordino/sku_categorie_soglie_riordino.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Inventory management",
+      "variant": "C: SKU, categories, thresholds, and replenishment",
+      "summary": "Application domain: Inventory management.\nBackend variant: C: SKU, categories, thresholds, and replenishment.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/stock-levels",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "InventoryVariantCController",
+          "routine": "set_stock_level"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ProductModel",
+          "table": "products",
+          "fields": [
+            "category_id",
+            "created_at",
+            "id",
+            "is_active",
+            "name",
+            "sku",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "category_id",
+              "target": "categories.id"
+            }
+          ]
+        },
+        {
+          "name": "StockLevelModel",
+          "table": "stock_levels",
+          "fields": [
+            "created_at",
+            "id",
+            "location_code",
+            "product_id",
+            "quantity",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "product_id",
+              "target": "products.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "products",
+        "stock_levels",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "categories.id",
+        "products.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "set_stock_level",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /stock-levels to an authenticated admin, accepting a JSON product id, location code, and non-negative quantity; it shall atomically create or update the stock level and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleSetStockLevel(request):\n    // REQ-8-029; preconditions: local persistence and valid JSON request.\n    AUTHORIZE admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE product, location, and non-negative quantity OR RETURN 400, 404, or 422.\n    BEGIN TRANSACTION; create or update the product-location stock level; COMMIT; RETURN 200.\n    On a conflict or persistence failure ROLLBACK and RETURN 409, 500, or 503.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-8-001",
+          "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+        },
+        {
+          "id": "REQ-8-002",
+          "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+        },
+        {
+          "id": "REQ-8-003",
+          "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

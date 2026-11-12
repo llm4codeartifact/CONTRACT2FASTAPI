@@ -1,0 +1,2917 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "DELETE /tables/{table_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/tables/{table_id}",
+      "path_params": [
+        {
+          "name": "table_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "TableController",
+          "routine": "delete_table"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_table",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "table_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [
+        {
+          "type": "reference_absence",
+          "source_model": "ReservationModel",
+          "match": {
+            "table_id": "table_id"
+          },
+          "target_model": null,
+          "scope": "matching_rows",
+          "must_not_filter_by": [],
+          "failure_status": 409
+        }
+      ],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": true
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /tables/{table_id} to an admin, accepting a positive table_id; it shall atomically soft-delete only a table with no reservations under REQ-4-009, be idempotent only insofar as a deleted id is 404, never cascade, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteTable(request, table_id):\n    // REQ-4-016; preconditions: existing table and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF any reservation references table THEN ROLLBACK; RETURN 409. END IF MARK deleted; COMMIT; RETURN 204.\n    // REQ-4-009; repeat is 404 and rollback leaves all reservation relations unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-009",
+          "requirement": "A table can be deactivated only with no PENDING or CONFIRMED reservation and can be soft-deleted only with no reservation history. Neither operation cascades to reservations."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /availability",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/availability",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "table_id",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true,
+            "gt": 0
+          }
+        },
+        {
+          "name": "start_at",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "end_at",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "party_size",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true,
+            "ge": 1,
+            "le": 20
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AvailabilityController",
+          "routine": "get_availability"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_availability",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "table_id",
+          "alias": "table_id",
+          "model_field": "table_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "start_at",
+          "alias": "start_at",
+          "model_field": "start_at",
+          "operator": "=="
+        },
+        {
+          "parameter": "end_at",
+          "alias": "end_at",
+          "model_field": "end_at",
+          "operator": "=="
+        },
+        {
+          "parameter": "party_size",
+          "alias": "party_size",
+          "model_field": "party_size",
+          "operator": "=="
+        }
+      ],
+      "intervals": [
+        {
+          "type": "half_open_interval_overlap",
+          "source_model": null,
+          "scope_field": null,
+          "required_predicates": [
+            {
+              "field": "start_at",
+              "operator": "<",
+              "parameter": "end_at"
+            },
+            {
+              "field": "end_at",
+              "operator": ">",
+              "parameter": "start_at"
+            }
+          ],
+          "status_scope": [],
+          "exclude_parameter": null
+        }
+      ],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /availability to an authenticated user or admin, accepting positive table_id, start_at, end_at, and party_size 1..20; it shall validate REQ-4-001 through REQ-4-005 and the half-open interval, calculate standard and overbook remaining seats without reserving them, make no persistent change, and emit only 200, 400, 401, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetAvailability(request):\n    // REQ-4-024; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE ids, interval, and party size OR RETURN 400 or 422; missing table is 404.\n    READ overlap demand and return standard_remaining plus overbook_remaining under REQ-4-004 and REQ-4-005. Transaction: none; postcondition: no capacity is held; errors leave state unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-004",
+          "requirement": "Active booking demand at a table is the sum of party_size for PENDING and CONFIRMED overlapping reservations using [start_at,end_at). It must not exceed table.seats plus table.overbook_seats; shared endpoints are not overlapping."
+        },
+        {
+          "id": "REQ-4-005",
+          "requirement": "Confirmed demand at a table is the sum of party_size for CONFIRMED overlapping reservations and must not exceed table.seats. Confirmation is therefore prohibited when overbooking would remain in the confirmed set."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "HealthController",
+          "routine": "get_health"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_health",
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no input or authorization, check only local persistence without writing state, and emit only 200 or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-4-011; preconditions: none; authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no persistent effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-002",
+          "requirement": "A table has a unique uppercase code matching ^[A-Z][A-Z0-9-]{0,11}$, seats 1..20, overbook_seats 0..8, zone in INDOOR, TERRACE, BAR, PRIVATE, and active boolean."
+        },
+        {
+          "id": "REQ-4-003",
+          "requirement": "A reservation references one active table, has guest_name trimmed 2..120 characters, party_size 1..20, start_at and end_at on a five-minute UTC boundary, duration 30..180 minutes, and end_at strictly later than start_at."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /reservations",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/reservations",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "table_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "status",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "from_time",
+          "alias": "from",
+          "required": false,
+          "constraints": {
+            "alias": "from",
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "to_time",
+          "alias": "to",
+          "required": false,
+          "constraints": {
+            "alias": "to",
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "list_reservations"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_reservations",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "table_id",
+          "alias": "table_id",
+          "model_field": "table_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "status",
+          "alias": "status",
+          "model_field": "status",
+          "operator": "=="
+        },
+        {
+          "parameter": "from_time",
+          "alias": "from",
+          "model_field": "from",
+          "operator": "=="
+        },
+        {
+          "parameter": "to_time",
+          "alias": "to",
+          "model_field": "to",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /reservations to an authenticated user or admin, accepting optional positive table_id, status, from, to, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, REQ-4-006, and REQ-4-010, restrict users to creator-owned rows, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListReservations(request):\n    // REQ-4-017; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE filters, half-open interval, and pagination OR RETURN 400 or 422; unknown table is 404.\n    READ overlapping rows by id, constrained to creator for user; RETURN 200 page. Transaction: none; state unchanged on all results.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-003",
+          "requirement": "A reservation references one active table, has guest_name trimmed 2..120 characters, party_size 1..20, start_at and end_at on a five-minute UTC boundary, duration 30..180 minutes, and end_at strictly later than start_at."
+        },
+        {
+          "id": "REQ-4-006",
+          "requirement": "Reservation status transitions are PENDING to CONFIRMED, CANCELLED, or NO_SHOW, and CONFIRMED to CANCELLED or NO_SHOW. CANCELLED and NO_SHOW are terminal and retain immutable history including cancellation or no-show timestamp and actor."
+        },
+        {
+          "id": "REQ-4-010",
+          "requirement": "Lists use id ascending order, limit 1..100 default 20, optional after_id greater than zero, and nullable next_after_id. Reservation time filters return rows whose intervals overlap the requested half-open range; invalid ranges are rejected."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /reservations/{reservation_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/reservations/{reservation_id}",
+      "path_params": [
+        {
+          "name": "reservation_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "get_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reservation_id",
+          "model": "ReservationModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /reservations/{reservation_id} to its creator user or an admin, accepting a positive reservation_id; it shall enforce REQ-4-001 and REQ-4-008, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetReservation(request, reservation_id):\n    // REQ-4-019; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid or absent id; REQUIRE creator or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: data unchanged on success and error.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-008",
+          "requirement": "A user may create, read, edit while PENDING, confirm, cancel, or mark no-show only reservations created by that user; admins manage tables and may operate all reservations. Private access denies by default."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/tables",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "zone",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "min_seats",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 1,
+            "le": 20
+          }
+        },
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "TableController",
+          "routine": "list_tables"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TableModel",
+          "table": "tables",
+          "fields": [
+            "active",
+            "code",
+            "id",
+            "is_deleted",
+            "overbook_seats",
+            "seats",
+            "zone"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tables",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "list_tables",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "zone",
+          "alias": "zone",
+          "model_field": "zone",
+          "operator": "=="
+        },
+        {
+          "parameter": "min_seats",
+          "alias": "min_seats",
+          "model_field": "min_seats",
+          "operator": "=="
+        },
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /tables to an authenticated user or admin, accepting optional zone, min_seats 1..20, active boolean, limit, and after_id; it shall validate REQ-4-002 and REQ-4-010, return a stable page without effects, and emit only 200, 400, 401, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListTables(request):\n    // REQ-4-012; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422.\n    READ non-deleted tables by id; RETURN 200 page. Transaction: none; postcondition and errors leave state unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-002",
+          "requirement": "A table has a unique uppercase code matching ^[A-Z][A-Z0-9-]{0,11}$, seats 1..20, overbook_seats 0..8, zone in INDOOR, TERRACE, BAR, PRIVATE, and active boolean."
+        },
+        {
+          "id": "REQ-4-010",
+          "requirement": "Lists use id ascending order, limit 1..100 default 20, optional after_id greater than zero, and nullable next_after_id. Reservation time filters return rows whose intervals overlap the requested half-open range; invalid ranges are rejected."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables/{table_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/tables/{table_id}",
+      "path_params": [
+        {
+          "name": "table_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "TableController",
+          "routine": "get_table"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TableModel",
+          "table": "tables",
+          "fields": [
+            "active",
+            "code",
+            "id",
+            "is_deleted",
+            "overbook_seats",
+            "seats",
+            "zone"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tables",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_table",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "table_id",
+          "model": "TableModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /tables/{table_id} to an authenticated user or admin, accepting a positive table_id; it shall enforce REQ-4-001, return the non-deleted table without effects, and emit only 200, 401, 404, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetTable(request, table_id):\n    // REQ-4-014; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; IF id is non-positive, absent, or deleted THEN RETURN 404. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors do not alter relationships.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "GET /tables/{table_id}/reservation-conflicts",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/tables/{table_id}/reservation-conflicts",
+      "path_params": [
+        {
+          "name": "table_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "start_at",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "end_at",
+          "alias": null,
+          "required": true,
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "exclude_reservation_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AvailabilityController",
+          "routine": "get_conflicts"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_conflicts",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "table_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "start_at",
+          "alias": "start_at",
+          "model_field": "start_at",
+          "operator": "=="
+        },
+        {
+          "parameter": "end_at",
+          "alias": "end_at",
+          "model_field": "end_at",
+          "operator": "=="
+        },
+        {
+          "parameter": "exclude_reservation_id",
+          "alias": "exclude_reservation_id",
+          "model_field": "exclude_reservation_id",
+          "operator": "=="
+        }
+      ],
+      "intervals": [
+        {
+          "type": "half_open_interval_overlap",
+          "source_model": "ReservationModel",
+          "scope_field": "table_id",
+          "required_predicates": [
+            {
+              "field": "start_at",
+              "operator": "<",
+              "parameter": "end_at"
+            },
+            {
+              "field": "end_at",
+              "operator": ">",
+              "parameter": "start_at"
+            }
+          ],
+          "status_scope": [
+            "CONFIRMED",
+            "PENDING"
+          ],
+          "exclude_parameter": null
+        }
+      ],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /tables/{table_id}/reservation-conflicts to an admin, accepting a positive table_id, start_at, end_at, optional positive exclude_reservation_id, limit, and after_id; it shall validate REQ-4-001, REQ-4-003, and REQ-4-010, return PENDING and CONFIRMED overlaps under REQ-4-004 without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReservationConflicts(request, table_id):\n    // REQ-4-025; preconditions: persistence available.\n    REQUIRE admin OR RETURN 401 or 403; RETURN 404 for invalid or absent table; VALIDATE interval, exclude id, and pagination OR RETURN 400 or 422.\n    READ PENDING and CONFIRMED half-open overlaps excluding requested id, order by id, RETURN 200 page. Transaction: none; postcondition: state unchanged on every error.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-003",
+          "requirement": "A reservation references one active table, has guest_name trimmed 2..120 characters, party_size 1..20, start_at and end_at on a five-minute UTC boundary, duration 30..180 minutes, and end_at strictly later than start_at."
+        },
+        {
+          "id": "REQ-4-004",
+          "requirement": "Active booking demand at a table is the sum of party_size for PENDING and CONFIRMED overlapping reservations using [start_at,end_at). It must not exceed table.seats plus table.overbook_seats; shared endpoints are not overlapping."
+        },
+        {
+          "id": "REQ-4-010",
+          "requirement": "Lists use id ascending order, limit 1..100 default 20, optional after_id greater than zero, and nullable next_after_id. Reservation time filters return rows whose intervals overlap the requested half-open range; invalid ranges are rejected."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "PATCH /reservations/{reservation_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/reservations/{reservation_id}",
+      "path_params": [
+        {
+          "name": "reservation_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "patch_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reservation_id",
+          "model": "ReservationModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /reservations/{reservation_id} to its creator user or an admin, accepting a positive reservation_id and JSON guest_name, party_size, table_id, start_at, or end_at; it shall require application/json, permit PENDING only, validate resulting REQ-4-003 and REQ-4-004, atomically lock and update supplied fields, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchReservation(request, reservation_id):\n    // REQ-4-020; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415. BEGIN TRANSACTION; IF status is not PENDING THEN ROLLBACK; RETURN 409. END IF\n    VALIDATE result OR ROLLBACK; RETURN 400 or 422; lock target interval; IF missing table THEN ROLLBACK; RETURN 404; IF active demand exceeds limit THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Idempotent identical payload; rollback preserves reservation and capacity state.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-003",
+          "requirement": "A reservation references one active table, has guest_name trimmed 2..120 characters, party_size 1..20, start_at and end_at on a five-minute UTC boundary, duration 30..180 minutes, and end_at strictly later than start_at."
+        },
+        {
+          "id": "REQ-4-004",
+          "requirement": "Active booking demand at a table is the sum of party_size for PENDING and CONFIRMED overlapping reservations using [start_at,end_at). It must not exceed table.seats plus table.overbook_seats; shared endpoints are not overlapping."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "PATCH /tables/{table_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/tables/{table_id}",
+      "path_params": [
+        {
+          "name": "table_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "TableController",
+          "routine": "patch_table"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "TableModel",
+          "table": "tables",
+          "fields": [
+            "active",
+            "code",
+            "id",
+            "is_deleted",
+            "overbook_seats",
+            "seats",
+            "zone"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "tables",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "patch_table",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "table_id",
+          "model": "TableModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /tables/{table_id} to an admin, accepting a positive table_id and JSON code, seats, overbook_seats, zone, or active; it shall require application/json, validate the resulting REQ-4-002, REQ-4-004, REQ-4-005, and REQ-4-009 conditions, atomically update supplied fields, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchTable(request, table_id):\n    // REQ-4-015; preconditions: existing table, JSON, persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE partial result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock table and active reservations; IF capacity would be below active or confirmed demand, duplicate code, or invalid deactivation THEN ROLLBACK; RETURN 409. END IF UPDATE; COMMIT; RETURN 200.\n    // Identical payload idempotent; rollback preserves all relations.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-002",
+          "requirement": "A table has a unique uppercase code matching ^[A-Z][A-Z0-9-]{0,11}$, seats 1..20, overbook_seats 0..8, zone in INDOOR, TERRACE, BAR, PRIVATE, and active boolean."
+        },
+        {
+          "id": "REQ-4-004",
+          "requirement": "Active booking demand at a table is the sum of party_size for PENDING and CONFIRMED overlapping reservations using [start_at,end_at). It must not exceed table.seats plus table.overbook_seats; shared endpoints are not overlapping."
+        },
+        {
+          "id": "REQ-4-005",
+          "requirement": "Confirmed demand at a table is the sum of party_size for CONFIRMED overlapping reservations and must not exceed table.seats. Confirmation is therefore prohibited when overbooking would remain in the confirmed set."
+        },
+        {
+          "id": "REQ-4-009",
+          "requirement": "A table can be deactivated only with no PENDING or CONFIRMED reservation and can be soft-deleted only with no reservation history. Neither operation cascades to reservations."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reservations",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "create_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "cancelled_by_user_id",
+            "no_show_by_user_id",
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reservations to an authenticated user or admin, accepting JSON positive table_id, guest_name, party_size, start_at, and end_at; it shall require application/json, validate REQ-4-001 through REQ-4-004, atomically create a PENDING reservation while locking the table interval, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateReservation(request):\n    // REQ-4-018; preconditions: JSON, active table, persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-003 OR RETURN 400 or 422; missing table is 404.\n    BEGIN TRANSACTION; lock table and overlap set; IF active demand violates REQ-4-004 THEN ROLLBACK; RETURN 409. END IF CREATE PENDING owner caller; COMMIT; RETURN 201 with Location.\n    // REQ-4-007: non-idempotent, rollback preserves capacity and relations.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-003",
+          "requirement": "A reservation references one active table, has guest_name trimmed 2..120 characters, party_size 1..20, start_at and end_at on a five-minute UTC boundary, duration 30..180 minutes, and end_at strictly later than start_at."
+        },
+        {
+          "id": "REQ-4-004",
+          "requirement": "Active booking demand at a table is the sum of party_size for PENDING and CONFIRMED overlapping reservations using [start_at,end_at). It must not exceed table.seats plus table.overbook_seats; shared endpoints are not overlapping."
+        },
+        {
+          "id": "REQ-4-007",
+          "requirement": "Every create, edit, confirmation, cancellation, and no-show operation locks the table and relevant time interval in one transaction before evaluating REQ-4-004 and REQ-4-005; concurrent requests cannot exceed either capacity."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/cancel",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reservations/{reservation_id}/cancel",
+      "path_params": [
+        {
+          "name": "reservation_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "cancel_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "cancel_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reservation_id",
+          "model": "ReservationModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/cancel to its creator user or an admin, accepting a positive reservation_id and JSON cancelled_at plus cancellation_reason of 3..500 characters; it shall require application/json, validate REQ-4-001 and REQ-4-006, atomically transition PENDING or CONFIRMED to CANCELLED while retaining history, be non-idempotent, release active demand, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCancelReservation(request, reservation_id):\n    // REQ-4-022; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE cancellation fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF terminal status THEN ROLLBACK; RETURN 409. END IF SET CANCELLED and immutable history; COMMIT; RETURN 200.\n    // REQ-4-006 and REQ-4-007; non-idempotent, rollback leaves capacity and relations unchanged.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-006",
+          "requirement": "Reservation status transitions are PENDING to CONFIRMED, CANCELLED, or NO_SHOW, and CONFIRMED to CANCELLED or NO_SHOW. CANCELLED and NO_SHOW are terminal and retain immutable history including cancellation or no-show timestamp and actor."
+        },
+        {
+          "id": "REQ-4-007",
+          "requirement": "Every create, edit, confirmation, cancellation, and no-show operation locks the table and relevant time interval in one transaction before evaluating REQ-4-004 and REQ-4-005; concurrent requests cannot exceed either capacity."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/confirm",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reservations/{reservation_id}/confirm",
+      "path_params": [
+        {
+          "name": "reservation_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "confirm_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "confirm_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reservation_id",
+          "model": "ReservationModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/confirm to its creator user or an admin, accepting a positive reservation_id and JSON confirmed_at; it shall require application/json, validate REQ-4-001, permit PENDING only, atomically lock demand and transition to CONFIRMED only under REQ-4-005, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleConfirmReservation(request, reservation_id):\n    // REQ-4-021; preconditions: JSON, existing PENDING reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; lock table and overlap set; IF status not PENDING or confirmed demand exceeds seats THEN ROLLBACK; RETURN 409. END IF SET CONFIRMED; COMMIT; RETURN 200.\n    // REQ-4-005 and REQ-4-007; non-idempotent and rollback preserves demand.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-005",
+          "requirement": "Confirmed demand at a table is the sum of party_size for CONFIRMED overlapping reservations and must not exceed table.seats. Confirmation is therefore prohibited when overbooking would remain in the confirmed set."
+        },
+        {
+          "id": "REQ-4-007",
+          "requirement": "Every create, edit, confirmation, cancellation, and no-show operation locks the table and relevant time interval in one transaction before evaluating REQ-4-004 and REQ-4-005; concurrent requests cannot exceed either capacity."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /reservations/{reservation_id}/no-show",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/reservations/{reservation_id}/no-show",
+      "path_params": [
+        {
+          "name": "reservation_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "ReservationController",
+          "routine": "no_show_reservation"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "ReservationModel",
+          "table": "reservations",
+          "fields": [
+            "cancellation_reason",
+            "cancelled_at",
+            "cancelled_by_user_id",
+            "confirmed_at",
+            "created_at",
+            "end_at",
+            "guest_name",
+            "id",
+            "no_show_at",
+            "no_show_by_user_id",
+            "party_size",
+            "start_at",
+            "status",
+            "table_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "cancelled_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "no_show_by_user_id",
+              "target": "users.id"
+            },
+            {
+              "field": "table_id",
+              "target": "tables.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "reservations",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "tables.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "no_show_reservation",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "reservation_id",
+          "model": "ReservationModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /reservations/{reservation_id}/no-show to its creator user or an admin, accepting a positive reservation_id and JSON no_show_at; it shall require application/json, validate REQ-4-001 and REQ-4-006, atomically transition PENDING or CONFIRMED to NO_SHOW while retaining history, be non-idempotent, release active demand, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleNoShowReservation(request, reservation_id):\n    // REQ-4-023; preconditions: JSON, existing reservation, persistence available.\n    REQUIRE creator or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE timestamp OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF terminal status THEN ROLLBACK; RETURN 409. END IF SET NO_SHOW and actor history; COMMIT; RETURN 200.\n    // REQ-4-006; non-idempotent and rollback preserves all persistent state.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-001",
+          "requirement": "Table and reservation ids are immutable positive integers; non-positive ids are not found. Reservation timestamps are offset-aware ISO-8601 UTC values from 2025-01-01T00:00:00Z through 2035-12-31T23:59:59Z."
+        },
+        {
+          "id": "REQ-4-006",
+          "requirement": "Reservation status transitions are PENDING to CONFIRMED, CANCELLED, or NO_SHOW, and CONFIRMED to CANCELLED or NO_SHOW. CANCELLED and NO_SHOW are terminal and retain immutable history including cancellation or no-show timestamp and actor."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "restaurant-overbooking-reservations",
+    "endpoint": "POST /tables",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/ristoranti/v1_overbooking_prenotazioni_concorrenti/overbooking_prenotazioni_concorrenti.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Restaurant management",
+      "variant": "B: Overbooking and concurrent reservations",
+      "summary": "Application domain: Restaurant management.\nBackend variant: B: Overbooking and concurrent reservations.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/tables",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "TableController",
+          "routine": "create_table"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "TableModel",
+          "table": "tables",
+          "fields": [
+            "active",
+            "code",
+            "id",
+            "is_deleted",
+            "overbook_seats",
+            "seats",
+            "zone"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "id",
+            "role",
+            "token",
+            "username"
+          ],
+          "foreign_keys": []
+        }
+      ],
+      "allowed_tables": [
+        "tables",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_table",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /tables to an admin, accepting JSON code, seats, overbook_seats, zone, and optional active default true; it shall require application/json, validate REQ-4-002, atomically create a unique table, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, or 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateTable(request):\n    // REQ-4-013; preconditions: JSON and persistence available.\n    REQUIRE admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE REQ-4-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF code exists THEN ROLLBACK; RETURN 409. END IF CREATE table; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback preserves all tables and reservation relations.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-4-002",
+          "requirement": "A table has a unique uppercase code matching ^[A-Z][A-Z0-9-]{0,11}$, seats 1..20, overbook_seats 0..8, zone in INDOOR, TERRACE, BAR, PRIVATE, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

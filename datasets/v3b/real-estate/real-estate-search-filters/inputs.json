@@ -1,0 +1,3736 @@
+[
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "DELETE /agents/{agent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/agents/{agent_id}",
+      "path_params": [
+        {
+          "name": "agent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AgentController",
+          "routine": "delete_agent"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_agent",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "agent_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /agents/{agent_id} to an admin, accepting a positive agent_id; it shall validate REQ-6-001 and REQ-6-004, soft-delete an agent with no active properties, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 409, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteAgent(request):\n    // REQ-6-019; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete an agent with no active properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-004",
+          "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "DELETE /properties/{property_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/properties/{property_id}",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "delete_property"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FavoriteModel",
+          "table": "favorites",
+          "fields": [
+            "created_at",
+            "id",
+            "property_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "property_id",
+              "target": "properties.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "favorites",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "properties.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_property",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /properties/{property_id} to its assigned agent or an admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-004, soft-delete an ARCHIVED property only when it has no favorites and retain no dangling agent relation, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 409, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProperty(request):\n    // REQ-6-014; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete an ARCHIVED property only when it has no favorites and retain no dangling agent relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-004",
+          "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "DELETE /properties/{property_id}/favorite",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/properties/{property_id}/favorite",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FavoriteController",
+          "routine": "delete_favorite"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FavoriteModel",
+          "table": "favorites",
+          "fields": [
+            "created_at",
+            "id",
+            "property_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "property_id",
+              "target": "properties.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "favorites",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "properties.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_favorite",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /properties/{property_id}/favorite to the favorite owner or an admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-006, remove only the caller favorite relation, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteFavorite(request):\n    // REQ-6-027; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-006 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; remove only the caller favorite relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-006",
+          "requirement": "A favorite is unique by caller account and property and may reference only an ACTIVE property; deleting a favorite never changes the property."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "DELETE /saved-searches/{search_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "DELETE",
+      "path": "/saved-searches/{search_id}",
+      "path_params": [
+        {
+          "name": "search_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        204
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "delete_saved_search"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "delete_saved_search",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "search_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": true,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose DELETE /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id; it shall validate REQ-6-001 and REQ-6-005, delete only the saved search without changing properties, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteSavedSearch(request):\n    // REQ-6-024; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-005 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only the saved search without changing properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-005",
+          "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /agents",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/agents",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "active",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "city",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AgentController",
+          "routine": "list_agents"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AgentModel",
+          "table": "agents",
+          "fields": [
+            "active",
+            "created_at",
+            "email",
+            "full_name",
+            "id",
+            "is_deleted",
+            "license_code",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "agents",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "active",
+          "alias": "active",
+          "model_field": "active",
+          "operator": "=="
+        },
+        {
+          "parameter": "city",
+          "alias": "city",
+          "model_field": "city",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /agents to an authenticated user or admin, accepting optional active, city, limit, and after_id; it shall validate REQ-6-001 and REQ-6-003, return a stable page of active agents, make no persistent change, and emit only 200, 400, 401, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListAgents(request):\n    // REQ-6-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-003 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-003",
+          "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /agents/{agent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/agents/{agent_id}",
+      "path_params": [
+        {
+          "name": "agent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AgentController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "AgentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AgentModel",
+          "table": "agents",
+          "fields": [
+            "active",
+            "created_at",
+            "email",
+            "full_name",
+            "id",
+            "is_deleted",
+            "license_code",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "agents",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "agent_id",
+          "model": "AgentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /agents/{agent_id} to an authenticated user or admin, accepting a positive agent_id; it shall validate REQ-6-001 and REQ-6-003, return the agent, make no persistent change, and emit only 200, 401, 404, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetAgent(request):\n    // REQ-6-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-003 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-003",
+          "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /favorites",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/favorites",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FavoriteController",
+          "routine": "list_favorites"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FavoriteModel",
+          "table": "favorites",
+          "fields": [
+            "created_at",
+            "id",
+            "property_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "property_id",
+              "target": "properties.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "favorites",
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "properties.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /favorites to an authenticated user or admin, accepting optional limit and after_id; it shall validate REQ-6-006 and pagination, return only caller-owned property favorites unless admin, make no persistent change, and emit only 200, 400, 401, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListFavorites(request):\n    // REQ-6-025; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-006 and pagination OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-006",
+          "requirement": "A favorite is unique by caller account and property and may reference only an ACTIVE property; deleting a favorite never changes the property."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /health",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": false,
+      "orm_required": false
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/health",
+      "path_params": [],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        503
+      ],
+      "route_controller_calls": []
+    },
+    "data_model_contract": {
+      "models": [],
+      "allowed_tables": [],
+      "allowed_foreign_key_targets": [],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": null,
+      "auth": {
+        "type": "public",
+        "allowed_actor_kinds": [
+          "public"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-6-009; preconditions: none; authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        },
+        {
+          "id": "REQ-6-003",
+          "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /properties",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/properties",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "city",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "property_type",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "price_min",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 1000,
+            "le": 2000000000
+          }
+        },
+        {
+          "name": "price_max",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 1000,
+            "le": 2000000000
+          }
+        },
+        {
+          "name": "area_min",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 10,
+            "le": 10000
+          }
+        },
+        {
+          "name": "area_max",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 10,
+            "le": 10000
+          }
+        },
+        {
+          "name": "rooms_min",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 0,
+            "le": 50
+          }
+        },
+        {
+          "name": "rooms_max",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "ge": 0,
+            "le": 50
+          }
+        },
+        {
+          "name": "agent_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        },
+        {
+          "name": "status",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": "PropertyStatusEnum.ACTIVE"
+          }
+        },
+        {
+          "name": "sort",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": "SortEnum.ID_ASC"
+          }
+        },
+        {
+          "name": "cursor",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null
+          }
+        },
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "search_properties"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [
+        {
+          "parameter": "city",
+          "alias": "city",
+          "model_field": "city",
+          "operator": "=="
+        },
+        {
+          "parameter": "property_type",
+          "alias": "property_type",
+          "model_field": "property_type",
+          "operator": "=="
+        },
+        {
+          "parameter": "price_min",
+          "alias": "price_min",
+          "model_field": "price_min",
+          "operator": "=="
+        },
+        {
+          "parameter": "price_max",
+          "alias": "price_max",
+          "model_field": "price_max",
+          "operator": "=="
+        },
+        {
+          "parameter": "area_min",
+          "alias": "area_min",
+          "model_field": "area_min",
+          "operator": "=="
+        },
+        {
+          "parameter": "area_max",
+          "alias": "area_max",
+          "model_field": "area_max",
+          "operator": "=="
+        },
+        {
+          "parameter": "rooms_min",
+          "alias": "rooms_min",
+          "model_field": "rooms_min",
+          "operator": "=="
+        },
+        {
+          "parameter": "rooms_max",
+          "alias": "rooms_max",
+          "model_field": "rooms_max",
+          "operator": "=="
+        },
+        {
+          "parameter": "agent_id",
+          "alias": "agent_id",
+          "model_field": "agent_id",
+          "operator": "=="
+        },
+        {
+          "parameter": "status",
+          "alias": "status",
+          "model_field": "status",
+          "operator": "=="
+        },
+        {
+          "parameter": "sort",
+          "alias": "sort",
+          "model_field": "sort",
+          "operator": "=="
+        },
+        {
+          "parameter": "cursor",
+          "alias": "cursor",
+          "model_field": "cursor",
+          "operator": "=="
+        }
+      ],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": null
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /properties to an authenticated user or admin, accepting optional city, property_type, price_min, price_max, area_min, area_max, rooms_min, rooms_max, agent_id, status, sort, cursor, and limit; it shall validate REQ-6-001, REQ-6-002, REQ-6-007, and REQ-6-008, return authorized properties using the requested stable filter and sort page, make no persistent change, and emit only 200, 400, 401, 404, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProperties(request):\n    // REQ-6-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001, REQ-6-002, REQ-6-007, and REQ-6-008 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        },
+        {
+          "id": "REQ-6-007",
+          "requirement": "Property search filters use AND semantics; city is case-insensitive exact after trimming, price_min <= price_max, area_min <= area_max, rooms_min <= rooms_max, and status defaults to ACTIVE."
+        },
+        {
+          "id": "REQ-6-008",
+          "requirement": "Search pages are sorted by requested sort PRICE_ASC, PRICE_DESC, AREA_DESC, or ID_ASC then id as a deterministic tie-breaker; sort cursors carry the sort value and id together."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /properties/{property_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/properties/{property_id}",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "PropertyController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": "PropertyModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /properties/{property_id} to an authenticated user or admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-002, return the authorized non-deleted property, make no persistent change, and emit only 200, 401, 403, 404, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProperty(request):\n    // REQ-6-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-002 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /properties/{property_id}/similar",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/properties/{property_id}/similar",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        404,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "list_similar"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": "PropertyModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /properties/{property_id}/similar to an authenticated user or admin, accepting a positive property_id, optional limit, and after_id; it shall validate REQ-6-001, REQ-6-002, and REQ-6-007, return same-city and same-type active properties excluding the subject, make no persistent change, and emit only 200, 400, 401, 404, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListSimilarProperties(request):\n    // REQ-6-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001, REQ-6-002, and REQ-6-007 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        },
+        {
+          "id": "REQ-6-007",
+          "requirement": "Property search filters use AND semantics; city is case-insensitive exact after trimming, price_min <= price_max, area_min <= area_max, rooms_min <= rooms_max, and status defaults to ACTIVE."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /saved-searches",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/saved-searches",
+      "path_params": [],
+      "query_params": [
+        {
+          "name": "limit",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": 20,
+            "ge": 1,
+            "le": 100
+          }
+        },
+        {
+          "name": "after_id",
+          "alias": null,
+          "required": false,
+          "constraints": {
+            "required": false,
+            "default": null,
+            "gt": 0
+          }
+        }
+      ],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "list_saved_searches"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "SavedSearchModel",
+          "table": "saved_searches",
+          "fields": [
+            "created_at",
+            "filters_json",
+            "id",
+            "name",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "saved_searches",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": {
+        "order_by": {
+          "field": "id",
+          "direction": "asc"
+        },
+        "limit": {
+          "parameter": "limit",
+          "default": 20,
+          "ge": 1,
+          "le": 100
+        },
+        "cursor": {
+          "parameter": "after_id",
+          "field": "id",
+          "operator": ">",
+          "gt": 0
+        },
+        "next_cursor_field": "next_after_id"
+      },
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /saved-searches to an authenticated user or admin, accepting optional limit and after_id; it shall validate REQ-6-005 and pagination, return only caller-owned saved searches unless admin, make no persistent change, and emit only 200, 400, 401, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListSavedSearches(request):\n    // REQ-6-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-005 and pagination OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-005",
+          "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "GET /saved-searches/{search_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "GET",
+      "path": "/saved-searches/{search_id}",
+      "path_params": [
+        {
+          "name": "search_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        401,
+        403,
+        404,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "get_by_id"
+        },
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "SavedSearchModel",
+          "table": "saved_searches",
+          "fields": [
+            "created_at",
+            "filters_json",
+            "id",
+            "name",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "saved_searches",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_by_id",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "search_id",
+          "model": "SavedSearchModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": true,
+        "write_method": false,
+        "transaction_required": false,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose GET /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id; it shall validate REQ-6-001 and REQ-6-005, return the authorized saved search, make no persistent change, and emit only 200, 401, 403, 404, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetSavedSearch(request):\n    // REQ-6-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-005 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-005",
+          "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "PATCH /agents/{agent_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/agents/{agent_id}",
+      "path_params": [
+        {
+          "name": "agent_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AgentController",
+          "routine": "patch_agent"
+        },
+        {
+          "controller_class": "AgentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AgentModel",
+          "table": "agents",
+          "fields": [
+            "active",
+            "created_at",
+            "email",
+            "full_name",
+            "id",
+            "is_deleted",
+            "license_code",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "agents",
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "agent_id",
+          "model": "AgentModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /agents/{agent_id} to an admin, accepting a positive agent_id and JSON full_name, email, license_code, or active; it shall validate REQ-6-003 and REQ-6-004, update supplied agent fields without orphaning active properties, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchAgent(request):\n    // REQ-6-018; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-003 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied agent fields without orphaning active properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-003",
+          "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+        },
+        {
+          "id": "REQ-6-004",
+          "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "PATCH /properties/{property_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/properties/{property_id}",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "patch_property"
+        },
+        {
+          "controller_class": "PropertyController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": "PropertyModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /properties/{property_id} to its assigned agent or an admin, accepting a positive property_id and JSON title, city, property_type, area_sqm, rooms, price_cents, status, or agent_id; it shall validate REQ-6-002 through REQ-6-004, change only supplied property data while preserving its single-agent relation, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProperty(request):\n    // REQ-6-013; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-002 through REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; change only supplied property data while preserving its single-agent relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        },
+        {
+          "id": "REQ-6-004",
+          "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "PATCH /saved-searches/{search_id}",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "PATCH",
+      "path": "/saved-searches/{search_id}",
+      "path_params": [
+        {
+          "name": "search_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        200
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "patch_saved_search"
+        },
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "SavedSearchModel",
+          "table": "saved_searches",
+          "fields": [
+            "created_at",
+            "filters_json",
+            "id",
+            "name",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "saved_searches",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "get_current_user",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "search_id",
+          "model": "SavedSearchModel",
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [
+        {
+          "type": "owner_scope_for_non_admin",
+          "caller_field": "current_user.id",
+          "candidate_owner_fields": [
+            "user_id"
+          ],
+          "failure_status": 403
+        }
+      ],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose PATCH /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id and JSON name or filters; it shall validate REQ-6-005 through REQ-6-007, update caller-owned filters only, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchSavedSearch(request):\n    // REQ-6-023; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-005 through REQ-6-007 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update caller-owned filters only. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-005",
+          "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+        },
+        {
+          "id": "REQ-6-007",
+          "requirement": "Property search filters use AND semantics; city is case-insensitive exact after trimming, price_min <= price_max, area_min <= area_max, rooms_min <= rooms_max, and status defaults to ACTIVE."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "POST /agents",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/agents",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "AgentController",
+          "routine": "create_agent"
+        },
+        {
+          "controller_class": "AgentController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "AgentModel",
+          "table": "agents",
+          "fields": [
+            "active",
+            "created_at",
+            "email",
+            "full_name",
+            "id",
+            "is_deleted",
+            "license_code",
+            "updated_at"
+          ],
+          "foreign_keys": []
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "agents",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_agent",
+      "auth": {
+        "type": "admin_only",
+        "allowed_actor_kinds": [
+          "admin"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /agents to an admin, accepting JSON full_name, email, license_code, and optional active; it shall validate REQ-6-003, create an agent, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateAgent(request):\n    // REQ-6-016; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-003 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create an agent. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-003",
+          "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "POST /properties",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/properties",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        403,
+        404,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "PropertyController",
+          "routine": "create_property"
+        },
+        {
+          "controller_class": "PropertyController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "PropertyModel",
+          "table": "properties",
+          "fields": [
+            "agent_id",
+            "area_sqm",
+            "city",
+            "created_at",
+            "id",
+            "is_deleted",
+            "price_cents",
+            "property_type",
+            "rooms",
+            "status",
+            "title",
+            "updated_at"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "properties",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_property",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /properties to an active agent user or admin, accepting JSON title, property_type, city, area_sqm, rooms, price_cents, and optional agent_id for admins; it shall validate REQ-6-001 through REQ-6-004, create an ACTIVE property bound to the caller agent or supplied active agent, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProperty(request):\n    // REQ-6-011; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 through REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create an ACTIVE property bound to the caller agent or supplied active agent. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-004",
+          "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "POST /properties/{property_id}/favorite",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/properties/{property_id}/favorite",
+      "path_params": [
+        {
+          "name": "property_id",
+          "source": "path",
+          "required": true,
+          "derivation": "deterministic_from_endpoint_path"
+        }
+      ],
+      "query_params": [],
+      "body_required": false,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        401,
+        404,
+        409,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "FavoriteController",
+          "routine": "create_favorite"
+        },
+        {
+          "controller_class": "FavoriteController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "FavoriteModel",
+          "table": "favorites",
+          "fields": [
+            "created_at",
+            "id",
+            "property_id",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "property_id",
+              "target": "properties.id"
+            },
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "favorites",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "properties.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_favorite",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [
+        {
+          "parameter": "property_id",
+          "model": null,
+          "not_found_status": 404
+        }
+      ],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /properties/{property_id}/favorite to an authenticated user or admin, accepting a positive property_id; it shall validate REQ-6-001, REQ-6-002, and REQ-6-006, create the caller favorite relation, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 401, 404, 409, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateFavorite(request):\n    // REQ-6-026; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001, REQ-6-002, and REQ-6-006 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the caller favorite relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-001",
+          "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+        },
+        {
+          "id": "REQ-6-002",
+          "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+        },
+        {
+          "id": "REQ-6-006",
+          "requirement": "A favorite is unique by caller account and property and may reference only an ACTIVE property; deleting a favorite never changes the property."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  },
+  {
+    "codegen_spec_version": "3.1.0-controller-focused",
+    "dataset_key": "real-estate-search-filters",
+    "endpoint": "POST /saved-searches",
+    "source": {
+      "source_dataset": "finetuning/per_backends_dataset_v2",
+      "specification_path": "backends/immobiliare/v1_ricerca_filtri_paginazione/ricerca_filtri_paginazione.specification.json",
+      "derivation_policy": "Compact controller-focused transformation of v2; target code is unchanged."
+    },
+    "target": {
+      "language": "python",
+      "framework": "fastapi",
+      "backend_profile": "local_sqlalchemy_persistence",
+      "architecture": "route_controller_orm_schema",
+      "output_sections": [
+        "schemas_code",
+        "orm_model_code",
+        "controller_code",
+        "route_code"
+      ]
+    },
+    "application_context": {
+      "domain": "Real-estate management",
+      "variant": "A: Search with filters and pagination",
+      "summary": "Application domain: Real-estate management.\nBackend variant: A: Search with filters and pagination.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+      "persistent_database_required": true,
+      "orm_required": true
+    },
+    "route_contract": {
+      "method": "POST",
+      "path": "/saved-searches",
+      "path_params": [],
+      "query_params": [],
+      "body_required": true,
+      "success_statuses": [
+        201
+      ],
+      "error_statuses": [
+        400,
+        401,
+        409,
+        415,
+        422,
+        500,
+        503
+      ],
+      "route_controller_calls": [
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "create_saved_search"
+        },
+        {
+          "controller_class": "SavedSearchController",
+          "routine": "serialize"
+        }
+      ]
+    },
+    "data_model_contract": {
+      "models": [
+        {
+          "name": "SavedSearchModel",
+          "table": "saved_searches",
+          "fields": [
+            "created_at",
+            "filters_json",
+            "id",
+            "name",
+            "updated_at",
+            "user_id"
+          ],
+          "foreign_keys": [
+            {
+              "field": "user_id",
+              "target": "users.id"
+            }
+          ]
+        },
+        {
+          "name": "UserModel",
+          "table": "users",
+          "fields": [
+            "agent_id",
+            "id",
+            "role",
+            "token",
+            "token_hash",
+            "username"
+          ],
+          "foreign_keys": [
+            {
+              "field": "agent_id",
+              "target": "agents.id"
+            }
+          ]
+        }
+      ],
+      "allowed_tables": [
+        "saved_searches",
+        "users"
+      ],
+      "allowed_foreign_key_targets": [
+        "agents.id",
+        "users.id"
+      ],
+      "forbid_undeclared_tables": true,
+      "forbid_undeclared_foreign_keys": true
+    },
+    "controller_contract": {
+      "routine": "create_saved_search",
+      "auth": {
+        "type": "owner_or_admin",
+        "allowed_actor_kinds": [
+          "admin",
+          "user_or_owner"
+        ],
+        "failure_statuses": [
+          401,
+          403
+        ]
+      },
+      "resource_lookups": [],
+      "access_control": [],
+      "filters": [],
+      "intervals": [],
+      "preconditions": [],
+      "pagination": null,
+      "mutation": {
+        "read_only": false,
+        "write_method": true,
+        "transaction_required": true,
+        "preserve_history": false,
+        "no_cascade": false
+      }
+    },
+    "requirement_context": {
+      "formal_requirement": "The system shall expose POST /saved-searches to an authenticated user or admin, accepting JSON name and filters; it shall validate REQ-6-005 through REQ-6-007, create a caller-owned saved search, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 409, 415, 422, 500, 503.",
+      "endpoint_pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateSavedSearch(request):\n    // REQ-6-021; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-005 through REQ-6-007 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create a caller-owned saved search. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      },
+      "relevant_domain_invariants": [
+        {
+          "id": "REQ-6-005",
+          "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+        },
+        {
+          "id": "REQ-6-007",
+          "requirement": "Property search filters use AND semantics; city is case-insensitive exact after trimming, price_min <= price_max, area_min <= area_max, rooms_min <= rooms_max, and status defaults to ACTIVE."
+        }
+      ]
+    },
+    "generation_constraints": [
+      "Return exactly four fenced Python sections named schemas_code, orm_model_code, controller_code, and route_code.",
+      "Implement controller_contract as behavior, not comments.",
+      "Do not implement narrower filters than controller_contract scopes.",
+      "Do not invent tables, foreign keys, status values, owner fields, or controller calls outside this contract."
+    ]
+  }
+]

@@ -1,0 +1,347 @@
+[
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "DELETE /projects/{project_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_project accepting db, current_user, project_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships.\n3. DEFINE class TicketModel. Declare fields or class attributes: __tablename__, assignee_membership, assignee_membership_id, created_at, creator, creator_account_id, description, id, priority, priority_order, project, project_id, status, title. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /projects/{project_id} to a MANAGER or an admin, accepting a positive project_id; it shall atomically soft-delete only when REQ-5-008 permits, append a PROJECT_DELETED audit event, be non-idempotent, retain memberships and audit history, never cascade to tickets, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteProject(request, project_id):\n    // REQ-5-016; preconditions: existing active project and persistence available.\n    REQUIRE MANAGER or admin OR RETURN 401 or 403; RETURN 404 for invalid or absent id. BEGIN TRANSACTION; IF tickets or active non-creator memberships exist THEN ROLLBACK; RETURN 409. END IF MARK deleted and append audit; COMMIT; RETURN 204.\n    // REQ-5-007 and REQ-5-008; non-idempotent, rollback leaves state and audit unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "DELETE /projects/{project_id}/memberships/{membership_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No schema code is required by this endpoint."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine delete_membership accepting db, current_user, project_id, membership_id. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose DELETE /projects/{project_id}/memberships/{membership_id} to a MANAGER or an admin, accepting positive ids; it shall atomically deactivate a membership only when it does not remove the final active MANAGER, append a MEMBERSHIP_REMOVED audit event, be non-idempotent, retain membership history, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleDeleteMembership(request, project_id, membership_id):\n    // REQ-5-020; preconditions: matching active membership and persistence available.\n    REQUIRE MANAGER or admin OR RETURN 401 or 403; RETURN 404 for invalid, absent, or mismatched ids. BEGIN TRANSACTION; IF final active MANAGER then ROLLBACK; RETURN 409. END IF DEACTIVATE and append audit; COMMIT; RETURN 204.\n    // REQ-5-003 and REQ-5-007; non-idempotent and rollback preserves membership permissions.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /audit-events",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class AuditEventListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_audit_events accepting db, current_user, project_id, event_type, ticket_id, subject_id, limit, after_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships.\n3. DEFINE class AuditEventModel. Declare fields or class attributes: __tablename__, actor, actor_account_id, changed_fields_json, created_at, event_type, id, project, project_id, subject_id, subject_type. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /audit-events to a MANAGER for a required positive project_id or to an admin for an optional positive project_id, accepting optional event_type, positive ticket_id, positive subject_id, limit, and after_id; it shall validate REQ-5-001, REQ-5-007, and REQ-5-010, restrict non-admin users to their managed project, return immutable stable audit rows without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListAuditEvents(request):\n    // REQ-5-025; preconditions: persistence available.\n    REQUIRE authenticated user or admin OR RETURN 401; VALIDATE ids, event enum, and pagination OR RETURN 400 or 422; unknown positive project or ticket is 404.\n    REQUIRE MANAGER for supplied project unless admin OR RETURN 403; READ matching immutable events by id; RETURN 200 page.\n    // REQ-5-007. Transaction: none; postcondition: audit and all persistent state remain unchanged on success and error.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /health",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class HealthResponse. Declare fields or class attributes: database, model_config, status."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_health accepting db. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "No ORM model code is required by this endpoint."
+    },
+    "formal_requirement": "The system shall expose GET /health publicly with no input or authorization, probe only local persistence without effects, and emit only 200 or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetHealth(request):\n    // REQ-5-011; preconditions: none; authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; failure has no side effect.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /projects",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProjectListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_projects accepting db, current_user, active, key_prefix, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProjectModel. Declare fields or class attributes: __tablename__, active, audit_events, creator, creator_account_id, description, id, is_deleted, key, memberships, name, tickets. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /projects to an authenticated user or admin, accepting optional active boolean, key_prefix 1..10 uppercase characters, limit, and after_id; it shall validate REQ-5-002 and REQ-5-010, restrict users to projects with an active membership, make no persistent change, and emit only 200, 400, 401, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListProjects(request):\n    // REQ-5-012; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; VALIDATE filters and pagination OR RETURN 400 or 422.\n    READ member projects for user or all matching projects for admin by id; RETURN 200 page. Transaction: none; postcondition: state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /projects/{project_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProjectOut. Declare fields or class attributes: active, creator_account_id, description, id, key, model_config, name."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_project accepting db, current_user, project_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProjectModel. Declare fields or class attributes: __tablename__, active, audit_events, creator, creator_account_id, description, id, is_deleted, key, memberships, name, tickets. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /projects/{project_id} to an active project member or an admin, accepting a positive project_id; it shall enforce REQ-5-001 and REQ-5-004 without persistent effects, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetProject(request, project_id):\n    // REQ-5-014; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid, absent, or deleted project; REQUIRE active membership or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: state and audit remain unchanged on errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /projects/{project_id}/memberships",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MembershipListResponse. Declare fields or class attributes: items, model_config, next_after_id."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_memberships accepting db, current_user, project_id, role, active, limit, after_id. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /projects/{project_id}/memberships to an active project member or an admin, accepting a positive project_id, optional role, optional active boolean, limit, and after_id; it shall validate REQ-5-001, REQ-5-003, and REQ-5-010, return a stable page without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListMemberships(request, project_id):\n    // REQ-5-017; preconditions: persistence available.\n    REQUIRE active membership or admin OR RETURN 401 or 403; RETURN 404 for absent project; VALIDATE role, active, and pagination OR RETURN 400 or 422.\n    READ memberships by id; RETURN 200 page. Transaction: none; postcondition: state and audit unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /tickets",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TicketListResponse. Declare fields or class attributes: items, model_config, next_after_id, next_after_priority."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine list_tickets accepting db, current_user, project_id, ticket_status, priority, assignee_membership_id, creator_account_id, q, priority_sort, after_priority, after_id, limit. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships.\n3. DEFINE class TicketModel. Declare fields or class attributes: __tablename__, assignee_membership, assignee_membership_id, created_at, creator, creator_account_id, description, id, priority, priority_order, project, project_id, status, title. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /tickets to an authenticated project member or an admin, accepting optional positive project_id, status, priority, positive assignee_membership_id, positive creator_account_id permitted only to an admin, q, priority_sort boolean default false, ordinary limit and after_id, or priority cursor after_priority and after_id; it shall validate REQ-5-001, REQ-5-005, REQ-5-006, REQ-5-009, and REQ-5-010, apply AND filter semantics and authorization scope without effects, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleListTickets(request):\n    // REQ-5-021; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE admin for creator filter OR RETURN 403; VALIDATE all filters, query, sort cursor, and pagination OR RETURN 400 or 422.\n    REQUIRE membership for each requested project or ticket scope OR RETURN 403; unknown positive references are 404. READ AND-matching rows in mandated order; RETURN 200 page.\n    // Transaction: none; postcondition: tickets, permissions, and audit remain unchanged on all errors.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "GET /tickets/{ticket_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TicketOut. Declare fields or class attributes: assignee_membership_id, created_at, creator_account_id, description, id, model_config, priority, project_id, status, title."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine get_ticket accepting db, current_user, ticket_id. Raise the declared controlled errors when a guard fails. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class TicketModel. Declare fields or class attributes: __tablename__, assignee_membership, assignee_membership_id, created_at, creator, creator_account_id, description, id, priority, priority_order, project, project_id, status, title. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose GET /tickets/{ticket_id} to an active member of its project or an admin, accepting a positive ticket_id; it shall enforce REQ-5-001 and REQ-5-004, make no persistent change, and emit only 200, 401, 403, 404, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleGetTicket(request, ticket_id):\n    // REQ-5-023; preconditions: persistence available.\n    REQUIRE user or admin OR RETURN 401; RETURN 404 for invalid or absent ticket; REQUIRE active membership or admin OR RETURN 403.\n    RETURN 200. Transaction: none; postcondition: ticket, membership, and audit state unchanged.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "PATCH /projects/{project_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProjectOut. Declare fields or class attributes: active, creator_account_id, description, id, key, model_config, name."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_project accepting db, current_user, project_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProjectModel. Declare fields or class attributes: __tablename__, active, audit_events, creator, creator_account_id, description, id, is_deleted, key, memberships, name, tickets. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /projects/{project_id} to a MANAGER or an admin, accepting a positive project_id and JSON key, name, description, or active; it shall require application/json, validate REQ-5-002, atomically update supplied fields and append one audit event, be idempotent for an identical valid payload except that it appends no duplicate audit row when no field changes, preserve memberships and tickets, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchProject(request, project_id):\n    // REQ-5-015; preconditions: JSON, existing project, persistence available.\n    REQUIRE MANAGER or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF duplicate key or deactivation violates REQ-5-008 THEN ROLLBACK; RETURN 409. END IF UPDATE changed fields; append audit only if changed; COMMIT; RETURN 200.\n    // REQ-5-007; identical payload is idempotent and rollback preserves relations and audit history.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "PATCH /projects/{project_id}/memberships/{membership_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MembershipOut. Declare fields or class attributes: account_id, active, id, model_config, project_id, role."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_membership accepting db, current_user, project_id, membership_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /projects/{project_id}/memberships/{membership_id} to a MANAGER or an admin, accepting positive ids and JSON role or active; it shall require application/json, validate REQ-5-003, REQ-5-004, and REQ-5-008, atomically update supplied permission fields and append an audit event only on change, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchMembership(request, project_id, membership_id):\n    // REQ-5-019; preconditions: JSON, matching membership, persistence available.\n    REQUIRE MANAGER or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF removing final active MANAGER THEN ROLLBACK; RETURN 409. END IF UPDATE changed fields and audit only if changed; COMMIT; RETURN 200.\n    // REQ-5-003 and REQ-5-007; identical payload idempotent and rollback preserves access control.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "PATCH /tickets/{ticket_id}",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TicketOut. Declare fields or class attributes: assignee_membership_id, created_at, creator_account_id, description, id, model_config, priority, project_id, status, title."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine patch_ticket accepting db, current_user, ticket_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships.\n3. DEFINE class TicketModel. Declare fields or class attributes: __tablename__, assignee_membership, assignee_membership_id, created_at, creator, creator_account_id, description, id, priority, priority_order, project, project_id, status, title. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose PATCH /tickets/{ticket_id} to the ticket creator when a CONTRIBUTOR or MANAGER, to any MANAGER of the project, or to an admin, accepting a positive ticket_id and JSON title, description, status, priority, or assignee_membership_id; it shall require application/json, validate REQ-5-005 and REQ-5-006, atomically update supplied fields and append one TICKET_UPDATED audit event only when fields change, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handlePatchTicket(request, ticket_id):\n    // REQ-5-024; preconditions: JSON, existing ticket, persistence available.\n    REQUIRE eligible creator, MANAGER, or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE partial result OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF assignee missing, inactive, wrong project, or VIEWER THEN ROLLBACK; RETURN 404 or 409. END IF UPDATE changed fields and audit only if changed; COMMIT; RETURN 200.\n    // REQ-5-006 and REQ-5-007; identical payload idempotent, rollback preserves all state.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "POST /projects",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class ProjectOut. Declare fields or class attributes: active, creator_account_id, description, id, key, model_config, name."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_project accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class ProjectModel. Declare fields or class attributes: __tablename__, active, audit_events, creator, creator_account_id, description, id, is_deleted, key, memberships, name, tickets. Maintain the declared ORM relationships. Enforce the declared uniqueness constraints.\n3. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /projects to an authenticated user or admin, accepting JSON key, name, and optional description; it shall require application/json, validate REQ-5-002 and REQ-5-003, atomically create an active project, creator MANAGER membership, and audit event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateProject(request):\n    // REQ-5-013; preconditions: JSON and persistence available.\n    REQUIRE user or admin OR RETURN 401; REQUIRE JSON OR RETURN 415; VALIDATE REQ-5-002 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF key exists THEN ROLLBACK; RETURN 409. END IF CREATE project, caller MANAGER membership, and audit row; COMMIT; RETURN 201 with Location.\n    // REQ-5-003 and REQ-5-007; non-idempotent and rollback preserves all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "POST /projects/{project_id}/memberships",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class MembershipOut. Declare fields or class attributes: account_id, active, id, model_config, project_id, role."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_membership accepting db, current_user, project_id, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /projects/{project_id}/memberships to a MANAGER or an admin, accepting a positive project_id and JSON positive account_id plus role; it shall require application/json, validate REQ-5-001 and REQ-5-003, require an existing account, atomically add an active unique membership and audit event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateMembership(request, project_id):\n    // REQ-5-018; preconditions: JSON, existing project and account, persistence available.\n    REQUIRE MANAGER or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE ids and role OR RETURN 400 or 422; unknown project or account is 404.\n    BEGIN TRANSACTION; IF membership exists THEN ROLLBACK; RETURN 409. END IF CREATE membership and audit row; COMMIT; RETURN 201 with Location.\n    // REQ-5-003 and REQ-5-007; non-idempotent and rollback preserves permissions.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  },
+  {
+    "dataset_key": "kanban-filters-priorities-audit",
+    "endpoint": "POST /tickets",
+    "schemas_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class TicketOut. Declare fields or class attributes: assignee_membership_id, created_at, creator_account_id, description, id, model_config, priority, project_id, status, title."
+    },
+    "controller_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE routine create_ticket accepting db, current_user, payload. Raise the declared controlled errors when a guard fails. Coordinate persistence changes through the surrounding transaction/session. Return the value produced by the implemented branch."
+    },
+    "orm_model_pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "1. DEFINE class UserModel. Declare fields or class attributes: __tablename__, id, role, token, username. Enforce the declared uniqueness constraints.\n2. DEFINE class MembershipModel. Declare fields or class attributes: __tablename__, account, account_id, active, assigned_tickets, id, project, project_id, role. Maintain the declared ORM relationships.\n3. DEFINE class TicketModel. Declare fields or class attributes: __tablename__, assignee_membership, assignee_membership_id, created_at, creator, creator_account_id, description, id, priority, priority_order, project, project_id, status, title. Maintain the declared ORM relationships."
+    },
+    "formal_requirement": "The system shall expose POST /tickets to a CONTRIBUTOR, MANAGER, or admin, accepting JSON positive project_id, title, optional description, optional status default TODO, priority, and optional assignee_membership_id; it shall require application/json, validate REQ-5-001, REQ-5-005, and REQ-5-006, atomically create a ticket and TICKET_CREATED audit event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+    "context_requirements": "Application domain: Kanban project management.\nC: Filters, priorities, audit, and project permissions.\nThis is a local FastAPI application that manages persistent domain resources through REST endpoints.\nApply the shared authorization, validation, controlled-error, and transaction conventions specified for the endpoint.",
+    "pseudocode": {
+      "language": "structured-pseudocode",
+      "body": "FUNCTION handleCreateTicket(request):\n    // REQ-5-022; preconditions: JSON, active project, persistence available.\n    REQUIRE CONTRIBUTOR, MANAGER, or admin OR RETURN 401 or 403; REQUIRE JSON OR RETURN 415; VALIDATE ticket body OR RETURN 400 or 422.\n    BEGIN TRANSACTION; IF project or assignee missing THEN ROLLBACK; RETURN 404; IF assignee role or project mismatches THEN ROLLBACK; RETURN 409. END IF CREATE ticket and audit row; COMMIT; RETURN 201 with Location.\n    // REQ-5-006 and REQ-5-007; non-idempotent and rollback preserves all relations.",
+      "generated_by": "gemini-gpt-5.6"
+    }
+  }
+]
