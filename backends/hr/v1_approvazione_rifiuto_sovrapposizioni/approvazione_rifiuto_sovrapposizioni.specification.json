@@ -1,0 +1,227 @@
+{
+  "case_id": "7",
+  "domain": "Human resources",
+  "variant": "B: Approval, rejection, and overlaps",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-7-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are treated as not found, while non-positive body and query reference ids are validation errors."
+    },
+    {
+      "id": "REQ-7-002",
+      "requirement": "Employees have unique employee_code, manager_employee_id, department 2..80, and active boolean."
+    },
+    {
+      "id": "REQ-7-003",
+      "requirement": "Requests have inclusive date intervals in 2025-01-01..2035-12-31, 0.5..365 requested days, and DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED status."
+    },
+    {
+      "id": "REQ-7-004",
+      "requirement": "An employee cannot have overlapping SUBMITTED or APPROVED requests of any leave type."
+    },
+    {
+      "id": "REQ-7-005",
+      "requirement": "Only the active requester manager or admin may decide a SUBMITTED request; self-approval is prohibited."
+    },
+    {
+      "id": "REQ-7-006",
+      "requirement": "Approval and rejection retain decided_at, decision_reason 3..500, and decider; terminal states are immutable."
+    },
+    {
+      "id": "REQ-7-007",
+      "requirement": "Users see their own requests, managers see subordinate requests, and admins see all."
+    },
+    {
+      "id": "REQ-7-008",
+      "requirement": "All lists use deterministic ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning items and nullable next_after_id after filters."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin. GET /health is public; every other route requires a valid non-expired local Bearer session and is deny-by-default.",
+    "JSON writes require application/json; malformed JSON is 400, wrong media type is 415, and valid JSON violating declared fields is 422.",
+    "The API is local and deterministic with no network, filesystem, upload, or external service. 503 and 500 leave all persistent state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-7-009; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE local persistence availability OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /employees",
+      "formal_requirement": "The system shall expose GET /employees to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate employee and manager hierarchy fields and stable pagination, return an authorized stable page of employees, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListEmployee(request):\n    // REQ-7-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee and manager hierarchy fields and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /employees",
+      "formal_requirement": "The system shall expose POST /employees to an authenticated user or admin, accepting JSON employee_code, full_name, manager_employee_id, department, active; it shall validate employee and manager hierarchy fields, create the Employee and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateEmployee(request):\n    // REQ-7-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Employee and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /employees/{employee_id}",
+      "formal_requirement": "The system shall expose GET /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee and manager hierarchy fields, return the authorized Employee, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetEmployee(request):\n    // REQ-7-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /employees/{employee_id}",
+      "formal_requirement": "The system shall expose PATCH /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id and JSON partial employee_code, full_name, manager_employee_id, department, active; it shall validate employee and manager hierarchy fields, update supplied Employee fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchEmployee(request):\n    // REQ-7-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Employee fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /employees/{employee_id}",
+      "formal_requirement": "The system shall expose DELETE /employees/{employee_id} to an authenticated user or admin, accepting a positive employee_id; it shall validate employee and manager hierarchy fields, soft-delete only an employee without subordinate or request relations, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteEmployee(request):\n    // REQ-7-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE employee and manager hierarchy fields OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete only an employee without subordinate or request relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /leave-requests",
+      "formal_requirement": "The system shall expose GET /leave-requests to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate interval, ownership, and no-overlap rule and stable pagination, return an authorized stable page of leave-requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListLeaveRequest(request):\n    // REQ-7-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE interval, ownership, and no-overlap rule and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /leave-requests",
+      "formal_requirement": "The system shall expose POST /leave-requests to an authenticated user or admin, accepting JSON employee_id, leave_type, start_date, end_date, requested_days; it shall validate interval, ownership, and no-overlap rule, create the LeaveRequest and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateLeaveRequest(request):\n    // REQ-7-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the LeaveRequest and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /leave-requests/{leave_request_id}",
+      "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate interval, ownership, and no-overlap rule, return the authorized LeaveRequest, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetLeaveRequest(request):\n    // REQ-7-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /leave-requests/{leave_request_id}",
+      "formal_requirement": "The system shall expose PATCH /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id and JSON partial employee_id, leave_type, start_date, end_date, requested_days; it shall validate interval, ownership, and no-overlap rule, update supplied LeaveRequest fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchLeaveRequest(request):\n    // REQ-7-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied LeaveRequest fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /leave-requests/{leave_request_id}",
+      "formal_requirement": "The system shall expose DELETE /leave-requests/{leave_request_id} to an authenticated user or admin, accepting a positive leave_request_id; it shall validate interval, ownership, and no-overlap rule, delete only a DRAFT request and preserve decisions, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteLeaveRequest(request):\n    // REQ-7-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE interval, ownership, and no-overlap rule OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only a DRAFT request and preserve decisions. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /approval-delegations",
+      "formal_requirement": "The system shall expose GET /approval-delegations to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate manager relation and non-overlapping effective dates and stable pagination, return an authorized stable page of approval-delegations, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListDelegation(request):\n    // REQ-7-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE manager relation and non-overlapping effective dates and stable pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /approval-delegations",
+      "formal_requirement": "The system shall expose POST /approval-delegations to an authenticated user or admin, accepting JSON manager_employee_id, delegate_employee_id, effective_from, effective_to; it shall validate manager relation and non-overlapping effective dates, create the Delegation and required relations, perform the creation atomically, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateDelegation(request):\n    // REQ-7-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the Delegation and required relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /approval-delegations/{delegation_id}",
+      "formal_requirement": "The system shall expose GET /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id; it shall validate manager relation and non-overlapping effective dates, return the authorized Delegation, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetDelegation(request):\n    // REQ-7-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /approval-delegations/{delegation_id}",
+      "formal_requirement": "The system shall expose PATCH /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id and JSON partial manager_employee_id, delegate_employee_id, effective_from, effective_to; it shall validate manager relation and non-overlapping effective dates, update supplied Delegation fields while preserving relations, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchDelegation(request):\n    // REQ-7-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied Delegation fields while preserving relations. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /approval-delegations/{delegation_id}",
+      "formal_requirement": "The system shall expose DELETE /approval-delegations/{delegation_id} to an authenticated user or admin, accepting a positive delegation_id; it shall validate manager relation and non-overlapping effective dates, end only the delegation without changing request history, perform the deletion atomically, preserve or protect relations as stated, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteDelegation(request):\n    // REQ-7-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE manager relation and non-overlapping effective dates OR RETURN 400 or 422.\n    BEGIN TRANSACTION; end only the delegation without changing request history. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /leave-requests/{leave_request_id}/approve",
+      "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/approve to requester manager or admin, accepting a positive leave_request_id and JSON decided_at and decision_reason; it shall validate SUBMITTED state, manager authority, and no overlap, approve and persist decision, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleApprove(request):\n    // REQ-7-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE SUBMITTED state, manager authority, and no overlap OR RETURN 400 or 422.\n    BEGIN TRANSACTION; approve and persist decision. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /leave-requests/{leave_request_id}/reject",
+      "formal_requirement": "The system shall expose POST /leave-requests/{leave_request_id}/reject to requester manager or admin, accepting a positive leave_request_id and JSON decided_at and decision_reason; it shall validate SUBMITTED state and manager authority, reject and persist decision, perform the action atomically and be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReject(request):\n    // REQ-7-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE SUBMITTED state and manager authority OR RETURN 400 or 422.\n    BEGIN TRANSACTION; reject and persist decision. IF references, ownership, invariants, or concurrency checks fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: errors preserve every persistent relation; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /employees/{employee_id}/leave-conflicts",
+      "formal_requirement": "The system shall expose GET /employees/{employee_id}/leave-conflicts to employee manager or admin, accepting a positive employee_id, start_date, end_date, limit, and after_id; it shall validate inclusive interval and overlap rule, return conflicting requests, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleLeaveConflicts(request):\n    // REQ-7-027; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE inclusive interval and overlap rule OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /leave-requests/{leave_request_id}/history",
+      "formal_requirement": "The system shall expose GET /leave-requests/{leave_request_id}/history to requester, manager, or admin, accepting a positive leave_request_id, limit, and after_id; it shall validate request authorization and pagination, return immutable decision history, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleApprovalHistory(request):\n    // REQ-7-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE request authorization and pagination OR RETURN 400 or 422.\n    READ only authorized matching data; RETURN 200. Transaction: none; postcondition: persistent state unchanged and all errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

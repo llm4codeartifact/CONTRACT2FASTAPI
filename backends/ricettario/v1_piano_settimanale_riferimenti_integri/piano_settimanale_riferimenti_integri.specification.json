@@ -1,0 +1,227 @@
+{
+  "case_id": "10",
+  "domain": "Recipe management",
+  "variant": "B: Weekly plan and referential integrity",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-10-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+    },
+    {
+      "id": "REQ-10-002",
+      "requirement": "Recipes have title 3..160 and active boolean"
+    },
+    {
+      "id": "REQ-10-003",
+      "requirement": "Meal plans belong to one user and cover unique ISO week start Monday in 2025..2035"
+    },
+    {
+      "id": "REQ-10-004",
+      "requirement": "Entries reference plan and active recipe, day MONDAY..SUNDAY, meal BREAKFAST, LUNCH, DINNER, SNACK, and servings 0.5..20"
+    },
+    {
+      "id": "REQ-10-005",
+      "requirement": "Plan-day-meal combination is unique"
+    },
+    {
+      "id": "REQ-10-006",
+      "requirement": "Recipes cannot be deleted while plan entries reference them; deletion never cascades"
+    },
+    {
+      "id": "REQ-10-007",
+      "requirement": "Users access only their plans and entries; admins can inspect all"
+    },
+    {
+      "id": "REQ-10-008",
+      "requirement": "All lists use ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning nullable next_after_id."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin; GET /health is public and all private routes require valid local Bearer authentication with deny-by-default.",
+    "Writes require application/json; malformed JSON is 400, unsupported media type 415, and declared-field violations 422.",
+    "The specification is local and deterministic without network, filesystem, upload, or external dependency; 500 and 503 leave state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes",
+      "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /recipes",
+      "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /meal-plans",
+      "formal_requirement": "The system shall expose GET /meal-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMealPlan(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /meal-plans",
+      "formal_requirement": "The system shall expose POST /meal-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMealPlan(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /meal-plans/{mealplan_id}",
+      "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMealPlan(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /meal-plans/{mealplan_id}",
+      "formal_requirement": "The system shall expose PATCH /meal-plans/{mealplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMealPlan(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /meal-plans/{mealplan_id}",
+      "formal_requirement": "The system shall expose DELETE /meal-plans/{mealplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteMealPlan(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /meal-entries",
+      "formal_requirement": "The system shall expose GET /meal-entries to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMealEntry(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /meal-entries",
+      "formal_requirement": "The system shall expose POST /meal-entries to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMealEntry(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /meal-entries/{mealentry_id}",
+      "formal_requirement": "The system shall expose GET /meal-entries/{mealentry_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMealEntry(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /meal-entries/{mealentry_id}",
+      "formal_requirement": "The system shall expose PATCH /meal-entries/{mealentry_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMealEntry(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /meal-entries/{mealentry_id}",
+      "formal_requirement": "The system shall expose DELETE /meal-entries/{mealentry_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Recipes have title 3..160 and active boolean, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteMealEntry(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /meal-plans/{mealplan_id}/shopping-list",
+      "formal_requirement": "The system shall expose GET /meal-plans/{mealplan_id}/shopping-list to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleShoppingList(request):\n    // REQ-10-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /meal-plans/{mealplan_id}/copy-week",
+      "formal_requirement": "The system shall expose POST /meal-plans/{mealplan_id}/copy-week to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCopyWeek(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes/{recipe_id}/plan-usages",
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Recipes have title 3..160 and active boolean, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePlanUsages(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /meal-entries/{mealentry_id}/move",
+      "formal_requirement": "The system shall expose POST /meal-entries/{mealentry_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Recipes have title 3..160 and active boolean, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleMoveMealEntry(request):\n    // REQ-10-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Recipes have title 3..160 and active boolean OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

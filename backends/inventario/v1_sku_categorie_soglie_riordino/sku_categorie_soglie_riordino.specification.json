@@ -1,0 +1,236 @@
+{
+  "case_id": "8",
+  "domain": "Inventory management",
+  "variant": "C: SKU, categories, thresholds, and replenishment",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-8-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query reference ids are validation errors."
+    },
+    {
+      "id": "REQ-8-002",
+      "requirement": "Categories have unique name 2..80 and optional parent without cycles"
+    },
+    {
+      "id": "REQ-8-003",
+      "requirement": "Products have unique SKU ^[A-Z0-9-]{3,32}$, name 2..160, category, and active boolean"
+    },
+    {
+      "id": "REQ-8-004",
+      "requirement": "A reorder rule is unique by product-location with reorder_point 0..1000000 and target_level strictly greater"
+    },
+    {
+      "id": "REQ-8-005",
+      "requirement": "Candidates are computed locally where available stock is at or below reorder point"
+    },
+    {
+      "id": "REQ-8-006",
+      "requirement": "Deactivating products is prohibited while active reorder rules exist"
+    },
+    {
+      "id": "REQ-8-007",
+      "requirement": "Only admins manage categories, SKU, and rules; users may read"
+    },
+    {
+      "id": "REQ-8-008",
+      "requirement": "All lists use ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning nullable next_after_id."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin; GET /health is public and all private routes require valid local Bearer authentication with deny-by-default.",
+    "Writes require application/json; malformed JSON is 400, unsupported media type 415, and declared-field violations 422.",
+    "The specification is local and deterministic without network, filesystem, upload, or external dependency; 500 and 503 leave state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-8-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /categories",
+      "formal_requirement": "The system shall expose GET /categories to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListCategory(request):\n    // REQ-8-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /categories",
+      "formal_requirement": "The system shall expose POST /categories to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateCategory(request):\n    // REQ-8-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /categories/{category_id}",
+      "formal_requirement": "The system shall expose GET /categories/{category_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetCategory(request):\n    // REQ-8-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /categories/{category_id}",
+      "formal_requirement": "The system shall expose PATCH /categories/{category_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchCategory(request):\n    // REQ-8-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /categories/{category_id}",
+      "formal_requirement": "The system shall expose DELETE /categories/{category_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteCategory(request):\n    // REQ-8-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /products",
+      "formal_requirement": "The system shall expose GET /products to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProduct(request):\n    // REQ-8-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /products",
+      "formal_requirement": "The system shall expose POST /products to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProduct(request):\n    // REQ-8-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /products/{product_id}",
+      "formal_requirement": "The system shall expose GET /products/{product_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProduct(request):\n    // REQ-8-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /products/{product_id}",
+      "formal_requirement": "The system shall expose PATCH /products/{product_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProduct(request):\n    // REQ-8-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /products/{product_id}",
+      "formal_requirement": "The system shall expose DELETE /products/{product_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProduct(request):\n    // REQ-8-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /reorder-rules",
+      "formal_requirement": "The system shall expose GET /reorder-rules to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListReorderRule(request):\n    // REQ-8-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /reorder-rules",
+      "formal_requirement": "The system shall expose POST /reorder-rules to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateReorderRule(request):\n    // REQ-8-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /reorder-rules/{reorderrule_id}",
+      "formal_requirement": "The system shall expose GET /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetReorderRule(request):\n    // REQ-8-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /reorder-rules/{reorderrule_id}",
+      "formal_requirement": "The system shall expose PATCH /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchReorderRule(request):\n    // REQ-8-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /reorder-rules/{reorderrule_id}",
+      "formal_requirement": "The system shall expose DELETE /reorder-rules/{reorderrule_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteReorderRule(request):\n    // REQ-8-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /reorder-candidates",
+      "formal_requirement": "The system shall expose GET /reorder-candidates to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleReorderCandidates(request):\n    // REQ-8-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /reorder-rules/{reorderrule_id}/acknowledge",
+      "formal_requirement": "The system shall expose POST /reorder-rules/{reorderrule_id}/acknowledge to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleAcknowledgeRule(request):\n    // REQ-8-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /products/{product_id}/stock-summary",
+      "formal_requirement": "The system shall expose GET /products/{product_id}/stock-summary to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Categories have unique name 2..80 and optional parent without cycles, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStockSummary(request):\n    // REQ-8-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /products/{product_id}/deactivate",
+      "formal_requirement": "The system shall expose POST /products/{product_id}/deactivate to an authenticated user or admin, accepting JSON declared route fields; it shall validate Categories have unique name 2..80 and optional parent without cycles, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeactivateProduct(request):\n    // REQ-8-028; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Categories have unique name 2..80 and optional parent without cycles OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /stock-levels",
+      "formal_requirement": "The system shall expose POST /stock-levels to an authenticated admin, accepting a JSON product id, location code, and non-negative quantity; it shall atomically create or update the stock level and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleSetStockLevel(request):\n    // REQ-8-029; preconditions: local persistence and valid JSON request.\n    AUTHORIZE admin OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE product, location, and non-negative quantity OR RETURN 400, 404, or 422.\n    BEGIN TRANSACTION; create or update the product-location stock level; COMMIT; RETURN 200.\n    On a conflict or persistence failure ROLLBACK and RETURN 409, 500, or 503.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

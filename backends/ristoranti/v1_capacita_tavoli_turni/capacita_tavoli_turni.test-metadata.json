@@ -1,0 +1,21 @@
+{
+  "case_id": "4",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Public health and method contract", "expected": {"status_code": 200, "method_status": 405, "postcondition": "health is read-only"}}]},
+    "GET /tables": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Authentication and table reads", "expected": {"statuses": [200, 401], "postcondition": "read does not mutate tables"}}]},
+    "POST /tables": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Admin creation and validation", "expected": {"statuses": [201, 403, 415, 422, 409], "headers": ["Location"], "postcondition": "rejected writes create no table"}}]},
+    "GET /tables/{table_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Persisted and deleted table retrieval", "expected": {"statuses": [200, 404], "postcondition": "read is unchanged"}}]},
+    "PATCH /tables/{table_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Persisted update and active-seating conflict", "expected": {"statuses": [200, 409], "postcondition": "conflict retains table state"}}]},
+    "DELETE /tables/{table_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Empty deletion and seating-reference conflict", "expected": {"statuses": [204, 409], "postcondition": "conflict preserves table and seating history"}}]},
+    "GET /service-shifts": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Authenticated stable pagination and invalid range", "expected": {"statuses": [200, 401, 422], "postcondition": "read is unchanged"}}]},
+    "POST /service-shifts": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Admin create and unique date-kind conflict", "expected": {"statuses": [201, 403, 409], "headers": ["Location"], "postcondition": "duplicate creates no shift"}}]},
+    "GET /service-shifts/{shift_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Persisted and deleted shift retrieval", "expected": {"statuses": [200, 404], "postcondition": "read is unchanged"}}]},
+    "PATCH /service-shifts/{shift_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Valid patch and empty payload rejection", "expected": {"statuses": [200, 422, 409], "postcondition": "failed update retains shift"}}]},
+    "DELETE /service-shifts/{shift_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Empty deletion and seating-reference conflict", "expected": {"statuses": [204, 409], "postcondition": "conflict preserves shift and seating history"}}]},
+    "GET /seatings": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Owner-scoped seating list", "expected": {"status_code": 200, "postcondition": "read is unchanged"}}]},
+    "POST /seatings": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Valid creation, malformed JSON, turn and slot conflicts", "expected": {"statuses": [201, 400, 409], "headers": ["Location"], "postcondition": "failed writes create no seating"}}]},
+    "GET /seatings/{seating_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Ownership and admin access", "expected": {"statuses": [200, 403], "postcondition": "read is unchanged"}}]},
+    "PATCH /seatings/{seating_id}": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Owner edit and terminal transition rejection", "expected": {"statuses": [200, 403, 409], "postcondition": "terminal seating retains history"}}]},
+    "POST /seatings/{seating_id}/cancel": {"test_files": ["tests/test_capacita_tavoli_turni.py"], "expected_output": [{"scenario": "Cancellation history and repeat conflict", "expected": {"statuses": [200, 409], "postcondition": "cancelled state and timestamp persist"}}]}
+  }
+}

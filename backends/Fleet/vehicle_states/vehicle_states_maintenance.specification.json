@@ -1,0 +1,200 @@
+{
+  "case_id": "fleet-vehicle-states-v1",
+  "domain": "Corporate fleet management",
+  "variant": "Vehicle states and maintenance management",
+  "generator": "gpt-5.6 Terra",
+  "domain_invariants": [
+    {
+      "id": "REQ-1-001",
+      "requirement": "Each vehicle has a unique positive id, a unique uppercase license plate matching ^[A-Z0-9 -]{3,12}$, manufacturer length 2..60, model length 1..60, year 1990..2100, and active flag."
+    },
+    {
+      "id": "REQ-1-002",
+      "requirement": "Each vehicle has exactly one current state, derived from its latest immutable non-superseded state event; valid states are AVAILABLE, ASSIGNED, OUT_OF_SERVICE, and MAINTENANCE."
+    },
+    {
+      "id": "REQ-1-003",
+      "requirement": "State events are append-only audit records and shall never be updated or deleted independently; effective_at is a UTC ISO-8601 timestamp with second precision."
+    },
+    {
+      "id": "REQ-1-004",
+      "requirement": "A vehicle may enter MAINTENANCE only if it has a SCHEDULED or IN_PROGRESS maintenance whose scheduled_start is not later than the state-event effective_at date."
+    },
+    {
+      "id": "REQ-1-005",
+      "requirement": "An IN_PROGRESS maintenance requires its vehicle to be in MAINTENANCE; completing or cancelling the last active maintenance atomically changes the vehicle to AVAILABLE or OUT_OF_SERVICE."
+    },
+    {
+      "id": "REQ-1-006",
+      "requirement": "For one vehicle, intervals of SCHEDULED or IN_PROGRESS maintenance cannot overlap; an open-ended IN_PROGRESS interval overlaps every later interval."
+    },
+    {
+      "id": "REQ-1-007",
+      "requirement": "Maintenance transitions are SCHEDULED to IN_PROGRESS or CANCELLED, and IN_PROGRESS to COMPLETED or CANCELLED; COMPLETED and CANCELLED are terminal."
+    },
+    {
+      "id": "REQ-1-008",
+      "requirement": "Every maintenance references an existing vehicle, has type PREVENTIVE, CORRECTIVE, INSPECTION, or REPAIR, title length 3..120, and scheduled_end strictly later than scheduled_start."
+    },
+    {
+      "id": "REQ-1-009",
+      "requirement": "A vehicle with maintenance history cannot be deleted. Deleting an unused vehicle atomically deletes all of its state events."
+    },
+    {
+      "id": "REQ-1-010",
+      "requirement": "The requester of maintenance is its creator. Users may read and operate only their own maintenance; admins may operate every maintenance."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin. Private routes deny by default and require a valid, non-expired server-side Bearer session token.",
+    "Vehicle creation atomically creates its first AVAILABLE state event at current UTC time.",
+    "All lists use stable ascending immutable numeric-id order, limit 1..100 default 20, and optional after_id > 0. Responses contain items and next_after_id, null when exhausted.",
+    "All timestamps are UTC ISO-8601 values with second precision, for example 2026-09-07T10:30:00Z."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health as a public endpoint with no input or authorization requirement; it shall return deterministic local service status without reading or changing persistent state and shall emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-fleet-vehicle-states-v1-011; preconditions: none.\n    IF local persistence is unavailable THEN RETURN 503. END IF\n    // Authorization: public. Transaction: none.\n    RETURN 200 with status = ok.\n    // Postcondition: persistent state is unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles",
+      "formal_requirement": "The system shall expose GET /vehicles as an admin-only endpoint accepting optional active boolean, current_state enum, plate_prefix of 1..12 valid uppercase plate characters, limit, and after_id; it shall apply exact boolean and state filters and normalized prefix matching, use stable pagination, make no persistent changes, and emit only 200, 400, 401, 403, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListVehicles(request):\n    // REQ-fleet-vehicle-states-v1-012; precondition: persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403.\n    VALIDATE query syntax and pagination; RETURN 422 if invalid syntax and 400 if invalid filter semantics.\n    READ vehicles with id > after_id, applying filters; order by id ascending and take limit.\n    RETURN 200 with items and next_after_id.\n    // Transaction: none; postcondition: state unchanged. RETURN 429, 500, or 503 only for throttling or local failures.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /vehicles",
+      "formal_requirement": "The system shall expose POST /vehicles as an admin-only endpoint accepting JSON license_plate, manufacturer, model, year, and optional active defaulting true; it shall validate REQ-fleet-vehicle-states-v1-001, reject duplicate plates, atomically create the vehicle and initial AVAILABLE state event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateVehicle(request):\n    // REQ-fleet-vehicle-states-v1-013; preconditions: JSON and persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403. REQUIRE application/json; otherwise RETURN 415.\n    VALIDATE fields against REQ-fleet-vehicle-states-v1-001; RETURN 422 for malformed input or 400 for semantic invalidity.\n    BEGIN TRANSACTION. IF normalized plate exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE vehicle and AVAILABLE state event; COMMIT. RETURN 201 with Location.\n    // Non-idempotent; any error rolls back and leaves vehicles and state events unchanged. RETURN 429, 500, or 503 only when applicable.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id} as an admin-only endpoint accepting a positive path id; it shall return the vehicle and current state without persistent effects, treat non-positive ids as not found, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetVehicle(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-014; precondition: persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403.\n    IF vehicle_id <= 0 OR vehicle absent THEN RETURN 404. END IF\n    READ vehicle and latest state under REQ-fleet-vehicle-states-v1-002; RETURN 200.\n    // Transaction: none; postcondition: state unchanged. RETURN 429, 500, or 503 only when applicable.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "PATCH /vehicles/{vehicle_id}",
+      "formal_requirement": "The system shall expose PATCH /vehicles/{vehicle_id} as an admin-only endpoint accepting JSON with one or more of license_plate, manufacturer, model, year, and active; it shall validate REQ-fleet-vehicle-states-v1-001, reject duplicate plates, atomically update supplied fields only, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchVehicle(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-015; preconditions: JSON, positive existing id, persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403. REQUIRE application/json; otherwise RETURN 415.\n    IF vehicle_id <= 0 OR absent THEN RETURN 404. VALIDATE non-empty patch; RETURN 422 or 400 if invalid.\n    BEGIN TRANSACTION. IF new plate belongs to another vehicle THEN ROLLBACK; RETURN 409. END IF\n    APPLY supplied changes and COMMIT; RETURN 200.\n    // Identical payload is idempotent. On error rollback; vehicle, states, and maintenance stay unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "DELETE /vehicles/{vehicle_id}",
+      "formal_requirement": "The system shall expose DELETE /vehicles/{vehicle_id} as an admin-only endpoint accepting a positive path id; it shall atomically delete only a vehicle without maintenance records together with all related state-event history, return 204, and emit only 204, 401, 403, 404, 409, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteVehicle(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-016; precondition: persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403. IF vehicle_id <= 0 OR absent THEN RETURN 404. END IF\n    BEGIN TRANSACTION. IF maintenance exists THEN ROLLBACK; RETURN 409 under REQ-fleet-vehicle-states-v1-009. END IF\n    DELETE state events, then vehicle; COMMIT; RETURN 204.\n    // Repeat after deletion returns 404. On error rollback, all relations remain unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}/state",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/state as an authenticated user or admin endpoint accepting a positive path id; it shall return the latest state event, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetVehicleState(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-017; precondition: persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401.\n    IF vehicle_id <= 0 OR vehicle absent THEN RETURN 404. END IF\n    READ latest state event under REQ-fleet-vehicle-states-v1-002; RETURN 200.\n    // Transaction: none; postcondition: persistent state unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}/state-history",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/state-history as an admin-only endpoint accepting a positive path id, limit, and after_id; it shall return immutable events ordered by event id ascending with stable pagination, make no persistent changes, and emit only 200, 401, 403, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListStateHistory(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-018; precondition: persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403. IF vehicle_id <= 0 OR absent THEN RETURN 404. END IF\n    VALIDATE limit and after_id; invalid values RETURN 422.\n    READ events after cursor in ascending id order; RETURN 200 with items and next_after_id.\n    // REQ-fleet-vehicle-states-v1-003; transaction none and state unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /vehicles/{vehicle_id}/state-transitions",
+      "formal_requirement": "The system shall expose POST /vehicles/{vehicle_id}/state-transitions as an admin-only endpoint accepting JSON target_state, effective_at, and reason of 3..250 characters; it shall validate the state enum, UTC timestamp, monotonically increasing effective_at, different target state, and REQ-fleet-vehicle-states-v1-004, atomically append an immutable event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateStateTransition(request, vehicle_id):\n    // REQ-fleet-vehicle-states-v1-019; preconditions: JSON, existing positive id, persistence available.\n    REQUIRE authenticated admin; otherwise RETURN 401 or 403. REQUIRE application/json; otherwise RETURN 415.\n    VALIDATE body; RETURN 422 for syntax or 400 for semantic invalidity.\n    BEGIN TRANSACTION; lock vehicle and active maintenances.\n    IF target equals current, timestamp regresses, or MAINTENANCE precondition fails THEN ROLLBACK; RETURN 409. END IF\n    APPEND state event; COMMIT; RETURN 201 with Location.\n    // Non-idempotent. Rollback preserves events, vehicle, and maintenances on all errors.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /maintenances",
+      "formal_requirement": "The system shall expose GET /maintenances as an authenticated endpoint accepting optional vehicle_id, status, type, from, to, limit, and after_id; it shall validate positive vehicle id, maintenance enums, UTC dates where from is not later than to, and stable pagination, restrict users to requester ownership while admins view all, make no persistent changes, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMaintenances(request):\n    // REQ-fleet-vehicle-states-v1-020; precondition: persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401.\n    VALIDATE filters and cursor; RETURN 422 for syntax and 400 for invalid date semantics.\n    IF supplied vehicle_id is non-positive or absent THEN RETURN 404. END IF\n    READ matching records; when caller is user require requester_id = caller.id under REQ-fleet-vehicle-states-v1-010.\n    ORDER by id ascending; RETURN 200 with page. // No transaction or persistent effect.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances",
+      "formal_requirement": "The system shall expose POST /maintenances as an authenticated user or admin endpoint accepting JSON vehicle_id, type, title, optional description of 0..2000 characters, scheduled_start, and scheduled_end; it shall validate REQ-fleet-vehicle-states-v1-006 and REQ-fleet-vehicle-states-v1-008, set requester to the caller, atomically create a SCHEDULED record, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMaintenance(request):\n    // REQ-fleet-vehicle-states-v1-021; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401. REQUIRE application/json; otherwise RETURN 415.\n    VALIDATE body under REQ-fleet-vehicle-states-v1-008; RETURN 422 or 400 if invalid. IF vehicle_id <= 0 OR absent THEN RETURN 404. END IF\n    BEGIN TRANSACTION; lock vehicle maintenance intervals.\n    IF interval overlaps active maintenance under REQ-fleet-vehicle-states-v1-006 THEN ROLLBACK; RETURN 409. END IF\n    CREATE SCHEDULED record with requester_id = caller.id; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves vehicle, records, and states unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "GET /maintenances/{maintenance_id}",
+      "formal_requirement": "The system shall expose GET /maintenances/{maintenance_id} as an authenticated endpoint accepting a positive path id; it shall return the record only to its requester or an admin, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMaintenance(request, maintenance_id):\n    // REQ-fleet-vehicle-states-v1-022; precondition: persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401.\n    IF maintenance_id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and caller.id != requester_id THEN RETURN 403 under REQ-fleet-vehicle-states-v1-010. END IF\n    RETURN 200 with record. // Transaction none; persistent state unchanged.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "PATCH /maintenances/{maintenance_id}",
+      "formal_requirement": "The system shall expose PATCH /maintenances/{maintenance_id} as an authenticated endpoint accepting JSON title, description, scheduled_start, or scheduled_end fields; it shall allow changes only to a SCHEDULED record by its requester or an admin, validate REQ-fleet-vehicle-states-v1-006 and REQ-fleet-vehicle-states-v1-008, atomically persist changes, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMaintenance(request, maintenance_id):\n    // REQ-fleet-vehicle-states-v1-023; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401. REQUIRE application/json; otherwise RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. IF status != SCHEDULED THEN RETURN 409.\n    VALIDATE resulting record; RETURN 422 or 400 if invalid. BEGIN TRANSACTION; lock intervals.\n    IF overlap exists THEN ROLLBACK; RETURN 409. END IF APPLY patch; COMMIT; RETURN 200.\n    // Identical payload is idempotent. Rollback preserves all records and state events.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/start",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/start as an authenticated endpoint accepting a positive path id and optional JSON actual_start UTC timestamp defaulting to current UTC time; it shall allow only the requester or an admin to start a SCHEDULED record when the vehicle is MAINTENANCE, atomically set IN_PROGRESS, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStartMaintenance(request, maintenance_id):\n    // REQ-fleet-vehicle-states-v1-024; precondition: persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401. IF body is supplied, REQUIRE application/json or RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. VALIDATE actual_start or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, and current state.\n    IF record is not SCHEDULED OR vehicle state is not MAINTENANCE THEN ROLLBACK; RETURN 409 under REQ-fleet-vehicle-states-v1-005. END IF\n    SET IN_PROGRESS and actual_start; COMMIT; RETURN 200. // Non-idempotent; rollback preserves relations.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/complete",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/complete as an authenticated endpoint accepting JSON completed_at, completion_notes of 1..2000 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE; it shall allow only the requester or an admin to complete an IN_PROGRESS record, atomically complete it and change vehicle state when it is the last active maintenance, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCompleteMaintenance(request, maintenance_id):\n    // REQ-fleet-vehicle-states-v1-025; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401. REQUIRE application/json; otherwise RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, active maintenances, and state.\n    IF status != IN_PROGRESS OR completed_at < actual_start THEN ROLLBACK; RETURN 409. END IF\n    COMPLETE record; IF no other active maintenance exists THEN APPEND next_vehicle_state event. END IF COMMIT; RETURN 200.\n    // REQ-fleet-vehicle-states-v1-005 and -007 apply. Non-idempotent; rollback preserves every relation.",
+        "generated_by": "gemini-gpt-5"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/cancel",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/cancel as an authenticated endpoint accepting JSON cancelled_at, cancellation_reason of 3..500 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE when cancelling IN_PROGRESS maintenance; it shall allow only the requester or an admin to cancel a SCHEDULED or IN_PROGRESS record, atomically cancel it and conditionally change vehicle state, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCancelMaintenance(request, maintenance_id):\n    // REQ-fleet-vehicle-states-v1-026; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin; otherwise RETURN 401. REQUIRE application/json; otherwise RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, active maintenances, and state.\n    IF status is terminal OR cancelled_at precedes actual_start THEN ROLLBACK; RETURN 409. END IF\n    CANCEL record; IF it was IN_PROGRESS and no active maintenance remains THEN APPEND next_vehicle_state event. END IF COMMIT; RETURN 200.\n    // REQ-fleet-vehicle-states-v1-005 and -007 apply. Non-idempotent; rollback preserves every relation.",
+        "generated_by": "gemini-gpt-5"
+      }
+    }
+  ]
+}

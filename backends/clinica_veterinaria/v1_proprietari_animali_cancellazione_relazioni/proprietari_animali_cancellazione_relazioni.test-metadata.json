@@ -1,0 +1,22 @@
+{
+  "case_id": "3",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Public health and 405 contract", "expected": {"status_code": 200, "method_status": 405, "json_contains": {"status": "ok"}}}]},
+    "GET /owners": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Admin filtering and user denial", "expected": {"statuses": [200, 401, 403, 422], "postcondition": "reads are stable"}}]},
+    "POST /owners": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Admin profile creation and invalid body handling", "expected": {"statuses": [201, 400, 403, 404, 409, 415, 422], "header_contains": "Location", "postcondition": "failed writes create no owner"}}]},
+    "GET /owners/{owner_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Mapped-owner access and soft-delete hiding", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /owners/{owner_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Authorized partial update", "expected": {"statuses": [200, 400, 401, 403], "postcondition": "ownerships remain unchanged"}}]},
+    "DELETE /owners/{owner_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Active-ownership conflict then redacted soft deletion", "expected": {"statuses": [204, 401, 409], "postcondition": "ended history and animals are retained"}}]},
+    "GET /owners/{owner_id}/animals": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Owner animal relation listing", "expected": {"status_code": 200, "postcondition": "read-only"}}]},
+    "GET /animals": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Private listing and mutually exclusive filters", "expected": {"statuses": [200, 400, 401]}}]},
+    "POST /animals": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Animal creation with atomic initial ownership", "expected": {"status_code": 201, "header_contains": "Location", "postcondition": "created relation is visible"}}]},
+    "GET /animals/{animal_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Active-owner authorization and deleted hiding", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /animals/{animal_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Partial update and microchip conflict", "expected": {"statuses": [200, 409], "postcondition": "conflict preserves animal"}}]},
+    "DELETE /animals/{animal_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Soft deletion after ended relation", "expected": {"status_code": 204, "postcondition": "ownership history remains queryable"}}]},
+    "GET /ownerships": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Admin historical filtering", "expected": {"statuses": [200, 401, 403]}}]},
+    "GET /animals/{animal_id}/ownerships": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Animal relation history endpoint", "expected": {"status_code": 200, "postcondition": "read-only"}}]},
+    "POST /animals/{animal_id}/ownerships": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Create unowned relation and reject active duplicate", "expected": {"statuses": [201, 409], "header_contains": "Location"}}]},
+    "GET /ownerships/{ownership_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "Admin-only historical retrieval", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /ownerships/{ownership_id}": {"test_files": ["tests/test_proprietari_animali_cancellazione_relazioni.py"], "expected_output": [{"scenario": "End relation boundaries and repeat conflict", "expected": {"statuses": [204, 409], "postcondition": "row is retained as ENDED"}}]}
+  }
+}

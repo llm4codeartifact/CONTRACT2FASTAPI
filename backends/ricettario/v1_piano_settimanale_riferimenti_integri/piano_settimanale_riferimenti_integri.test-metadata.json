@@ -1,0 +1,25 @@
+{
+  "case_id": "10",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "200 health response; unsupported POST returns 405"},
+    "GET /recipes": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated recipe listing is available"},
+    "POST /recipes": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated recipe creation flow is available"},
+    "GET /recipes/{recipe_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated recipe retrieval is available"},
+    "PATCH /recipes/{recipe_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "403 for non-admin credentials"},
+    "DELETE /recipes/{recipe_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Admin-only deletion is enforced"},
+    "GET /recipes/{recipe_id}/plan-usages": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated plan usage lookup is available"},
+    "GET /meal-plans": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "401 without credentials"},
+    "POST /meal-plans": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "201 valid plan, 400 malformed JSON, 415 unsupported media type, and 422 invalid week"},
+    "GET /meal-plans/{mealplan_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "403 for another user's plan and owner persistence"},
+    "PATCH /meal-plans/{mealplan_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "200 and updated note persists"},
+    "DELETE /meal-plans/{mealplan_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Owner-only deletion is enforced"},
+    "GET /meal-plans/{mealplan_id}/shopping-list": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "200 with alphabetically ordered aggregated items"},
+    "POST /meal-plans/{mealplan_id}/copy-week": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated copy-week flow is available"},
+    "GET /meal-entries": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Authenticated meal-entry listing is available"},
+    "POST /meal-entries": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "201 valid entry and 409 duplicate slot"},
+    "GET /meal-entries/{mealentry_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Owner meal-entry retrieval is authorized"},
+    "PATCH /meal-entries/{mealentry_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Owner meal-entry updates are authorized"},
+    "DELETE /meal-entries/{mealentry_id}": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Owner meal-entry deletion is authorized"},
+    "POST /meal-entries/{mealentry_id}/move": {"test_files": ["tests/test_piano_settimanale_http.py"], "expected_output": "Owner meal-entry move flow is available"}
+  }
+}

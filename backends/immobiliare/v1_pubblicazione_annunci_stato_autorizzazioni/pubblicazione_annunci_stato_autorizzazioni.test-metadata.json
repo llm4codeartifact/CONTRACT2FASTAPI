@@ -1,0 +1,25 @@
+{
+  "case_id": "6",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "public health and 405", "expected": {"statuses": [200, 405]}}]},
+    "GET /properties": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "authenticated filtering and pagination validation", "expected": {"statuses": [200, 401, 422]}}]},
+    "POST /properties": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "creator property creation and body validation", "expected": {"statuses": [201, 400, 401, 403, 415]}}]},
+    "GET /properties/{property_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "created property persistence", "expected": {"statuses": [200, 401, 404]}}]},
+    "PATCH /properties/{property_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "creator update and foreign denial", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /properties/{property_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "listing-protected then archived deletion", "expected": {"statuses": [204, 401, 409]}}]},
+    "GET /agents": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "authenticated agent list", "expected": {"statuses": [200, 401]}}]},
+    "POST /agents": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "agent validation and uniqueness", "expected": {"statuses": [201, 401, 409, 422]}}]},
+    "GET /agents/{agent_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "agent persistence", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /agents/{agent_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "self or admin update authorization", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /agents/{agent_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "authentication boundary", "expected": {"status_code": 401}}]},
+    "GET /listings": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "authenticated listing list", "expected": {"statuses": [200, 401]}}]},
+    "POST /listings": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "owner creation, validation, and slug conflict", "expected": {"statuses": [201, 401, 403, 409, 422]}}]},
+    "GET /listings/{listing_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "listing retrieval", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /listings/{listing_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "owner update and archive transition", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /listings/{listing_id}": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "draft deletion and non-draft conflict", "expected": {"statuses": [204, 401, 409]}}]},
+    "POST /listings/{listing_id}/publish": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "idempotent publication and media validation", "expected": {"statuses": [200, 401, 415]}}]},
+    "POST /listings/{listing_id}/unpublish": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "unpublication transition and repeat conflict", "expected": {"statuses": [200, 401, 409]}}]},
+    "GET /public/listings": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "public published projection", "expected": {"status_code": 200}}]},
+    "GET /listings/{listing_id}/history": {"test_files": ["tests/test_pubblicazione_annunci_stato_autorizzazioni.py"], "expected_output": [{"scenario": "owner history and foreign denial", "expected": {"statuses": [200, 401, 403]}}]}
+  }
+}

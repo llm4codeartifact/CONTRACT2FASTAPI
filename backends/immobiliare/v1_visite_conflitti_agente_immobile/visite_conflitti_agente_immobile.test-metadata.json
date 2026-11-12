@@ -1,0 +1,25 @@
+{
+  "case_id": "6",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "public health and 405", "expected": {"statuses": [200, 405]}}]},
+    "GET /properties": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "authenticated pagination validation", "expected": {"statuses": [200, 401, 422]}}]},
+    "POST /properties": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin property creation and body errors", "expected": {"statuses": [201, 400, 401, 403, 415]}}]},
+    "GET /properties/{property_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "property persistence", "expected": {"statuses": [200, 401, 404]}}]},
+    "PATCH /properties/{property_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin-only property update", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /properties/{property_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "archived unvisited deletion", "expected": {"statuses": [204, 401]}}]},
+    "GET /agents": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "authenticated agent list", "expected": {"status_code": 401}}]},
+    "POST /agents": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin agent validation and duplicate", "expected": {"statuses": [201, 401, 403, 409, 422]}}]},
+    "GET /agents/{agent_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "authenticated retrieval", "expected": {"status_code": 401}}]},
+    "PATCH /agents/{agent_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin update", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /agents/{agent_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "unreferenced deletion", "expected": {"statuses": [204, 401]}}]},
+    "GET /visits": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "owner-scoped visit list", "expected": {"statuses": [200, 401]}}]},
+    "POST /visits": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "creation, validation, and overlap conflict", "expected": {"statuses": [201, 401, 409, 415, 422]}}]},
+    "GET /visits/{visit_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "visitor and assigned-agent access", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /visits/{visit_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "visitor update and foreign denial", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /visits/{visit_id}": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "terminal visit deletion conflict", "expected": {"statuses": [401, 409]}}]},
+    "POST /visits/{visit_id}/check-in": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "idempotent check-in", "expected": {"statuses": [200, 401]}}]},
+    "POST /visits/{visit_id}/complete": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "completion transition", "expected": {"statuses": [200, 401]}}]},
+    "GET /agents/{agent_id}/visit-conflicts": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin conflict report", "expected": {"statuses": [200, 401, 403]}}]},
+    "GET /properties/{property_id}/visit-conflicts": {"test_files": ["tests/test_visite_conflitti_agente_immobile.py"], "expected_output": [{"scenario": "admin conflict report validation", "expected": {"statuses": [200, 401, 422]}}]}
+  }
+}

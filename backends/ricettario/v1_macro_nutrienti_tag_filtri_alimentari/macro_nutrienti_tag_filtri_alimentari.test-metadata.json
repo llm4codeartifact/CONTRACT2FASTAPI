@@ -1,0 +1,25 @@
+{
+  "case_id": "10",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "200 health response; unsupported POST returns 405"},
+    "GET /ingredients": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "401 without credentials"},
+    "POST /ingredients": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "201 for admin ingredient creation"},
+    "GET /ingredients/{ingredient_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Authenticated ingredient retrieval is available"},
+    "PATCH /ingredients/{ingredient_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Admin-only ingredient updates are enforced"},
+    "DELETE /ingredients/{ingredient_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Admin-only ingredient deletion is enforced"},
+    "GET /recipes/search": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "200 with the persisted matching recipe"},
+    "GET /recipes": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Authenticated recipe listing is available"},
+    "POST /recipes": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "201 valid recipe, 400 malformed JSON, 415 unsupported media type, and 422 invalid payload"},
+    "GET /recipes/{recipe_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "200 with persisted owner recipe"},
+    "PATCH /recipes/{recipe_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "403 for another user and 200 for owner update"},
+    "DELETE /recipes/{recipe_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Owner-only deletion is enforced"},
+    "GET /recipes/{recipe_id}/nutrition": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "200 with deterministic nutrition totals"},
+    "POST /recipes/{recipe_id}/tags": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "201 valid relation and 409 duplicate relation"},
+    "DELETE /recipes/{recipe_id}/tags/{tag_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Owner-only tag removal is enforced"},
+    "GET /tags": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Authenticated tag listing is available"},
+    "POST /tags": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "403 for non-admin credentials"},
+    "GET /tags/{tag_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Authenticated tag retrieval is available"},
+    "PATCH /tags/{tag_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Admin-only tag updates are enforced"},
+    "DELETE /tags/{tag_id}": {"test_files": ["tests/test_macro_nutrienti_http.py"], "expected_output": "Admin-only tag deletion is enforced"}
+  }
+}

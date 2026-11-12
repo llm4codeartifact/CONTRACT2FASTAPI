@@ -1,0 +1,25 @@
+{
+  "case_id": "10",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "200 health response; unsupported POST returns 405"},
+    "GET /ingredients": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "401 without credentials"},
+    "POST /ingredients": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "403 for non-admin credentials"},
+    "GET /ingredients/{ingredient_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated ingredient retrieval is available"},
+    "PATCH /ingredients/{ingredient_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Admin-only ingredient updates are enforced"},
+    "DELETE /ingredients/{ingredient_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "409 for a referenced ingredient"},
+    "GET /ingredients/{ingredient_id}/recipe-usages": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated usage lookup is available"},
+    "GET /recipes": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "401 without credentials"},
+    "POST /recipes": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "400 malformed JSON, 415 unsupported media type, and 422 invalid payload"},
+    "GET /recipes/{recipe_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "403 for another user's recipe and persisted owner state"},
+    "PATCH /recipes/{recipe_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Owner updates are authorized"},
+    "DELETE /recipes/{recipe_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Owner-only deletion is enforced"},
+    "GET /recipes/{recipe_id}/servings": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Scaled component calculation returns factor 2"},
+    "POST /recipes/{recipe_id}/scale": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "200 and scaled servings persist"},
+    "POST /recipes/{recipe_id}/duplicate": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated duplication flow is available"},
+    "GET /recipe-components": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated component listing is available"},
+    "POST /recipe-components": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated component creation flow is available"},
+    "GET /recipe-components/{recipecomponent_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Authenticated component retrieval is available"},
+    "PATCH /recipe-components/{recipecomponent_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Owner component updates are authorized"},
+    "DELETE /recipe-components/{recipecomponent_id}": {"test_files": ["tests/test_ricette_ingredienti_porzione_http.py"], "expected_output": "Owner component deletion is authorized"}
+  }
+}

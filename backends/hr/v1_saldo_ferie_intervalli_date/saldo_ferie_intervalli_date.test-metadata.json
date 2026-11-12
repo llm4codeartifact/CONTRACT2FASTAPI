@@ -1,0 +1,25 @@
+{
+  "case_id": "7",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Public health and method contract", "expected": {"statuses": [200, 405], "postcondition": "employee listing unchanged"}}]},
+    "GET /employees": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Authenticated employee listing", "expected": {"statuses": [200, 401], "postcondition": "read-only"}}]},
+    "POST /employees": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Admin creation and body validation", "expected": {"statuses": [201, 400, 403, 409, 415, 422], "postcondition": "failed writes preserve employees"}}]},
+    "GET /employees/{employee_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Own-record authorization", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /employees/{employee_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Persistent admin patch", "expected": {"statuses": [200, 401, 422]}}]},
+    "DELETE /employees/{employee_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Unrelated employee deletion", "expected": {"statuses": [204, 401, 409]}}]},
+    "GET /leave-balances": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Authenticated balance listing", "expected": {"statuses": [200, 401]}}]},
+    "POST /leave-balances": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Balance creation and uniqueness", "expected": {"statuses": [201, 401, 409]}}]},
+    "GET /leave-balances/{leave_balance_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Balance ownership", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /leave-balances/{leave_balance_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Adjustment persistence and authorization", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /leave-balances/{leave_balance_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Unused balance deletion", "expected": {"statuses": [204, 401, 404]}}]},
+    "GET /leave-balances/{leave_balance_id}/history": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Immutable adjustment history", "expected": {"statuses": [200, 401]}}]},
+    "GET /leave-requests": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Owned request listing", "expected": {"statuses": [200, 401]}}]},
+    "POST /leave-requests": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Owned draft creation and validation", "expected": {"statuses": [201, 401, 403, 422]}}]},
+    "GET /leave-requests/{leave_request_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Request ownership", "expected": {"statuses": [200, 401, 403]}}]},
+    "PATCH /leave-requests/{leave_request_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Draft patch", "expected": {"statuses": [200, 401]}}]},
+    "DELETE /leave-requests/{leave_request_id}": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Submitted request conflict", "expected": {"statuses": [401, 409]}}]},
+    "POST /leave-requests/{leave_request_id}/submit": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Submission idempotence and overlap conflict", "expected": {"statuses": [200, 401, 409]}}]},
+    "POST /leave-requests/{leave_request_id}/cancel": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Cancellation persistence", "expected": {"statuses": [200, 401]}}]},
+    "GET /employees/{employee_id}/leave-calendar": {"test_files": ["tests/test_saldo_ferie_intervalli_date.py"], "expected_output": [{"scenario": "Visible submitted interval", "expected": {"statuses": [200, 401]}}]}
+  }
+}

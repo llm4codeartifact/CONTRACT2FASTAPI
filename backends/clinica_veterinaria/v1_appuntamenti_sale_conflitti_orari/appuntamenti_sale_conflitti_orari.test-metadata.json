@@ -1,0 +1,23 @@
+{
+  "case_id": "3",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Public health and 405", "expected": {"status_code": 200, "method_status": 405}}]},
+    "GET /rooms": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Authenticated listing and deleted visibility authorization", "expected": {"statuses": [200, 401, 403]}}]},
+    "POST /rooms": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Admin creation, conflict, and body validation", "expected": {"statuses": [201, 400, 403, 409, 415, 422], "header_contains": "Location"}}]},
+    "GET /rooms/{room_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Authenticated retrieval and deleted hiding", "expected": {"statuses": [200, 401, 404]}}]},
+    "PATCH /rooms/{room_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Partial update and scheduled deactivation conflict", "expected": {"statuses": [200, 400, 409]}}]},
+    "DELETE /rooms/{room_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Unreferenced deletion and appointment-reference conflict", "expected": {"statuses": [204, 404, 409], "postcondition": "appointments are retained"}}]},
+    "GET /animals": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Owner-scoped list and admin filter", "expected": {"statuses": [200, 401, 403]}}]},
+    "POST /animals": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Owner creation and foreign-account denial", "expected": {"statuses": [201, 401, 403], "header_contains": "Location"}}]},
+    "GET /animals/{animal_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Owner and foreign-user access", "expected": {"statuses": [200, 401, 403]}}]},
+    "GET /appointments": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Owner list and invalid time range", "expected": {"statuses": [200, 400, 401]}}]},
+    "POST /appointments": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Scheduled creation, overlap, boundary validation", "expected": {"statuses": [201, 409, 422], "header_contains": "Location", "postcondition": "conflict leaves existing appointment unchanged"}}]},
+    "GET /appointments/{appointment_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Persisted appointment retrieval", "expected": {"status_code": 200}}]},
+    "PATCH /appointments/{appointment_id}": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Scheduled-only patch and resulting interval validation", "expected": {"statuses": [200, 422]}}]},
+    "POST /appointments/{appointment_id}/check-in": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "In-window check-in", "expected": {"statuses": [200, 409], "json_contains": {"status": "CHECKED_IN"}}}]},
+    "POST /appointments/{appointment_id}/complete": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Checked-in completion ordering", "expected": {"statuses": [200, 409], "json_contains": {"status": "COMPLETED"}}}]},
+    "POST /appointments/{appointment_id}/cancel": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Cancellation history and terminal conflict", "expected": {"statuses": [200, 409], "postcondition": "cancelled slot can be reused"}}]},
+    "GET /rooms/{room_id}/appointment-conflicts": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Admin half-open conflict query", "expected": {"statuses": [200, 401, 403]}}]},
+    "GET /animals/{animal_id}/appointment-conflicts": {"test_files": ["tests/test_appuntamenti_sale_conflitti_orari.py"], "expected_output": [{"scenario": "Owner half-open conflict query", "expected": {"statuses": [200, 401], "postcondition": "read-only"}}]}
+  }
+}

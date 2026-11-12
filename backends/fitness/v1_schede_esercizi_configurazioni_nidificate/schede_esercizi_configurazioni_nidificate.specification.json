@@ -1,0 +1,227 @@
+{
+  "case_id": "9",
+  "domain": "Fitness management",
+  "variant": "A: Workout plans, exercises, and nested configurations",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-9-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+    },
+    {
+      "id": "REQ-9-002",
+      "requirement": "Exercises have unique code, name 2..120, category enum, and active flag"
+    },
+    {
+      "id": "REQ-9-003",
+      "requirement": "Plans belong to one user, have name 2..100 and DRAFT or PUBLISHED state"
+    },
+    {
+      "id": "REQ-9-004",
+      "requirement": "Blocks reference one plan and exercise with unique position and nested sets 1..10"
+    },
+    {
+      "id": "REQ-9-005",
+      "requirement": "Nested set configuration has reps 1..100, rest_seconds 0..900, and optional load target 0..500"
+    },
+    {
+      "id": "REQ-9-006",
+      "requirement": "Published plans are immutable; cloning creates a DRAFT copy with copied nested relations"
+    },
+    {
+      "id": "REQ-9-007",
+      "requirement": "Users access only their plans; admins manage exercises"
+    },
+    {
+      "id": "REQ-9-008",
+      "requirement": "All lists use ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning nullable next_after_id."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin; GET /health is public and all private routes require valid local Bearer authentication with deny-by-default.",
+    "Writes require application/json; malformed JSON is 400, unsupported media type 415, and declared-field violations 422.",
+    "The specification is local and deterministic without network, filesystem, upload, or external dependency; 500 and 503 leave state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /exercises",
+      "formal_requirement": "The system shall expose GET /exercises to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListExercise(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /exercises",
+      "formal_requirement": "The system shall expose POST /exercises to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateExercise(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /exercises/{exercise_id}",
+      "formal_requirement": "The system shall expose GET /exercises/{exercise_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetExercise(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /exercises/{exercise_id}",
+      "formal_requirement": "The system shall expose PATCH /exercises/{exercise_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchExercise(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /exercises/{exercise_id}",
+      "formal_requirement": "The system shall expose DELETE /exercises/{exercise_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteExercise(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /workout-plans",
+      "formal_requirement": "The system shall expose GET /workout-plans to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListWorkoutPlan(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /workout-plans",
+      "formal_requirement": "The system shall expose POST /workout-plans to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateWorkoutPlan(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /workout-plans/{workoutplan_id}",
+      "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetWorkoutPlan(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /workout-plans/{workoutplan_id}",
+      "formal_requirement": "The system shall expose PATCH /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchWorkoutPlan(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /workout-plans/{workoutplan_id}",
+      "formal_requirement": "The system shall expose DELETE /workout-plans/{workoutplan_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteWorkoutPlan(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /plan-blocks",
+      "formal_requirement": "The system shall expose GET /plan-blocks to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListPlanBlock(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /plan-blocks",
+      "formal_requirement": "The system shall expose POST /plan-blocks to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreatePlanBlock(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /plan-blocks/{planblock_id}",
+      "formal_requirement": "The system shall expose GET /plan-blocks/{planblock_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetPlanBlock(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /plan-blocks/{planblock_id}",
+      "formal_requirement": "The system shall expose PATCH /plan-blocks/{planblock_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchPlanBlock(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /plan-blocks/{planblock_id}",
+      "formal_requirement": "The system shall expose DELETE /plan-blocks/{planblock_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeletePlanBlock(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /workout-plans/{workoutplan_id}/clone",
+      "formal_requirement": "The system shall expose POST /workout-plans/{workoutplan_id}/clone to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleClonePlan(request):\n    // REQ-9-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /workout-plans/{workoutplan_id}/configuration",
+      "formal_requirement": "The system shall expose GET /workout-plans/{workoutplan_id}/configuration to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePlanConfiguration(request):\n    // REQ-9-026; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /plan-blocks/{planblock_id}/move",
+      "formal_requirement": "The system shall expose POST /plan-blocks/{planblock_id}/move to an authenticated user or admin, accepting JSON declared route fields; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleMoveBlock(request):\n    // REQ-9-027; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /exercises/{exercise_id}/plan-usages",
+      "formal_requirement": "The system shall expose GET /exercises/{exercise_id}/plan-usages to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Exercises have unique code, name 2..120, category enum, and active flag, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleExerciseUsages(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Exercises have unique code, name 2..120, category enum, and active flag OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

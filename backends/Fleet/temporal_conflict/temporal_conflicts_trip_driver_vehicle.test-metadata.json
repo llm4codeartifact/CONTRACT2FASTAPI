@@ -1,0 +1,65 @@
+{
+  "case_id": "fleet-temporal-conflict-v1",
+  "endpoint_tests": {
+    "GET /health": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_011_health_and_method_contract"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_011_health_and_method_contract", "scenario": "Health and 405 contract", "expected": {"status_code": 200, "json_contains": {"status": "ok", "database": "connected"}, "method_status": 405, "allow_contains": "GET"}}]
+    },
+    "GET /drivers": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_012_013_driver_authorization_validation_and_boundary"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_012_013_driver_authorization_validation_and_boundary", "scenario": "Driver list authorization and bounds", "expected": {"statuses": [401, 200, 422]}}]
+    },
+    "POST /drivers": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_012_013_driver_authorization_validation_and_boundary", "tests/test_temporal_conflicts.py::test_REQ_CASE_payload_over_10_mib_is_413"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_012_013_driver_authorization_validation_and_boundary", "scenario": "Malformed, unsupported, and invalid drivers", "expected": {"statuses": [400, 415, 422], "postcondition": "invalid input creates no driver"}}, {"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_payload_over_10_mib_is_413", "scenario": "Payload exceeds 10 MiB", "expected": {"status_code": 413}}]
+    },
+    "GET /trips": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_014_trip_list_is_owner_scoped_and_paged"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_014_trip_list_is_owner_scoped_and_paged", "scenario": "Owner-scoped trip list", "expected": {"statuses": [401, 200, 422], "postcondition": "created trip is visible to its requester"}}]
+    },
+    "POST /trips": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_014_015_trip_create_conflict_and_unchanged_state"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_014_015_trip_create_conflict_and_unchanged_state", "scenario": "Overlapping trip", "expected": {"statuses": [400, 409, 415, 422], "postcondition": "original trip remains PLANNED"}}]
+    },
+    "GET /trips/{trip_id}": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_016_017_trip_read_patch_and_ownership", "tests/test_temporal_conflicts.py::test_REQ_CASE_010_trip_owner_isolation_returns_403"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_016_017_trip_read_patch_and_ownership", "scenario": "Read persisted patch", "expected": {"statuses": [200, 401], "json_contains": {"purpose": "REQ-017 amended purpose"}}}, {"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_010_trip_owner_isolation_returns_403", "scenario": "Foreign owner", "expected": {"status_code": 403, "postcondition": "trip remains unchanged"}}]
+    },
+    "PATCH /trips/{trip_id}": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_016_017_trip_read_patch_and_ownership"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_016_017_trip_read_patch_and_ownership", "scenario": "Idempotent patch and invalid patch", "expected": {"statuses": [200, 422, 404], "postcondition": "invalid patch leaves purpose unchanged"}}]
+    },
+    "POST /trips/{trip_id}/start": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged", "scenario": "Start before planning time", "expected": {"status_code": 409, "postcondition": "trip remains PLANNED"}}]
+    },
+    "POST /trips/{trip_id}/complete": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged", "scenario": "Complete a non-started trip", "expected": {"status_code": 409, "postcondition": "trip remains PLANNED"}}]
+    },
+    "POST /trips/{trip_id}/cancel": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_018_019_020_transition_errors_leave_trip_unchanged", "scenario": "Cancel and repeat", "expected": {"statuses": [200, 409], "json_contains": {"status": "CANCELLED"}, "postcondition": "cancellation fields are retained"}}]
+    },
+    "GET /drivers/{driver_id}/trip-conflicts": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_021_022_conflict_queries_validation_and_404"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_021_022_conflict_queries_validation_and_404", "scenario": "Driver conflict query", "expected": {"statuses": [200, 404]}}]
+    },
+    "GET /vehicles/{vehicle_id}/trip-conflicts": {
+      "test_files": ["tests/test_temporal_conflicts.py"],
+      "test_ids": ["tests/test_temporal_conflicts.py::test_REQ_CASE_021_022_conflict_queries_validation_and_404"],
+      "expected_output": [{"test_id": "tests/test_temporal_conflicts.py::test_REQ_CASE_021_022_conflict_queries_validation_and_404", "scenario": "Vehicle conflict query", "expected": {"statuses": [200, 422], "postcondition": "query is read-only"}}]
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "case_id": "2",
+  "endpoint_tests": {
+    "GET /health": {
+      "test_files": ["tests/test_health.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_011_health_is_public_read_only_and_advertises_get"],
+      "expected_output": [{"scenario": "Public persistence health and unsupported method", "expected": {"status_code": 200, "json_contains": {"status": "ok"}, "postcondition": "actuator, rule, and execution listings are unchanged", "method_status": 405, "allow_contains": "GET"}}]
+    },
+    "GET /actuators": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_012_014_actuator_reads_filters_pagination_and_owner_isolation_are_read_only"],
+      "expected_output": [{"scenario": "Authorization, filters, owner scope, and pagination", "expected": {"statuses": [401, 200, 403, 404, 422], "postcondition": "read requests and rejected filters leave actuators unchanged", "pagination": "ascending IDs with next_after_id"}}]
+    },
+    "POST /actuators": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_001_013_actuator_creation_validation_bounds_and_duplicate_are_atomic", "tests/test_actuators.py::test_REQ_2_payload_media_malformed_and_over_10_mib_are_rejected_without_actuator_write"],
+      "expected_output": [{"scenario": "Valid minimum and maximum actuator", "expected": {"status_code": 201, "location": "/actuators/{id}", "postcondition": "GET returns the created metadata and initial current_value"}}, {"scenario": "Invalid, duplicate, malformed, unsupported, and oversized bodies", "expected": {"statuses": [400, 409, 415, 422, 413], "postcondition": "no matching actuator is created; duplicate leaves original actuator unchanged"}}]
+    },
+    "GET /actuators/{actuator_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_012_014_actuator_reads_filters_pagination_and_owner_isolation_are_read_only"],
+      "expected_output": [{"scenario": "Owner, admin, foreign user, and invalid id", "expected": {"statuses": [200, 401, 403, 404], "postcondition": "foreign reads do not alter the actuator"}}]
+    },
+    "PATCH /actuators/{actuator_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_015_patch_is_idempotent_preserves_command_history_and_rejects_non_admins"],
+      "expected_output": [{"scenario": "Admin metadata patch, repeated patch, invalid patch, and user denial", "expected": {"statuses": [200, 401, 403, 422], "postcondition": "identical patch is stable; failed writes preserve name, current_value, and command history"}}]
+    },
+    "DELETE /actuators/{actuator_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_016_delete_unreferenced_actuator_and_conflicts_preserve_relations"],
+      "expected_output": [{"scenario": "Unreferenced deletion and action/command conflicts", "expected": {"statuses": [204, 401, 404, 409], "postcondition": "successful deletion is non-idempotent; conflicts preserve actuator, rule, and command records"}}]
+    },
+    "POST /actuators/{actuator_id}/commands": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_002_008_017_manual_commands_validate_type_boundaries_and_are_atomic", "tests/test_actuators.py::test_REQ_2_018_command_history_filters_pagination_and_owner_checks_are_read_only"],
+      "expected_output": [{"scenario": "Manual SWITCH, DIMMER, and THERMOSTAT command bounds", "expected": {"statuses": [201, 401, 403, 422], "header_contains": "Location", "json_contains": {"origin": "MANUAL", "status": "APPLIED"}, "postcondition": "valid command changes current_value; invalid or foreign command leaves actuator and history unchanged"}}]
+    },
+    "GET /actuators/{actuator_id}/commands": {
+      "test_files": ["tests/test_health.py", "tests/test_actuators.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_actuators.py::test_REQ_2_018_command_history_filters_pagination_and_owner_checks_are_read_only"],
+      "expected_output": [{"scenario": "Owner-scoped MANUAL history and pagination", "expected": {"statuses": [200, 401, 403, 404, 422], "postcondition": "history is ascending, filtered, and unchanged after rejected requests"}}]
+    },
+    "GET /automation-rules": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_019_021_rule_reads_filters_pagination_and_owner_isolation_are_read_only"],
+      "expected_output": [{"scenario": "Owner-scoped enabled/source filters and pagination", "expected": {"statuses": [200, 401, 403, 404, 422], "postcondition": "rules remain unchanged by reads and rejected filters"}}]
+    },
+    "POST /automation-rules": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_003_004_020_rule_creation_validates_bounds_actions_owners_and_duplicate_names"],
+      "expected_output": [{"scenario": "Minimum and maximum rule/actions plus ownership and uniqueness validation", "expected": {"statuses": [201, 401, 409, 422], "location": "/automation-rules/{id}", "postcondition": "created rule is retrievable with ordered actions; invalid/duplicate writes leave rules and target actuator unchanged"}}]
+    },
+    "GET /automation-rules/{rule_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_019_021_rule_reads_filters_pagination_and_owner_isolation_are_read_only"],
+      "expected_output": [{"scenario": "Owner and admin read versus foreign and invalid ids", "expected": {"statuses": [200, 401, 403, 404], "postcondition": "foreign reads do not change rule or actions"}}]
+    },
+    "PUT /automation-rules/{rule_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_022_rule_replace_is_complete_idempotent_and_rolls_back_invalid_or_conflicting_writes"],
+      "expected_output": [{"scenario": "Complete replacement, identical replay, invalid body, and name collision", "expected": {"statuses": [200, 401, 409, 422], "postcondition": "identical representation remains stable; invalid/conflicting replacement preserves both rule definitions"}}]
+    },
+    "DELETE /automation-rules/{rule_id}": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_023_024_025_rule_enable_disable_and_delete_contracts", "tests/test_rules_events.py::test_REQ_2_006_007_ordered_execution_cooldown_disabled_rules_and_executed_delete_conflict"],
+      "expected_output": [{"scenario": "Unexecuted and executed rule deletion", "expected": {"statuses": [204, 401, 404, 409], "postcondition": "repeat deletion is 404; executed-rule conflict retains rule and audit history"}}]
+    },
+    "POST /automation-rules/{rule_id}/enable": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_023_024_025_rule_enable_disable_and_delete_contracts"],
+      "expected_output": [{"scenario": "Enable and repeat enable", "expected": {"statuses": [200, 401, 404], "json_contains": {"enabled": true}, "postcondition": "actions are retained and repeat call is idempotent"}}]
+    },
+    "POST /automation-rules/{rule_id}/disable": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_023_024_025_rule_enable_disable_and_delete_contracts"],
+      "expected_output": [{"scenario": "Disable and repeat disable", "expected": {"statuses": [200, 401, 404], "json_contains": {"enabled": false}, "postcondition": "actions are retained and repeat call is idempotent"}}]
+    },
+    "POST /automation-events": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_005_026_event_bounds_idempotency_conflict_and_atomic_effects", "tests/test_rules_events.py::test_REQ_2_006_007_ordered_execution_cooldown_disabled_rules_and_executed_delete_conflict"],
+      "expected_output": [{"scenario": "Boundary event, idempotent duplicate, and conflicting duplicate", "expected": {"statuses": [200, 201, 401, 409, 422], "header_contains": "Location for 201", "postcondition": "valid matching event creates applied audit records and updates actuator atomically; invalid/conflicting/replayed requests add no records"}}, {"scenario": "Rule evaluation ordering, cooldown, and disabled rule", "expected": {"postcondition": "matching rules execute by ascending id; cooldown yields SUPPRESSED with no command; disabled rule has no execution or actuator update"}}]
+    },
+    "GET /automation-executions": {
+      "test_files": ["tests/test_health.py", "tests/test_rules_events.py"],
+      "test_ids": ["tests/test_health.py::test_REQ_2_010_every_private_operation_denies_missing_bearer", "tests/test_rules_events.py::test_REQ_2_005_026_event_bounds_idempotency_conflict_and_atomic_effects", "tests/test_rules_events.py::test_REQ_2_006_007_ordered_execution_cooldown_disabled_rules_and_executed_delete_conflict", "tests/test_rules_events.py::test_REQ_2_027_execution_filters_pagination_validation_and_visibility_are_read_only"],
+      "expected_output": [{"scenario": "Execution outcome/event filters, pagination, ownership and invalid filters", "expected": {"statuses": [200, 401, 403, 404, 422], "postcondition": "rows are immutable ascending audit history; failed reads leave executions, commands, and actuators unchanged"}}]
+    }
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "case_id": "9",
+  "domain": "Fitness management",
+  "variant": "C: Goals, progress, and load validation",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-9-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+    },
+    {
+      "id": "REQ-9-002",
+      "requirement": "Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035"
+    },
+    {
+      "id": "REQ-9-003",
+      "requirement": "Progress events reference a goal and have value 0..1000000 and event date in goal interval"
+    },
+    {
+      "id": "REQ-9-004",
+      "requirement": "Load limits are unique by exercise and experience level with maximum kg 0..500"
+    },
+    {
+      "id": "REQ-9-005",
+      "requirement": "Strength events exceeding a limit are rejected unless explicitly validated by admin"
+    },
+    {
+      "id": "REQ-9-006",
+      "requirement": "Goals close only when completed or cancelled and retain progress history"
+    },
+    {
+      "id": "REQ-9-007",
+      "requirement": "Users access own goals; admins manage limits and validations"
+    },
+    {
+      "id": "REQ-9-008",
+      "requirement": "All lists use ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning nullable next_after_id."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin; GET /health is public and all private routes require valid local Bearer authentication with deny-by-default.",
+    "Writes require application/json; malformed JSON is 400, unsupported media type 415, and declared-field violations 422.",
+    "The specification is local and deterministic without network, filesystem, upload, or external dependency; 500 and 503 leave state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-9-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /fitness-goals",
+      "formal_requirement": "The system shall expose GET /fitness-goals to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListFitnessGoal(request):\n    // REQ-9-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /fitness-goals",
+      "formal_requirement": "The system shall expose POST /fitness-goals to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateFitnessGoal(request):\n    // REQ-9-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /fitness-goals/{fitnessgoal_id}",
+      "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetFitnessGoal(request):\n    // REQ-9-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /fitness-goals/{fitnessgoal_id}",
+      "formal_requirement": "The system shall expose PATCH /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchFitnessGoal(request):\n    // REQ-9-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /fitness-goals/{fitnessgoal_id}",
+      "formal_requirement": "The system shall expose DELETE /fitness-goals/{fitnessgoal_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteFitnessGoal(request):\n    // REQ-9-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /progress-events",
+      "formal_requirement": "The system shall expose GET /progress-events to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProgressEvent(request):\n    // REQ-9-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /progress-events",
+      "formal_requirement": "The system shall expose POST /progress-events to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProgressEvent(request):\n    // REQ-9-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /progress-events/{progressevent_id}",
+      "formal_requirement": "The system shall expose GET /progress-events/{progressevent_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProgressEvent(request):\n    // REQ-9-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /progress-events/{progressevent_id}",
+      "formal_requirement": "The system shall expose PATCH /progress-events/{progressevent_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProgressEvent(request):\n    // REQ-9-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /progress-events/{progressevent_id}",
+      "formal_requirement": "The system shall expose DELETE /progress-events/{progressevent_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProgressEvent(request):\n    // REQ-9-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /load-limits",
+      "formal_requirement": "The system shall expose GET /load-limits to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListLoadLimit(request):\n    // REQ-9-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /load-limits",
+      "formal_requirement": "The system shall expose POST /load-limits to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateLoadLimit(request):\n    // REQ-9-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /load-limits/{loadlimit_id}",
+      "formal_requirement": "The system shall expose GET /load-limits/{loadlimit_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetLoadLimit(request):\n    // REQ-9-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /load-limits/{loadlimit_id}",
+      "formal_requirement": "The system shall expose PATCH /load-limits/{loadlimit_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchLoadLimit(request):\n    // REQ-9-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /load-limits/{loadlimit_id}",
+      "formal_requirement": "The system shall expose DELETE /load-limits/{loadlimit_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteLoadLimit(request):\n    // REQ-9-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /fitness-goals/{fitnessgoal_id}/progress",
+      "formal_requirement": "The system shall expose GET /fitness-goals/{fitnessgoal_id}/progress to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGoalProgress(request):\n    // REQ-9-025; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /progress-events/{progressevent_id}/validate",
+      "formal_requirement": "The system shall expose POST /progress-events/{progressevent_id}/validate to an authenticated user or admin, accepting JSON declared route fields; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleValidateProgress(request):\n    // REQ-9-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /load-limits/validate",
+      "formal_requirement": "The system shall expose GET /load-limits/validate to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleValidateLoad(request):\n    // REQ-9-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /personal-records",
+      "formal_requirement": "The system shall expose GET /personal-records to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePersonalRecords(request):\n    // REQ-9-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Goals belong to one user, metric WEIGHT, BODY_FAT, STRENGTH, DISTANCE, or SESSIONS, target 0..1000000 and start/end dates in 2025..2035 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

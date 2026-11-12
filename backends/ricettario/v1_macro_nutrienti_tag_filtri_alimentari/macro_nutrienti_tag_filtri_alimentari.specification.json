@@ -1,0 +1,227 @@
+{
+  "case_id": "10",
+  "domain": "Recipe management",
+  "variant": "C: Macronutrients, tags, and dietary filters",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-10-001",
+      "requirement": "All resource ids are immutable positive integers; non-positive path resource ids are 404, while non-positive body and query references are 422."
+    },
+    {
+      "id": "REQ-10-002",
+      "requirement": "Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100"
+    },
+    {
+      "id": "REQ-10-003",
+      "requirement": "Recipes have components whose nutrition totals are deterministically summed by quantity"
+    },
+    {
+      "id": "REQ-10-004",
+      "requirement": "Tags have unique normalized name 2..40 and dietary enum VEGAN, VEGETARIAN, GLUTEN_FREE, DAIRY_FREE, HIGH_PROTEIN"
+    },
+    {
+      "id": "REQ-10-005",
+      "requirement": "Recipe-tag relations are unique and tag deletion is prohibited while referenced"
+    },
+    {
+      "id": "REQ-10-006",
+      "requirement": "Search filters use AND semantics for tags, max calories, min protein, and literal q 1..80"
+    },
+    {
+      "id": "REQ-10-007",
+      "requirement": "Users own recipes; admins manage ingredient nutrition and tags"
+    },
+    {
+      "id": "REQ-10-008",
+      "requirement": "All lists use ascending immutable id pagination with limit 1..100 default 20 and after_id greater than zero, returning nullable next_after_id."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin; GET /health is public and all private routes require valid local Bearer authentication with deny-by-default.",
+    "Writes require application/json; malformed JSON is 400, unsupported media type 415, and declared-field violations 422.",
+    "The specification is local and deterministic without network, filesystem, upload, or external dependency; 500 and 503 leave state unchanged."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, make no persistent change, and emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-10-009; preconditions: none; authorization: public.\n    IF local persistence fails THEN RETURN 503. END IF; RETURN 200.\n    Transaction: none; postcondition: state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /ingredients",
+      "formal_requirement": "The system shall expose GET /ingredients to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListIngredient(request):\n    // REQ-10-010; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /ingredients",
+      "formal_requirement": "The system shall expose POST /ingredients to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateIngredient(request):\n    // REQ-10-011; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /ingredients/{ingredient_id}",
+      "formal_requirement": "The system shall expose GET /ingredients/{ingredient_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetIngredient(request):\n    // REQ-10-012; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /ingredients/{ingredient_id}",
+      "formal_requirement": "The system shall expose PATCH /ingredients/{ingredient_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchIngredient(request):\n    // REQ-10-013; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /ingredients/{ingredient_id}",
+      "formal_requirement": "The system shall expose DELETE /ingredients/{ingredient_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteIngredient(request):\n    // REQ-10-014; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes",
+      "formal_requirement": "The system shall expose GET /recipes to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListRecipe(request):\n    // REQ-10-015; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /recipes",
+      "formal_requirement": "The system shall expose POST /recipes to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateRecipe(request):\n    // REQ-10-016; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetRecipe(request):\n    // REQ-10-017; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose PATCH /recipes/{recipe_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchRecipe(request):\n    // REQ-10-018; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /recipes/{recipe_id}",
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteRecipe(request):\n    // REQ-10-019; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /tags",
+      "formal_requirement": "The system shall expose GET /tags to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListTag(request):\n    // REQ-10-020; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /tags",
+      "formal_requirement": "The system shall expose POST /tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateTag(request):\n    // REQ-10-021; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /tags/{tag_id}",
+      "formal_requirement": "The system shall expose GET /tags/{tag_id} to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetTag(request):\n    // REQ-10-022; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /tags/{tag_id}",
+      "formal_requirement": "The system shall expose PATCH /tags/{tag_id} to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically apply the action, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchTag(request):\n    // REQ-10-023; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /tags/{tag_id}",
+      "formal_requirement": "The system shall expose DELETE /tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteTag(request):\n    // REQ-10-024; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /recipes/{recipe_id}/tags",
+      "formal_requirement": "The system shall expose POST /recipes/{recipe_id}/tags to an authenticated user or admin, accepting JSON declared route fields; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically create the resource or relation, be non-idempotent, and return 201 with Location, and emit only 201, 400, 401, 403, 404, 409, 415, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleAddTag(request):\n    // REQ-10-025; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /recipes/{recipe_id}/tags/{tag_id}",
+      "formal_requirement": "The system shall expose DELETE /recipes/{recipe_id}/tags/{tag_id} to an authenticated user or admin, accepting a positive resource id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, atomically delete or archive only under relation constraints, be non-idempotent, and return 204, and emit only 204, 401, 403, 404, 409, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleRemoveTag(request):\n    // REQ-10-026; preconditions: local persistence and valid JSON request.\n    AUTHORIZE caller OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; apply declared domain operation. IF references, ownership, invariants, or concurrency fail THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Atomic rollback postcondition: all persistent relations remain unchanged on error; idempotence is as declared.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes/{recipe_id}/nutrition",
+      "formal_requirement": "The system shall expose GET /recipes/{recipe_id}/nutrition to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleRecipeNutrition(request):\n    // REQ-10-027; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /recipes/search",
+      "formal_requirement": "The system shall expose GET /recipes/search to an authenticated user or admin, accepting optional declared filters, limit, and after_id; it shall validate Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100, make no persistent change, and emit only 200, 400, 401, 403, 404, 422, 500, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleSearchRecipes(request):\n    // REQ-10-028; preconditions: local persistence available.\n    AUTHORIZE caller OR RETURN 401 or 403. VALIDATE Ingredients have nutrition per 100g: kcal 0..1000 and protein, carbs, fat 0..100 OR RETURN 400 or 422.\n    READ authorized data; RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "case_id": "8",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /products": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "POST /products": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /products/{product_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "PATCH /products/{product_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "DELETE /products/{product_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /stock-levels": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "POST /stock-levels": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /stock-levels/{stocklevel_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "PATCH /stock-levels/{stocklevel_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "DELETE /stock-levels/{stocklevel_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /stock-movements": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "POST /stock-movements": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /stock-movements/{stockmovement_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "PATCH /stock-movements/{stockmovement_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "DELETE /stock-movements/{stockmovement_id}": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "POST /stock-movements/{stockmovement_id}/reverse": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /products/{product_id}/stock-ledger": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "POST /stock-levels/{stocklevel_id}/reconcile": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"},
+    "GET /stock/availability": {"test_files": ["tests/test_carico_scarico_giacenza_non_negativa.py"], "expected_output": "3 passed"}
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "case_id": "7",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Public health and 405", "expected": {"statuses": [200, 405], "postcondition": "employee listing unchanged"}}]},
+    "GET /employees": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Authenticated list", "expected": {"statuses": [200, 401]}}]},
+    "POST /employees": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Admin creation validation and conflict", "expected": {"statuses": [201, 400, 403, 409, 415, 422]}}]},
+    "GET /employees/{employee_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Authenticated retrieval", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /employees/{employee_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Persistent admin patch", "expected": {"statuses": [200, 401, 422]}}]},
+    "DELETE /employees/{employee_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Unrelated employee deletion", "expected": {"statuses": [204, 401, 409]}}]},
+    "GET /leave-requests": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager subordinate listing", "expected": {"statuses": [200, 401]}}]},
+    "POST /leave-requests": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Owner creation, validation, and overlap", "expected": {"statuses": [201, 401, 403, 409, 422]}}]},
+    "GET /leave-requests/{leave_request_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Requester history access", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /leave-requests/{leave_request_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Terminal-state conflict", "expected": {"statuses": [401, 409]}}]},
+    "DELETE /leave-requests/{leave_request_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Authentication policy", "expected": {"statuses": [401]}}]},
+    "GET /approval-delegations": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Filtered delegation listing", "expected": {"statuses": [200, 401]}}]},
+    "POST /approval-delegations": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager creation, validation, authority, and overlap", "expected": {"statuses": [201, 401, 403, 409, 422]}}]},
+    "GET /approval-delegations/{delegation_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Delegation retrieval", "expected": {"statuses": [200, 401, 404]}}]},
+    "PATCH /approval-delegations/{delegation_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager-only patch", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /approval-delegations/{delegation_id}": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager deletion", "expected": {"statuses": [204, 401]}}]},
+    "POST /leave-requests/{leave_request_id}/approve": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager approval and idempotence", "expected": {"statuses": [200, 401, 403]}}]},
+    "POST /leave-requests/{leave_request_id}/reject": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager rejection", "expected": {"statuses": [200, 401]}}]},
+    "GET /employees/{employee_id}/leave-conflicts": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Manager conflict projection", "expected": {"statuses": [200, 401]}}]},
+    "GET /leave-requests/{leave_request_id}/history": {"test_files": ["tests/test_approvazione_rifiuto_sovrapposizioni.py"], "expected_output": [{"scenario": "Immutable approval history", "expected": {"statuses": [200, 401]}}]}
+  }
+}

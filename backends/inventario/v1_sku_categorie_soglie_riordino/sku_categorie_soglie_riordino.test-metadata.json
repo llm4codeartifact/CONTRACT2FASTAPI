@@ -1,0 +1,26 @@
+{
+  "case_id": "8",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /categories": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /categories": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /categories/{category_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "PATCH /categories/{category_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "DELETE /categories/{category_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /products": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /products": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /products/{product_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "PATCH /products/{product_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "DELETE /products/{product_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /products/{product_id}/deactivate": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /products/{product_id}/stock-summary": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /reorder-rules": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /reorder-rules": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /reorder-rules/{reorderrule_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "PATCH /reorder-rules/{reorderrule_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "DELETE /reorder-rules/{reorderrule_id}": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /reorder-rules/{reorderrule_id}/acknowledge": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "GET /reorder-candidates": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"},
+    "POST /stock-levels": {"test_files": ["tests/test_sku_categorie_soglie_riordino.py"], "expected_output": "3 passed"}
+  }
+}

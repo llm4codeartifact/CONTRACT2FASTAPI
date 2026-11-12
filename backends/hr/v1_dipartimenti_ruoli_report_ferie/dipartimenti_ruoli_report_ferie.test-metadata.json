@@ -1,0 +1,25 @@
+{
+  "case_id": "7",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Public health and 405", "expected": {"statuses": [200, 405], "postcondition": "department list unchanged"}}]},
+    "GET /departments": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Authenticated department list", "expected": {"statuses": [200, 401]}}]},
+    "POST /departments": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin creation, body validation, and uniqueness", "expected": {"statuses": [201, 400, 401, 403, 409, 415, 422]}}]},
+    "GET /departments/{department_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Authenticated retrieval", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /departments/{department_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Persistent patch and hierarchy conflict", "expected": {"statuses": [200, 401, 409]}}]},
+    "DELETE /departments/{department_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Assignment-protected deletion", "expected": {"statuses": [204, 401, 409]}}]},
+    "GET /departments/{department_id}/hierarchy": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin hierarchy projection", "expected": {"statuses": [200, 401, 403]}}]},
+    "GET /roles": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Authenticated role list", "expected": {"statuses": [200, 401]}}]},
+    "POST /roles": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin creation and half-day validation", "expected": {"statuses": [201, 401, 403, 409, 422]}}]},
+    "GET /roles/{role_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Authenticated retrieval", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /roles/{role_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Persistent admin patch", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /roles/{role_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Assignment-protected deletion", "expected": {"statuses": [204, 401, 409]}}]},
+    "GET /assignments": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Authenticated assignment list", "expected": {"statuses": [200, 401]}}]},
+    "POST /assignments": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin creation and overlap conflict", "expected": {"statuses": [201, 401, 403, 409]}}]},
+    "GET /assignments/{assignment_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Assignment ownership", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /assignments/{assignment_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Persistent patch and interval validation", "expected": {"statuses": [200, 401, 422]}}]},
+    "DELETE /assignments/{assignment_id}": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Assignment removal", "expected": {"statuses": [204, 401]}}]},
+    "GET /leave-reports/by-department": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin department totals", "expected": {"statuses": [200, 401, 403], "postcondition": "read-only"}}]},
+    "GET /leave-reports/by-role": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Admin role totals", "expected": {"statuses": [200, 401], "postcondition": "read-only"}}]},
+    "GET /employees/{employee_id}/leave-report": {"test_files": ["tests/test_dipartimenti_ruoli_report_ferie.py"], "expected_output": [{"scenario": "Own report authorization", "expected": {"statuses": [200, 401, 403], "postcondition": "read-only"}}]}
+  }
+}

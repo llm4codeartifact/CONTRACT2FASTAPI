@@ -1,0 +1,228 @@
+{
+  "case_id": "6",
+  "domain": "Real-estate management",
+  "variant": "A: Search with filters and pagination",
+  "generator": "gemini-gpt-5.6",
+  "domain_invariants": [
+    {
+      "id": "REQ-6-001",
+      "requirement": "Property, agent, saved-search, and favorite ids are immutable positive integers; non-positive ids are not found."
+    },
+    {
+      "id": "REQ-6-002",
+      "requirement": "A property has title 5..160 trimmed characters, property_type APARTMENT, HOUSE, VILLA, OFFICE, LAND, city 2..80, area_sqm integer 10..10000, rooms integer 0..50, price_cents integer 1000..2000000000, and status ACTIVE or ARCHIVED."
+    },
+    {
+      "id": "REQ-6-003",
+      "requirement": "An agent has full_name 3..120, unique normalized email 5..254, license_code matching ^[A-Z0-9-]{4,20}$, and active boolean."
+    },
+    {
+      "id": "REQ-6-004",
+      "requirement": "An active property has exactly one active agent; agents and properties cannot be deleted while referenced by an active relation, and deletion never cascades."
+    },
+    {
+      "id": "REQ-6-005",
+      "requirement": "A saved search belongs to one caller account, has name 2..80 unique per account, and stores only validated city, property_type, price, area, rooms, and agent filters."
+    },
+    {
+      "id": "REQ-6-006",
+      "requirement": "A favorite is unique by caller account and property and may reference only an ACTIVE property; deleting a favorite never changes the property."
+    },
+    {
+      "id": "REQ-6-007",
+      "requirement": "Property search filters use AND semantics; city is case-insensitive exact after trimming, price_min <= price_max, area_min <= area_max, rooms_min <= rooms_max, and status defaults to ACTIVE."
+    },
+    {
+      "id": "REQ-6-008",
+      "requirement": "Search pages are sorted by requested sort PRICE_ASC, PRICE_DESC, AREA_DESC, or ID_ASC then id as a deterministic tie-breaker; sort cursors carry the sort value and id together."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin. GET /health is public; all private routes require a valid non-expired local Bearer session and deny by default.",
+    "All JSON writes require application/json; malformed JSON is 400, unsupported media type is 415, and syntactically valid payloads violating declared fields are 422.",
+    "Every ordinary list is stably ordered by immutable ascending id, accepts limit 1..100 with default 20 and after_id greater than zero, and returns items plus nullable next_after_id.",
+    "The service has no network, filesystem, upload, wall-clock, or external-service dependency. Local persistence outage is 503 and unexpected local failure is 500 without state changes."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no authorization, accepting no input; it shall validate local persistence availability, probe only local persistence, make no persistent change, and emit only 200, or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-6-009; preconditions: none; authorization: public.\n    IF local persistence probe fails THEN RETURN 503. END IF\n    RETURN 200. Transaction: none; postcondition: persistent state unchanged; errors have no effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /properties",
+      "formal_requirement": "The system shall expose GET /properties to an authenticated user or admin, accepting optional city, property_type, price_min, price_max, area_min, area_max, rooms_min, rooms_max, agent_id, status, sort, cursor, and limit; it shall validate REQ-6-001, REQ-6-002, REQ-6-007, and REQ-6-008, return authorized properties using the requested stable filter and sort page, make no persistent change, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListProperties(request):\n    // REQ-6-010; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001, REQ-6-002, REQ-6-007, and REQ-6-008 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /properties",
+      "formal_requirement": "The system shall expose POST /properties to an active agent user or admin, accepting JSON title, property_type, city, area_sqm, rooms, price_cents, and optional agent_id for admins; it shall validate REQ-6-001 through REQ-6-004, create an ACTIVE property bound to the caller agent or supplied active agent, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 404, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateProperty(request):\n    // REQ-6-011; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 through REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create an ACTIVE property bound to the caller agent or supplied active agent. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /properties/{property_id}",
+      "formal_requirement": "The system shall expose GET /properties/{property_id} to an authenticated user or admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-002, return the authorized non-deleted property, make no persistent change, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetProperty(request):\n    // REQ-6-012; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-002 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /properties/{property_id}",
+      "formal_requirement": "The system shall expose PATCH /properties/{property_id} to its assigned agent or an admin, accepting a positive property_id and JSON title, city, property_type, area_sqm, rooms, price_cents, status, or agent_id; it shall validate REQ-6-002 through REQ-6-004, change only supplied property data while preserving its single-agent relation, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchProperty(request):\n    // REQ-6-013; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-002 through REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; change only supplied property data while preserving its single-agent relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /properties/{property_id}",
+      "formal_requirement": "The system shall expose DELETE /properties/{property_id} to its assigned agent or an admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-004, soft-delete an ARCHIVED property only when it has no favorites and retain no dangling agent relation, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 409, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteProperty(request):\n    // REQ-6-014; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete an ARCHIVED property only when it has no favorites and retain no dangling agent relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /agents",
+      "formal_requirement": "The system shall expose GET /agents to an authenticated user or admin, accepting optional active, city, limit, and after_id; it shall validate REQ-6-001 and REQ-6-003, return a stable page of active agents, make no persistent change, and emit only 200, 400, 401, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListAgents(request):\n    // REQ-6-015; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-003 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /agents",
+      "formal_requirement": "The system shall expose POST /agents to an admin, accepting JSON full_name, email, license_code, and optional active; it shall validate REQ-6-003, create an agent, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateAgent(request):\n    // REQ-6-016; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-003 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create an agent. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /agents/{agent_id}",
+      "formal_requirement": "The system shall expose GET /agents/{agent_id} to an authenticated user or admin, accepting a positive agent_id; it shall validate REQ-6-001 and REQ-6-003, return the agent, make no persistent change, and emit only 200, 401, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetAgent(request):\n    // REQ-6-017; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-003 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /agents/{agent_id}",
+      "formal_requirement": "The system shall expose PATCH /agents/{agent_id} to an admin, accepting a positive agent_id and JSON full_name, email, license_code, or active; it shall validate REQ-6-003 and REQ-6-004, update supplied agent fields without orphaning active properties, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchAgent(request):\n    // REQ-6-018; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-003 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update supplied agent fields without orphaning active properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /agents/{agent_id}",
+      "formal_requirement": "The system shall expose DELETE /agents/{agent_id} to an admin, accepting a positive agent_id; it shall validate REQ-6-001 and REQ-6-004, soft-delete an agent with no active properties, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, 409, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteAgent(request):\n    // REQ-6-019; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-004 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; soft-delete an agent with no active properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /saved-searches",
+      "formal_requirement": "The system shall expose GET /saved-searches to an authenticated user or admin, accepting optional limit and after_id; it shall validate REQ-6-005 and pagination, return only caller-owned saved searches unless admin, make no persistent change, and emit only 200, 400, 401, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListSavedSearches(request):\n    // REQ-6-020; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-005 and pagination OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /saved-searches",
+      "formal_requirement": "The system shall expose POST /saved-searches to an authenticated user or admin, accepting JSON name and filters; it shall validate REQ-6-005 through REQ-6-007, create a caller-owned saved search, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateSavedSearch(request):\n    // REQ-6-021; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-005 through REQ-6-007 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create a caller-owned saved search. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /saved-searches/{search_id}",
+      "formal_requirement": "The system shall expose GET /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id; it shall validate REQ-6-001 and REQ-6-005, return the authorized saved search, make no persistent change, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetSavedSearch(request):\n    // REQ-6-022; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001 and REQ-6-005 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "PATCH /saved-searches/{search_id}",
+      "formal_requirement": "The system shall expose PATCH /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id and JSON name or filters; it shall validate REQ-6-005 through REQ-6-007, update caller-owned filters only, atomically update only supplied fields, be idempotent for an identical valid payload, return 200, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchSavedSearch(request):\n    // REQ-6-023; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-005 through REQ-6-007 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; update caller-owned filters only. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 200.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /saved-searches/{search_id}",
+      "formal_requirement": "The system shall expose DELETE /saved-searches/{search_id} to its owner or an admin, accepting a positive search_id; it shall validate REQ-6-001 and REQ-6-005, delete only the saved search without changing properties, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteSavedSearch(request):\n    // REQ-6-024; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-005 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; delete only the saved search without changing properties. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /favorites",
+      "formal_requirement": "The system shall expose GET /favorites to an authenticated user or admin, accepting optional limit and after_id; it shall validate REQ-6-006 and pagination, return only caller-owned property favorites unless admin, make no persistent change, and emit only 200, 400, 401, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListFavorites(request):\n    // REQ-6-025; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-006 and pagination OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "POST /properties/{property_id}/favorite",
+      "formal_requirement": "The system shall expose POST /properties/{property_id}/favorite to an authenticated user or admin, accepting a positive property_id; it shall validate REQ-6-001, REQ-6-002, and REQ-6-006, create the caller favorite relation, atomically perform the stated creation, be non-idempotent, return 201 with Location, and emit only 201, 401, 404, 409, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateFavorite(request):\n    // REQ-6-026; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001, REQ-6-002, and REQ-6-006 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; create the caller favorite relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 201 with Location.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "DELETE /properties/{property_id}/favorite",
+      "formal_requirement": "The system shall expose DELETE /properties/{property_id}/favorite to the favorite owner or an admin, accepting a positive property_id; it shall validate REQ-6-001 and REQ-6-006, remove only the caller favorite relation, atomically perform the stated deletion, retain or protect relations as stated, be non-idempotent and return 204, and emit only 204, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDeleteFavorite(request):\n    // REQ-6-027; preconditions: local persistence and a valid request.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. REQUIRE application/json OR RETURN 415. VALIDATE REQ-6-001 and REQ-6-006 OR RETURN 400 or 422.\n    BEGIN TRANSACTION; remove only the caller favorite relation. IF an invariant, reference, or concurrency check fails THEN ROLLBACK; RETURN 404 or 409. END IF COMMIT; RETURN 204.\n    // Authorization, atomic rollback, and postcondition: errors leave every persistent relation unchanged; idempotence is as stated.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    },
+    {
+      "endpoint": "GET /properties/{property_id}/similar",
+      "formal_requirement": "The system shall expose GET /properties/{property_id}/similar to an authenticated user or admin, accepting a positive property_id, optional limit, and after_id; it shall validate REQ-6-001, REQ-6-002, and REQ-6-007, return same-city and same-type active properties excluding the subject, make no persistent change, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListSimilarProperties(request):\n    // REQ-6-028; preconditions: local persistence available.\n    AUTHORIZE caller under the route policy OR RETURN 401 or 403. VALIDATE REQ-6-001, REQ-6-002, and REQ-6-007 OR RETURN 400 or 422.\n    READ only authorized matching state and RETURN 200. Transaction: none; postcondition: persistent state unchanged; 404, validation, and service errors have no side effect.",
+        "generated_by": "gemini-gpt-5.6"
+      }
+    }
+  ]
+}

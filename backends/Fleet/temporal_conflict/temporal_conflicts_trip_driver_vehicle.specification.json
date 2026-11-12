@@ -1,0 +1,163 @@
+{
+  "case_id": "fleet-temporal-conflict-v1",
+  "domain": "Corporate fleet management",
+  "variant": "Temporal conflicts among trips, drivers, and vehicles",
+  "generator": "gpt-5.6 Terra",
+  "domain_invariants": [
+    {
+      "id": "REQ-1-001",
+      "requirement": "Vehicle ids, driver ids, and trip ids are positive immutable integers; a non-positive id is treated as not found."
+    },
+    {
+      "id": "REQ-1-002",
+      "requirement": "A driver has a unique employee_code matching ^[A-Z0-9-]{3,20}$, a full_name of 3..120 characters, and an active flag."
+    },
+    {
+      "id": "REQ-1-003",
+      "requirement": "A trip references exactly one existing active driver and one existing active vehicle, has purpose length 3..250, and has planned_end strictly later than planned_start; timestamps are UTC ISO-8601 with second precision."
+    },
+    {
+      "id": "REQ-1-004",
+      "requirement": "A vehicle cannot be assigned to overlapping trips in PLANNED or IN_PROGRESS status; intervals sharing an endpoint without overlap are permitted."
+    },
+    {
+      "id": "REQ-1-005",
+      "requirement": "A driver cannot be assigned to overlapping trips in PLANNED or IN_PROGRESS status; intervals sharing an endpoint without overlap are permitted."
+    },
+    {
+      "id": "REQ-1-006",
+      "requirement": "Trips transition only from PLANNED to IN_PROGRESS or CANCELLED, and from IN_PROGRESS to COMPLETED or CANCELLED; COMPLETED and CANCELLED are terminal."
+    },
+    {
+      "id": "REQ-1-007",
+      "requirement": "A trip may start only at or after planned_start and may complete only at or after actual_start. Actual completion is not later than planned_end plus 24 hours."
+    },
+    {
+      "id": "REQ-1-008",
+      "requirement": "Vehicle status must be AVAILABLE or ASSIGNED for an active trip: starting a trip atomically changes AVAILABLE to ASSIGNED, and completing or cancelling its last active trip atomically changes ASSIGNED to AVAILABLE."
+    },
+    {
+      "id": "REQ-1-009",
+      "requirement": "Cancelled trips retain their driver, vehicle, planning data, cancellation timestamp, and cancellation reason of 3..500 characters as immutable history."
+    },
+    {
+      "id": "REQ-1-010",
+      "requirement": "A user may create, read, update, start, complete, or cancel only trips where that user is the requester; admins may operate all trips. Driver records and vehicles are admin-managed."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin. Private endpoints deny by default and require a valid non-expired server-side Bearer session token.",
+    "Lists use stable ascending numeric id order, limit 1..100 default 20, and after_id > 0. Each response contains items and next_after_id, null when exhausted.",
+    "A vehicle deletion is prohibited while any trip references it. A driver deletion is prohibited while any trip references that driver."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall return deterministic local service status without persistent effects and shall emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-fleet-temporal-conflict-v1-011; preconditions: none.\n    IF local persistence unavailable THEN RETURN 503. END IF\n    RETURN 200 with status = ok.\n    // Authorization and transaction: none; postcondition: persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /drivers",
+      "formal_requirement": "The system shall expose GET /drivers as an admin-only endpoint accepting optional active, employee_code_prefix, limit, and after_id; it shall validate boolean, prefix length 1..20, and pagination, use normalized prefix matching and stable pagination, persist no changes, and emit only 200, 400, 401, 403, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListDrivers(request):\n    // REQ-fleet-temporal-conflict-v1-012; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. VALIDATE query or RETURN 422/400.\n    READ filtered drivers where id > after_id, order by id ascending, and build next_after_id.\n    RETURN 200. // Transaction none; persistent state unchanged; 429/500/503 only when applicable.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /drivers",
+      "formal_requirement": "The system shall expose POST /drivers as an admin-only endpoint accepting JSON employee_code, full_name, and optional active=true; it shall validate REQ-fleet-temporal-conflict-v1-002, atomically create a unique driver, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 403, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateDriver(request):\n    // REQ-fleet-temporal-conflict-v1-013; preconditions: JSON and persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. REQUIRE application/json or RETURN 415.\n    VALIDATE REQ-fleet-temporal-conflict-v1-002 or RETURN 422/400. BEGIN TRANSACTION.\n    IF employee_code exists THEN ROLLBACK; RETURN 409. END IF CREATE driver; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /trips",
+      "formal_requirement": "The system shall expose GET /trips as an authenticated endpoint accepting optional driver_id, vehicle_id, status, from, to, limit, and after_id; it shall validate ids, enum, UTC date range, and pagination, restrict users to requester-owned trips while admins view all, persist no changes, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListTrips(request):\n    // REQ-fleet-temporal-conflict-v1-014; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. VALIDATE filters or RETURN 422/400.\n    IF supplied driver_id or vehicle_id is non-positive or absent THEN RETURN 404. END IF\n    READ matching trips after cursor; users require requester_id = caller.id under REQ-fleet-temporal-conflict-v1-010.\n    RETURN 200 with stable page. // No transaction or persistent effect.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /trips",
+      "formal_requirement": "The system shall expose POST /trips as an authenticated user or admin endpoint accepting JSON driver_id, vehicle_id, purpose, planned_start, and planned_end; it shall validate REQ-fleet-temporal-conflict-v1-003 through REQ-fleet-temporal-conflict-v1-005, assign the caller as requester, atomically create a PLANNED trip, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateTrip(request):\n    // REQ-fleet-temporal-conflict-v1-015; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    VALIDATE body or RETURN 422/400; require positive existing active driver and vehicle or RETURN 404/409.\n    BEGIN TRANSACTION; lock driver and vehicle active-trip intervals.\n    IF driver or vehicle interval overlaps THEN ROLLBACK; RETURN 409. END IF\n    CREATE PLANNED trip with requester_id = caller.id; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves all trip, driver, and vehicle state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /trips/{trip_id}",
+      "formal_requirement": "The system shall expose GET /trips/{trip_id} as an authenticated endpoint accepting a positive id; it shall return a trip only to its requester or an admin, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-016; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF trip_id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF\n    RETURN 200 with trip. // Transaction none; postcondition: state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "PATCH /trips/{trip_id}",
+      "formal_requirement": "The system shall expose PATCH /trips/{trip_id} as an authenticated endpoint accepting JSON purpose, driver_id, vehicle_id, planned_start, or planned_end; it shall permit only a requester or admin to modify a PLANNED trip, validate REQ-fleet-temporal-conflict-v1-003 through REQ-fleet-temporal-conflict-v1-005, atomically update it, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-017; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. IF status != PLANNED THEN RETURN 409.\n    VALIDATE resulting trip or RETURN 422/400. BEGIN TRANSACTION; lock affected driver and vehicle schedules.\n    IF a conflict exists THEN ROLLBACK; RETURN 409. END IF UPDATE trip; COMMIT; RETURN 200.\n    // Identical payload is idempotent; rollback preserves all relations.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /trips/{trip_id}/start",
+      "formal_requirement": "The system shall expose POST /trips/{trip_id}/start as an authenticated endpoint accepting a positive id and JSON actual_start; it shall allow only requester or admin to start a PLANNED trip at or after planned_start when the vehicle is AVAILABLE, atomically set IN_PROGRESS and vehicle ASSIGNED, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStartTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-018; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD trip; RETURN 404 if invalid/absent; RETURN 403 if user is not requester; VALIDATE timestamp or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, driver, and schedules.\n    IF trip not PLANNED, timestamp before plan, conflicts exist, or vehicle not AVAILABLE THEN ROLLBACK; RETURN 409. END IF\n    SET trip IN_PROGRESS and vehicle ASSIGNED; COMMIT; RETURN 200.\n    // REQ-fleet-temporal-conflict-v1-004, -005, -007, -008; non-idempotent; rollback preserves relations.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /trips/{trip_id}/complete",
+      "formal_requirement": "The system shall expose POST /trips/{trip_id}/complete as an authenticated endpoint accepting a positive id and JSON actual_end; it shall allow only requester or admin to complete an IN_PROGRESS trip satisfying REQ-fleet-temporal-conflict-v1-007, atomically set COMPLETED and return its vehicle to AVAILABLE when no active trip remains, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCompleteTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-019; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    AUTHORIZE requester/admin; RETURN 404 or 403 when applicable; VALIDATE actual_end or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, and active trips.\n    IF trip not IN_PROGRESS OR actual_end violates REQ-fleet-temporal-conflict-v1-007 THEN ROLLBACK; RETURN 409. END IF\n    COMPLETE trip; if no active trip remains set vehicle AVAILABLE; COMMIT; RETURN 200.\n    // Non-idempotent; errors rollback trip and vehicle changes.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /trips/{trip_id}/cancel",
+      "formal_requirement": "The system shall expose POST /trips/{trip_id}/cancel as an authenticated endpoint accepting a positive id and JSON cancelled_at plus cancellation_reason of 3..500 characters; it shall allow only requester or admin to cancel PLANNED or IN_PROGRESS trips, atomically retain cancellation history and return the vehicle to AVAILABLE when required, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCancelTrip(request, trip_id):\n    // REQ-fleet-temporal-conflict-v1-020; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    AUTHORIZE requester/admin; RETURN 404 or 403 when applicable; VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock trip, vehicle, and active trips.\n    IF status is terminal THEN ROLLBACK; RETURN 409. END IF\n    SET CANCELLED and immutable cancellation fields; if last active trip set vehicle AVAILABLE; COMMIT; RETURN 200.\n    // REQ-fleet-temporal-conflict-v1-006, -008, -009; non-idempotent; rollback preserves all relations.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /drivers/{driver_id}/trip-conflicts",
+      "formal_requirement": "The system shall expose GET /drivers/{driver_id}/trip-conflicts as an admin-only endpoint accepting a positive driver id, planned_start, planned_end, optional exclude_trip_id, limit, and after_id; it shall validate UTC interval and pagination, return active overlapping trips using the same overlap semantics as REQ-fleet-temporal-conflict-v1-005 without persistent effects, and emit only 200, 400, 401, 403, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleDriverTripConflicts(request, driver_id):\n    // REQ-fleet-temporal-conflict-v1-021; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF driver_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclude id, and pagination or RETURN 422/400.\n    READ PLANNED/IN_PROGRESS trips for driver whose interval overlaps query; exclude requested trip; paginate stably.\n    RETURN 200. // Transaction none; postcondition unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}/trip-conflicts",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/trip-conflicts as an admin-only endpoint accepting a positive vehicle id, planned_start, planned_end, optional exclude_trip_id, limit, and after_id; it shall validate UTC interval and pagination, return active overlapping trips using REQ-fleet-temporal-conflict-v1-004 without persistent effects, and emit only 200, 400, 401, 403, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleVehicleTripConflicts(request, vehicle_id):\n    // REQ-fleet-temporal-conflict-v1-022; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclude id, and pagination or RETURN 422/400.\n    READ overlapping PLANNED/IN_PROGRESS vehicle trips, exclude requested trip, and paginate by id.\n    RETURN 200. // Transaction none; persistent state remains unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+### Model
+model_name_or_path: Qwen/Qwen2.5-Coder-7B-Instruct
+trust_remote_code: true
+
+### Method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+quantization_bit: 4
+quantization_method: bitsandbytes
+
+### Dataset
+dataset_dir: generated/llamafactory-v2
+dataset: qwen_fastapi_codegen_v2_train
+eval_dataset: qwen_fastapi_codegen_v2_validation
+template: qwen
+cutoff_len: 6144
+overwrite_cache: true
+preprocessing_num_workers: 8
+
+### Output
+output_dir: outputs/qwen25-coder-7b-fastapi-contract-v2-a40-3epoch
+logging_steps: 5
+save_steps: 50
+eval_steps: 25
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### Train
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.01
+max_grad_norm: 1.0
+fp16: true
+bf16: false
+ddp_timeout: 180000000
+
+### Eval
+val_size: 0.0
+eval_strategy: steps
+do_eval: true

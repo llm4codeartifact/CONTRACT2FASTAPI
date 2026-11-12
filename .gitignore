@@ -1,0 +1,26 @@
+# Local environments, caches, reports, and generated training artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.schemathesis/
+*.db
+*.log
+generated/
+outputs/
+hf_cache/
+wandb/
+
+# Large model and optimizer artifacts are not part of this replication package.
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.ckpt
+adapter_model.*
+optimizer.pt
+rng_state.pth
+scaler.pt
+scheduler.pt

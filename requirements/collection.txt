@@ -1,0 +1,9 @@
+fastapi
+pydantic>=2,<3
+sqlalchemy
+uvicorn
+requests
+schemathesis
+python-owasp-zap-v2.4
+pytest
+httpx

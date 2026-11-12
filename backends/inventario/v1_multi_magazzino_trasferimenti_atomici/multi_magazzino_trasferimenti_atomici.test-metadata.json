@@ -1,0 +1,25 @@
+{
+  "case_id": "8",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /warehouses": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /warehouses": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /warehouses/{warehouse_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "PATCH /warehouses/{warehouse_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "DELETE /warehouses/{warehouse_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /products": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /products": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /products/{product_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "PATCH /products/{product_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "DELETE /products/{product_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /transfers": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /transfers": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /transfers/{transfer_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "PATCH /transfers/{transfer_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "DELETE /transfers/{transfer_id}": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /transfers/{transfer_id}/dispatch": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /transfers/{transfer_id}/receive": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "POST /transfers/{transfer_id}/cancel": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"},
+    "GET /warehouses/{warehouse_id}/transfer-conflicts": {"test_files": ["tests/test_multi_magazzino_trasferimenti_atomici.py"], "expected_output": "3 passed"}
+  }
+}

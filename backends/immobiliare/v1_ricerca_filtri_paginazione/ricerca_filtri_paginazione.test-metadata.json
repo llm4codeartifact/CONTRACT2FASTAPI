@@ -1,0 +1,25 @@
+{
+  "case_id": "6",
+  "endpoint_tests": {
+    "GET /health": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "public health and 405", "expected": {"statuses": [200, 405]}}]},
+    "GET /properties": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "authenticated filtered cursor search", "expected": {"statuses": [200, 400, 401, 422]}}]},
+    "POST /properties": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "agent-owned creation and body validation", "expected": {"statuses": [201, 400, 401, 415]}}]},
+    "GET /properties/{property_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "persistent property retrieval", "expected": {"statuses": [200, 401, 404]}}]},
+    "PATCH /properties/{property_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner update and foreign-agent denial", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /properties/{property_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "archived property deletion", "expected": {"statuses": [204, 401]}}]},
+    "GET /agents": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "authenticated pagination validation", "expected": {"statuses": [200, 401, 422]}}]},
+    "POST /agents": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "admin creation and validation", "expected": {"statuses": [201, 401, 403, 422]}}]},
+    "GET /agents/{agent_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "agent retrieval", "expected": {"statuses": [200, 401]}}]},
+    "PATCH /agents/{agent_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "admin update", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /agents/{agent_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "unreferenced agent deletion", "expected": {"statuses": [204, 401]}}]},
+    "GET /saved-searches": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner-scoped listing", "expected": {"statuses": [200, 401]}}]},
+    "POST /saved-searches": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner creation and duplicate conflict", "expected": {"statuses": [201, 401, 409]}}]},
+    "GET /saved-searches/{search_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner authorization", "expected": {"statuses": [200, 401, 403, 404]}}]},
+    "PATCH /saved-searches/{search_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner update", "expected": {"statuses": [200, 401, 403]}}]},
+    "DELETE /saved-searches/{search_id}": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "owner deletion", "expected": {"statuses": [204, 401]}}]},
+    "GET /favorites": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "caller favorites persist", "expected": {"statuses": [200, 401]}}]},
+    "POST /properties/{property_id}/favorite": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "favorite creation and uniqueness", "expected": {"statuses": [201, 401, 409]}}]},
+    "DELETE /properties/{property_id}/favorite": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "caller-only favorite removal", "expected": {"statuses": [204, 401, 404]}}]},
+    "GET /properties/{property_id}/similar": {"test_files": ["tests/test_ricerca_filtri_paginazione.py"], "expected_output": [{"scenario": "same-city same-type projection", "expected": {"statuses": [200, 401]}}]}
+  }
+}

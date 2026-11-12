@@ -1,0 +1,163 @@
+{
+  "case_id": "fleet-maintenance-planning-v1",
+  "domain": "Corporate fleet management",
+  "variant": "Maintenance planning, cancellation, and history",
+  "generator": "gpt-5.6 Terra",
+  "domain_invariants": [
+    {
+      "id": "REQ-1-001",
+      "requirement": "Vehicle and maintenance ids are positive immutable integers; non-positive ids are treated as not found."
+    },
+    {
+      "id": "REQ-1-002",
+      "requirement": "A maintenance references exactly one existing vehicle, has type PREVENTIVE, CORRECTIVE, INSPECTION, or REPAIR, title length 3..120, optional description length 0..2000, and planned_end strictly later than planned_start."
+    },
+    {
+      "id": "REQ-1-003",
+      "requirement": "Maintenance status transitions are SCHEDULED to IN_PROGRESS or CANCELLED, and IN_PROGRESS to COMPLETED or CANCELLED; COMPLETED and CANCELLED are terminal."
+    },
+    {
+      "id": "REQ-1-004",
+      "requirement": "Active maintenance intervals for a vehicle, namely SCHEDULED or IN_PROGRESS records, must not overlap; touching endpoints do not overlap."
+    },
+    {
+      "id": "REQ-1-005",
+      "requirement": "Starting maintenance requires the vehicle current state MAINTENANCE. Completing or cancelling the last active maintenance atomically moves the vehicle to AVAILABLE or OUT_OF_SERVICE."
+    },
+    {
+      "id": "REQ-1-006",
+      "requirement": "Maintenance cancellation is historical and immutable: a cancelled record keeps its planned schedule, cancellation timestamp, and reason of 3..500 characters and is never deleted."
+    },
+    {
+      "id": "REQ-1-007",
+      "requirement": "Every maintenance status change appends an immutable history event containing previous_status, new_status, effective_at in UTC, actor id, and optional reason; history events are never modified or removed independently."
+    },
+    {
+      "id": "REQ-1-008",
+      "requirement": "A user may create, read, amend, start, complete, or cancel only maintenance requested by that user; admins may operate all maintenance. Vehicle management is admin-only."
+    },
+    {
+      "id": "REQ-1-009",
+      "requirement": "A maintenance record with history cannot be deleted. A vehicle with any maintenance cannot be deleted, preserving planning and cancellation history."
+    },
+    {
+      "id": "REQ-1-010",
+      "requirement": "All maintenance timestamps are UTC ISO-8601 with second precision; actual_end must not precede actual_start, and cancellation timestamp must not precede planned_start."
+    }
+  ],
+  "seed_data": [
+    "Roles are user and admin. Private endpoints deny by default and require a valid non-expired server-side Bearer session token.",
+    "List order is ascending immutable id, using limit 1..100 default 20 and after_id > 0; results return items and next_after_id, null when exhausted.",
+    "New maintenance is SCHEDULED and creates a SCHEDULED history event at creation time."
+  ],
+  "apis": [
+    {
+      "endpoint": "GET /health",
+      "formal_requirement": "The system shall expose GET /health publicly with no input or authorization requirement; it shall return deterministic local service status without persistent effects and shall emit only 200 or 503.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetHealth(request):\n    // REQ-fleet-maintenance-planning-v1-011; preconditions: none.\n    IF local persistence unavailable THEN RETURN 503. END IF\n    RETURN 200 with status = ok. // No authorization, transaction, or state change.",
+        "generated_by": "gpt-5-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles",
+      "formal_requirement": "The system shall expose GET /vehicles as an admin-only endpoint accepting optional active boolean, limit, and after_id; it shall validate inputs, use stable pagination, persist no changes, and emit only 200, 401, 403, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListVehicles(request):\n    // REQ-fleet-maintenance-planning-v1-012; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. VALIDATE boolean and pagination or RETURN 422.\n    READ matching vehicles after cursor ordered by id; RETURN 200 with page.\n    // Transaction none; postcondition persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /maintenances",
+      "formal_requirement": "The system shall expose GET /maintenances as an authenticated endpoint accepting optional vehicle_id, status, type, from, to, include_cancelled boolean default true, limit, and after_id; it shall validate ids, enums, UTC range, boolean, and pagination, restrict users to owned records while admins view all, persist no changes, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleListMaintenances(request):\n    // REQ-fleet-maintenance-planning-v1-013; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. VALIDATE filters or RETURN 422/400.\n    IF supplied vehicle id is non-positive or absent THEN RETURN 404. END IF\n    READ matching records after cursor; users require requester_id = caller.id under REQ-fleet-maintenance-planning-v1-008.\n    RETURN 200 with stable page. // Transaction none; state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances",
+      "formal_requirement": "The system shall expose POST /maintenances as an authenticated user or admin endpoint accepting JSON vehicle_id, type, title, optional description, planned_start, and planned_end; it shall validate REQ-fleet-maintenance-planning-v1-002, REQ-fleet-maintenance-planning-v1-004, and REQ-fleet-maintenance-planning-v1-010, assign the caller as requester, atomically create a SCHEDULED record and its first history event, be non-idempotent, return 201 with Location, and emit only 201, 400, 401, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCreateMaintenance(request):\n    // REQ-fleet-maintenance-planning-v1-014; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. REQUIRE application/json or RETURN 415.\n    VALIDATE body or RETURN 422/400. IF vehicle id <= 0 OR absent THEN RETURN 404. END IF\n    BEGIN TRANSACTION; lock vehicle active intervals. IF overlap exists THEN ROLLBACK; RETURN 409. END IF\n    CREATE SCHEDULED maintenance and SCHEDULED history event with caller actor; COMMIT; RETURN 201 with Location.\n    // Non-idempotent; rollback leaves record, history, and vehicle unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /maintenances/{maintenance_id}",
+      "formal_requirement": "The system shall expose GET /maintenances/{maintenance_id} as an authenticated endpoint accepting a positive id; it shall return a maintenance only to its requester or an admin, make no persistent changes, treat non-positive ids as not found, and emit only 200, 401, 403, 404, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-015; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF id <= 0 OR absent THEN RETURN 404. END IF\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF\n    RETURN 200. // Transaction none; persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "PATCH /maintenances/{maintenance_id}",
+      "formal_requirement": "The system shall expose PATCH /maintenances/{maintenance_id} as an authenticated endpoint accepting JSON title, description, planned_start, or planned_end; it shall permit only requester or admin to change SCHEDULED maintenance, validate resulting values under REQ-fleet-maintenance-planning-v1-002, REQ-fleet-maintenance-planning-v1-004, and REQ-fleet-maintenance-planning-v1-010, atomically update it, be idempotent for an identical valid payload, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handlePatchMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-016; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    IF id <= 0 OR absent THEN RETURN 404. IF user is not requester THEN RETURN 403. IF status != SCHEDULED THEN RETURN 409.\n    VALIDATE resulting fields or RETURN 422/400. BEGIN TRANSACTION; lock intervals.\n    IF overlap THEN ROLLBACK; RETURN 409. END IF UPDATE record; COMMIT; RETURN 200.\n    // Idempotent for same valid payload; rollback preserves maintenance, history, and vehicle.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/start",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/start as an authenticated endpoint accepting a positive id and JSON actual_start; it shall permit requester or admin to start only SCHEDULED maintenance at or after planned_start when the vehicle is MAINTENANCE, atomically create an IN_PROGRESS history event and update status, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleStartMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-017; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE actual_start or RETURN 422/400.\n    BEGIN TRANSACTION; lock maintenance and vehicle.\n    IF not SCHEDULED, time before plan, or vehicle state != MAINTENANCE THEN ROLLBACK; RETURN 409. END IF\n    SET IN_PROGRESS and append history event; COMMIT; RETURN 200.\n    // REQ-fleet-maintenance-planning-v1-003, -005, -007; non-idempotent and errors roll back all relations.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/complete",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/complete as an authenticated endpoint accepting JSON actual_end, completion_notes of 1..2000 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE; it shall permit requester or admin to complete only IN_PROGRESS maintenance, atomically append COMPLETED history and conditionally update vehicle state, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCompleteMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-018; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE body or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, and active maintenance set.\n    IF not IN_PROGRESS OR actual_end before actual_start THEN ROLLBACK; RETURN 409. END IF\n    COMPLETE record and append history; if last active record then update vehicle state; COMMIT; RETURN 200.\n    // REQ-fleet-maintenance-planning-v1-003, -005, -007, -010; non-idempotent; rollback preserves relations.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "POST /maintenances/{maintenance_id}/cancel",
+      "formal_requirement": "The system shall expose POST /maintenances/{maintenance_id}/cancel as an authenticated endpoint accepting JSON cancelled_at, cancellation_reason of 3..500 characters, and next_vehicle_state AVAILABLE or OUT_OF_SERVICE only for IN_PROGRESS maintenance; it shall permit requester or admin to cancel SCHEDULED or IN_PROGRESS maintenance, atomically append CANCELLED history and conditionally update vehicle state, be non-idempotent, and emit only 200, 400, 401, 403, 404, 409, 415, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleCancelMaintenance(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-019; preconditions: JSON and persistence available.\n    REQUIRE authenticated user or admin or RETURN 401; REQUIRE application/json or RETURN 415.\n    LOAD and authorize record or RETURN 404/403; VALIDATE body under REQ-fleet-maintenance-planning-v1-006/-010 or RETURN 422/400.\n    BEGIN TRANSACTION; lock record, vehicle, and active set. IF status terminal THEN ROLLBACK; RETURN 409. END IF\n    CANCEL record and append history; if it was IN_PROGRESS and last active then update vehicle state; COMMIT; RETURN 200.\n    // Non-idempotent. Rollback keeps cancellation history, maintenance, and state unchanged on error.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /maintenances/{maintenance_id}/history",
+      "formal_requirement": "The system shall expose GET /maintenances/{maintenance_id}/history as an authenticated endpoint accepting a positive id, limit, and after_id; it shall return immutable status history only to requester or admin using stable ascending event-id pagination, persist no changes, and emit only 200, 401, 403, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetMaintenanceHistory(request, maintenance_id):\n    // REQ-fleet-maintenance-planning-v1-020; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF id <= 0 OR absent THEN RETURN 404.\n    IF caller is user and caller.id != requester_id THEN RETURN 403. END IF VALIDATE cursor or RETURN 422.\n    READ immutable history after cursor ordered ascending; RETURN 200 with page.\n    // REQ-fleet-maintenance-planning-v1-007; transaction none and persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}/maintenance-history",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/maintenance-history as an admin-only endpoint accepting a positive vehicle id, optional status and type, limit, and after_id; it shall validate inputs, return every maintenance including cancelled and completed records in stable order, persist no changes, and emit only 200, 401, 403, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleGetVehicleMaintenanceHistory(request, vehicle_id):\n    // REQ-fleet-maintenance-planning-v1-021; precondition: persistence available.\n    REQUIRE authenticated admin or RETURN 401/403. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE enum filters and cursor or RETURN 422.\n    READ all matching vehicle maintenance, including terminal records, ordered by id; RETURN 200 with stable page.\n    // REQ-fleet-maintenance-planning-v1-006/-009; transaction none and state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    },
+    {
+      "endpoint": "GET /vehicles/{vehicle_id}/maintenance-availability",
+      "formal_requirement": "The system shall expose GET /vehicles/{vehicle_id}/maintenance-availability as an authenticated user or admin endpoint accepting a positive vehicle id, planned_start, planned_end, optional exclude_maintenance_id, limit, and after_id; it shall validate UTC interval and pagination, return overlapping active maintenance records without persistent effects, and emit only 200, 400, 401, 404, 422, or 500.",
+      "pseudocode": {
+        "language": "structured-pseudocode",
+        "body": "FUNCTION handleMaintenanceAvailability(request, vehicle_id):\n    // REQ-fleet-maintenance-planning-v1-022; precondition: persistence available.\n    REQUIRE authenticated user or admin or RETURN 401. IF vehicle_id <= 0 OR absent THEN RETURN 404.\n    VALIDATE interval, optional positive exclusion id, and pagination or RETURN 422/400.\n    READ SCHEDULED/IN_PROGRESS records overlapping interval under REQ-fleet-maintenance-planning-v1-004; paginate by id.\n    RETURN 200. // Transaction none; postcondition persistent state unchanged.",
+        "generated_by": "gpt-5.6-Terra"
+      }
+    }
+  ]
+}
